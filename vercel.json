@@ -1,0 +1,26 @@
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "package.json",
+            "use": "@vercel/node",
+            "config": {
+                "distDir": "API"
+            }
+        },
+        {
+            "src": "src/index.html",
+            "use": "@vitejs/plugin-react"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "/API/$1"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/src/$1"
+        }
+    ]
+}
