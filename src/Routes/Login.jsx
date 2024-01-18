@@ -2,7 +2,7 @@ import { useState } from 'react'
 import DefaultLayout from '../layout/DefaultLayout'
 import { Input } from '@material-tailwind/react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../auth/authProvider'
+import { useAuth } from '../auth/AuthProvider'
 import { Alert, Button } from '@material-tailwind/react'
 import { MdError } from 'react-icons/md'
 

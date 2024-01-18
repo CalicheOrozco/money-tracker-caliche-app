@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useAuth } from '../auth/authProvider'
+import { useAuth } from '../auth/AuthProvider'
 import { MdLogout } from 'react-icons/md'
 import { FaFileInvoiceDollar } from 'react-icons/fa'
 

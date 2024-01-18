@@ -7,7 +7,7 @@ import Login from './Routes/Login.jsx'
 import Signup from './Routes/Signup.jsx'
 import Guest from './Routes/Guest.jsx'
 import ProtectedRoute from './Routes/ProtectedRoute.jsx'
-import { AuthProvider } from './auth/authProvider.jsx'
+import { AuthProvider } from './auth/AuthProvider.jsx'
 
 const router = createBrowserRouter([
   {
