@@ -10,7 +10,6 @@ import loginRoute from './routes/login.js'
 import logoutRoute from './routes/logout.js'
 import refreshTokenRoute from './routes/refreshToken.js'
 import userRoute from './routes/user.js'
-import { useImperativeHandle } from 'react'
 
 const app = express()
 mongoose
@@ -44,7 +43,8 @@ app.get('/api/transactions/:id', async (req, res) => {
 // post user transaction
 app.post('/api/transaction/:id', async (req, res) => {
   try {
-    const { name, price, datetime, description, userID } = req.body
+    const { name, price, datetime, description, userID, category, card } =
+      req.body
     // quitar los espacios en blanca del price
     const priceTrim = price.replace(/\s/g, '')
     // validar si el price trae signo - o +
@@ -82,7 +82,9 @@ app.post('/api/transaction/:id', async (req, res) => {
       price: priceTrim,
       datetime,
       description,
-      userID
+      userID,
+      category,
+      card
     })
     res.json(transaction)
   } catch (error) {
@@ -93,7 +95,7 @@ app.post('/api/transaction/:id', async (req, res) => {
 // post transaction
 app.post('/api/transaction', async (req, res) => {
   try {
-    const { name, price, datetime, description } = req.body
+    const { name, price, datetime, description, category, card } = req.body
 
     // quitar los espacios en blanca del price
     const priceTrim = price.replace(/\s/g, '')
@@ -131,7 +133,9 @@ app.post('/api/transaction', async (req, res) => {
       name,
       price: priceTrim,
       datetime,
-      description
+      description,
+      category,
+      card
     })
     res.json(transaction)
   } catch (error) {
@@ -140,9 +144,31 @@ app.post('/api/transaction', async (req, res) => {
   }
 })
 
+// get cards
+app.get('/api/cards', async (req, res) => {
+  const transactions = await TransactionModel.find({ userID: null })
+  // obtener todas las cards que hay en las transacciones
+  let cards = transactions.map(transaction => transaction.card)
+  // eliminar los duplicados
+  cards = [...new Set(cards)]
+  res.json(cards)
+})
+
+// get cards by user
+app.get('/api/cards/:id', async (req, res) => {
+  const { id } = req.params
+  const transactions = await TransactionModel.find({ userID: id })
+  // obtener todas las cards que hay en las transacciones
+  let cards = transactions.map(transaction => transaction.card)
+  // eliminar los duplicados
+  cards = [...new Set(cards)]
+  res.json(cards)
+})
+
 app.get('/api/transactions', async (req, res) => {
   // buscar las transations que no tienen userID
   const transactions = await TransactionModel.find({ userID: null })
+
   res.json(transactions)
 })
 
@@ -157,14 +183,16 @@ app.delete('/api/transaction/delete/:id', async (req, res) => {
 // update transaction
 app.put('/api/transaction/update/:id', async (req, res) => {
   const { id } = req.params
-  const { name, price, datetime, description } = req.body
+  const { name, price, datetime, description, category, card } = req.body
   const priceTrim = price.replace(/\s/g, '')
   console.log('id', id)
   const transaction = await TransactionModel.findByIdAndUpdate(id, {
     name,
     price: priceTrim,
     datetime,
-    description
+    description,
+    category,
+    card
   })
   res.json(transaction)
 })
