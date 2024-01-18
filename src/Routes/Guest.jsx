@@ -63,7 +63,6 @@ function Guest () {
 
   const handleChangeCard = value => {
     if (value !== '') {
-      console.log(value)
       setSelectedCard(value)
     }
   }
@@ -148,10 +147,10 @@ function Guest () {
       setEditingTransactionId(id) // Establecer la ID de la transacción que está siendo editada
       setCategory(transactionToEdit.category)
       const card = transactionToEdit.card
-      console.log(card)
+
 
       if (card !== '' && card !== null && card !== undefined) {
-        console.log(card)
+
         setChecked(true)
       }
       setSelectedCard(card)
