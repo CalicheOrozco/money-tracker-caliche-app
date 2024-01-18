@@ -5,9 +5,9 @@ import './index.css'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Login from './Routes/Login.jsx'
 import Signup from './Routes/Signup.jsx'
-import { AuthProvider } from './auth/authProvider.jsx'
 import Guest from './Routes/Guest.jsx'
 import ProtectedRoute from './Routes/ProtectedRoute.jsx'
+import { AuthProvider } from './auth/authProvider.jsx'
 
 const router = createBrowserRouter([
   {
