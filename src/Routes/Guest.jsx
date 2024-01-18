@@ -9,11 +9,14 @@ import { FaPlus } from 'react-icons/fa6'
 import DefaultLayout from '../layout/DefaultLayout'
 import { Alert, Button } from '@material-tailwind/react'
 import { MdError } from 'react-icons/md'
-
+import { Checkbox, Typography } from '@material-tailwind/react'
 import Transaction from '../Components/Transaction'
 import SwipeableListItem from '../Components/SwipeableListItem'
+import { Select, Option } from '@material-tailwind/react'
+import { FaCreditCard } from 'react-icons/fa6'
 
 function Guest () {
+  const userInfo = JSON.parse(localStorage.getItem('userInfo'))
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
   const [datetime, setDatetime] = useState({
@@ -24,6 +27,11 @@ function Guest () {
   const [transactions, setTransactions] = useState([])
   const [editingTransactionId, setEditingTransactionId] = useState(null)
   const [errorResponse, setErrorResponse] = useState('')
+  const [checked, setChecked] = useState(false)
+  const [category, setCategory] = useState('')
+  const [cards, setCards] = useState([])
+  const [selectedCard, setSelectedCard] = useState()
+  const [addingCard, setAddingCard] = useState(false)
 
   useEffect(() => {
     getTransactions()
@@ -41,12 +49,33 @@ function Guest () {
     setDescription(event.target.value)
   }
 
+  const handleChangeNewCard = event => {
+    setSelectedCard(event.target.value)
+  }
+
   const handleChangeDatetime = newValue => {
     setDatetime(newValue)
   }
 
+  const handleChangeCategory = value => {
+    setCategory(value)
+  }
+
+  const handleChangeCard = value => {
+    if (value !== '') {
+      console.log(value)
+      setSelectedCard(value)
+    }
+  }
+  const handleCheckboxChange = event => {
+    setChecked(event.target.checked)
+    setAddingCard(false)
+    setSelectedCard('')
+  }
+
   async function getTransactions () {
     const url = import.meta.env.VITE_API_URL + '/transactions'
+    const urlCards = import.meta.env.VITE_API_URL + `/cards`
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -57,6 +86,27 @@ function Guest () {
       if (response.ok) {
         const json = await response.json()
         setTransactions(json.reverse())
+      } else {
+        const json = await response.json()
+        console.log(json)
+      }
+    } catch (error) {
+      console.error(error)
+    }
+
+    try {
+      const response = await fetch(urlCards, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      if (response.ok) {
+        let json = await response.json()
+        // Eliminar nulls
+        json = json.filter(card => card)
+
+        setCards(json)
       } else {
         const json = await response.json()
         console.log(json)
@@ -96,6 +146,15 @@ function Guest () {
       })
       setDescription(transactionToEdit.description)
       setEditingTransactionId(id) // Establecer la ID de la transacción que está siendo editada
+      setCategory(transactionToEdit.category)
+      const card = transactionToEdit.card
+      console.log(card)
+
+      if (card !== '' && card !== null && card !== undefined) {
+        console.log(card)
+        setChecked(true)
+      }
+      setSelectedCard(card)
     }
   }
 
@@ -108,6 +167,9 @@ function Guest () {
       endDate: null
     })
     setDescription('')
+    setCategory('')
+    setSelectedCard('')
+    setChecked(false)
   }
 
   async function handleSubmit (event) {
@@ -129,7 +191,9 @@ function Guest () {
           name: name,
           price: price,
           datetime: datetime.startDate,
-          description: description
+          description: description,
+          category: category,
+          card: selectedCard
         })
       })
       if (response.ok) {
@@ -234,9 +298,119 @@ function Guest () {
               color='white'
               label='Description'
             />
-
-            {/* <input type='text' placeholder='Category' /> */}
           </div>
+          <div className='flex w-full justify-between items-center text-white py-1.5'>
+            {/* preguntar si se utilizo tarjeta */}
+
+            <div className='w-72'>
+              <Select
+                label='Category'
+                color='blue'
+                className='text-white'
+                labelProps={{ style: { color: 'white' } }}
+                onChange={handleChangeCategory}
+                value={category}
+              >
+                <Option value='Salary'>Salary</Option>
+                <Option value='Hourly Wages'>Hourly Wages</Option>
+                <Option value='Business Income'>Business Income</Option>
+                <Option value='Freelance Income'>Freelance Income</Option>
+                <Option value='Bonuses and Commissions'>
+                  Bonuses and Commissions
+                </Option>
+                <Option value='Investment Income'>Investment Income</Option>
+                <Option value='Rental Income'>Rental Income</Option>
+                <Option value='Retirement Income'>Retirement Income</Option>
+                <Option value='Passive Income'>Passive Income</Option>
+                <Option value='Side Hustles'>Side Hustles</Option>
+                <Option value='Gifts Received'>Gifts Received</Option>
+                <Option value='Tax Refund'>Tax Refund</Option>
+
+                <Option value='Housing'>Housing</Option>
+                <Option value='Utilities'>Utilities</Option>
+                <Option value='Food'>Food</Option>
+                <Option value='Transportation'>Transportation</Option>
+                <Option value='Medical & Healthcare'>
+                  Medical & Healthcare
+                </Option>
+                <Option value='Insurance'>Insurance</Option>
+                <Option value='Savings & Investments'>
+                  Savings & Investments
+                </Option>
+                <Option value='Personal Spending'>Personal Spending</Option>
+                <Option value='Debts'>Debts</Option>
+                <Option value='Education & Training'>
+                  Education & Training
+                </Option>
+                <Option value='Personal Care'>Personal Care</Option>
+                <Option value='Clothing'>Clothing</Option>
+                <Option value='Streaming Service'>Streaming Service</Option>
+                <Option value='Recreation & Entertainment'>
+                  Recreation & Entertainment
+                </Option>
+                <Option value='Travel'>Travel</Option>
+                <Option value='Gifts & Donations'>Gifts & Donations</Option>
+                <Option value='Pets'>Pets</Option>
+                <Option value='Other'>Other</Option>
+              </Select>
+            </div>
+
+            <Checkbox
+              color='blue'
+              label={
+                <div>
+                  <Typography color='white' className='font-medium'>
+                    Did you use a card?
+                  </Typography>
+                </div>
+              }
+              checked={checked}
+              onChange={handleCheckboxChange}
+            />
+          </div>
+
+          {/* Card */}
+          {/* tiene que estar check en true y addingCard false */}
+          {checked && !addingCard && (
+            <div className='flex w-full justify-between items-center text-white py-1.5'>
+              <div className='w-full'>
+                <Select
+                  label='Card'
+                  value={selectedCard}
+                  color='blue'
+                  className='text-white'
+                  labelProps={{ style: { color: 'white' } }}
+                  onChange={handleChangeCard}
+                >
+                  {cards.map((card, index) => (
+                    <Option value={card} key={index}>
+                      {card}
+                    </Option>
+                  ))}
+                </Select>
+                <div
+                  className='py-1.5 w-full flex justify-center items-center'
+                  onClick={() => {
+                    setAddingCard(true)
+                  }}
+                >
+                  <div className='flex justify-center items-center gap-x-2 cursor-pointer '>
+                    <FaPlus />
+                    New card
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {addingCard && (
+            <Input
+              value={selectedCard}
+              className='py-1.5'
+              onChange={handleChangeNewCard}
+              color='white'
+              label='Name of the card'
+            />
+          )}
 
           {!editingTransactionId ? (
             <button className='flex flex-row justify-center items-center gap-x-2 w-full my-3 bg-gray-300 btn-default overflow-hidden relative bg-stone-50 text-gray-900 py-4 px-4 rounded-xl font-bold uppercase transition-all duration-100 -- hover:shadow-md border border-stone-100 hover:bg-gradient-to-t hover:from-stone-100 before:to-stone-50 hover:-translate-y-[3px]'>
