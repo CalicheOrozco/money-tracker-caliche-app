@@ -276,7 +276,7 @@ export default function App () {
           {`$${balance}`}
         </h1>
         <form className='mt-5' onSubmit={handleSubmit}>
-          <div className='basic flex gap-3 mb-1'>
+          <div className='basic flex flex-col 2xl:flex-row gap-3 mb-1'>
             <Input
               value={price}
               onChange={handleChangePrice}

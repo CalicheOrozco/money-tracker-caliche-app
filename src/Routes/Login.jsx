@@ -28,7 +28,6 @@ export default function Login () {
 
         if (json.body.accessToken && json.body.refreshToken) {
           auth.saveUser(json)
-          
         }
       } else {
         const json = await response.json()
@@ -87,7 +86,7 @@ export default function Login () {
           type='password'
         />
 
-        <button className='gap-x-2 w-full my-1 bg-blue-300 btn-default overflow-hidden relative bg-stone-50 text-gray-900 py-4 px-4 rounded-xl font-bold uppercase transition-all duration-100 -- hover:shadow-md border border-stone-100 hover:bg-gradient-to-t hover:from-stone-100 before:to-stone-50 hover:-translate-y-[3px]'>
+        <button className='gap-x-2 my-1 bg-blue-300 btn-default overflow-hidden relative bg-stone-50 text-gray-900 py-4 px-4 rounded-xl font-bold uppercase transition-all duration-100 -- hover:shadow-md border border-stone-100 hover:bg-gradient-to-t hover:from-stone-100 before:to-stone-50 hover:-translate-y-[3px]'>
           <span className='relative'>Login</span>
         </button>
       </form>
