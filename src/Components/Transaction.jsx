@@ -1,6 +1,8 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 function Transaction ({ name, description, price, datetime, category, card }) {
+  // eliminar T00:00:00Z de la fecha y convertir a formato legible
+  const date = new Date(datetime).toISOString().split('T')[0]
   const priceIndicator = price.slice(0, 1)
   const formattedPrice = `${priceIndicator} $${price.slice(1)}`
   const priceClass = priceIndicator === '+' ? 'text-green-400' : 'text-red-400'
@@ -25,7 +27,7 @@ function Transaction ({ name, description, price, datetime, category, card }) {
         <div className={`price text-base font-semibold ${priceClass}`}>
           {formattedPrice}
         </div>
-        <div className='date text-xs text-gray-500'>{datetime}</div>
+        <div className='date text-xs text-gray-500'>{date}</div>
       </div>
     </div>
   )
