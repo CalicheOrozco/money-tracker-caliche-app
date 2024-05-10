@@ -12,6 +12,7 @@ import { Checkbox, Typography } from '@material-tailwind/react'
 import { Select, Option } from '@material-tailwind/react'
 import Transaction from './Components/Transaction.jsx'
 import SwipeableListItem from './Components/SwipeableListItem'
+import Filter from './Components/Filter.jsx'
 
 export default function App () {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'))
@@ -102,6 +103,10 @@ export default function App () {
         let json = await response.json()
         // Eliminar nulls
         json = json.filter(card => card)
+        // en caso de que no haya tarjetas se agrega un string con un mensaje para que el usuario pueda agregar una tarjeta
+        if (json.length === 0) {
+          json.push('No cards found. Add a new card')
+        }
 
         setCards(json)
       } else {
@@ -236,6 +241,18 @@ export default function App () {
 
   useEffect(() => {
     getUserTransactions()
+    //   obtener fecha actual en formato 2024-12-08
+    const today = new Date()
+    const dd = String(today.getDate()).padStart(2, '0')
+    const mm = String(today.getMonth() + 1).padStart(2, '0') //January is 0!
+    const yyyy = today.getFullYear()
+
+    const todayDate = yyyy + '-' + mm + '-' + dd
+
+    setDatetime({
+      startDate: todayDate,
+      endDate: todayDate
+    })
   }, [])
 
   useEffect(() => {
@@ -246,7 +263,7 @@ export default function App () {
 
   return (
     <PortalLayout>
-      <main className='w-full h-full px-10 xl:px-80 my-7'>
+      <main className='w-full h-full px-10 xl:px-64 my-7'>
         {!!errorResponse && (
           <div className='py-5'>
             <Alert
@@ -276,7 +293,7 @@ export default function App () {
           {`$${balance}`}
         </h1>
         <form className='mt-5' onSubmit={handleSubmit}>
-          <div className='basic flex flex-col 2xl:flex-row gap-3 mb-1'>
+          <div className='basic flex flex-col xl:flex-row gap-3 mb-1'>
             <Input
               value={price}
               onChange={handleChangePrice}
@@ -443,6 +460,16 @@ export default function App () {
             </>
           )}
         </form>
+
+        {/* Mostrar unicamente filter en caso de que cards no sea vacio un array vacio [] */}
+        {cards.length > 0 && (
+          <Filter
+            userID={userID}
+            cards={cards}
+            setTransactions={setTransactions}
+          />
+        )}
+
         <div className='transactions mt-2.5'>
           <div className='overflow-x-hidden'>
             {transactions.map(transaction => (
