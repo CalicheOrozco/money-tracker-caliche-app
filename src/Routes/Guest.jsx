@@ -14,6 +14,7 @@ import Transaction from '../Components/Transaction'
 import SwipeableListItem from '../Components/SwipeableListItem'
 import { Select, Option } from '@material-tailwind/react'
 import { FaCreditCard } from 'react-icons/fa6'
+import Filter from '../Components/Filter'
 
 function Guest () {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'))
@@ -35,6 +36,18 @@ function Guest () {
 
   useEffect(() => {
     getTransactions()
+    //   obtener fecha actual en formato 2024-12-08
+    const today = new Date()
+    const dd = String(today.getDate()).padStart(2, '0')
+    const mm = String(today.getMonth() + 1).padStart(2, '0') //January is 0!
+    const yyyy = today.getFullYear()
+
+    const todayDate = yyyy + '-' + mm + '-' + dd
+
+    setDatetime({
+      startDate: todayDate,
+      endDate: todayDate
+    })
   }, [])
 
   const handleChangeName = event => {
@@ -234,7 +247,7 @@ function Guest () {
 
   return (
     <DefaultLayout>
-      <main className='w-full h-full px-10 xl:px-96 my-7'>
+      <main className='w-full h-full px-10 xl:px-64 my-7'>
         {!!errorResponse && (
           <div className='py-5'>
             <Alert
@@ -431,6 +444,12 @@ function Guest () {
             </>
           )}
         </form>
+
+        {/* Mostrar unicamente filter en caso de que cards no sea vacio un array vacio [] */}
+        {cards.length > 0 && (
+          <Filter cards={cards} setTransactions={setTransactions} />
+        )}
+
         <div className='transactions mt-2.5'>
           <div className='overflow-x-hidden'>
             {transactions.map(transaction => (
