@@ -451,6 +451,7 @@ function Guest () {
         )}
 
         <div className='transactions mt-2.5'>
+          <h1 className='text-3xl font-bold'>Transactions</h1>
           <div className='overflow-x-hidden'>
             {transactions.map(transaction => (
               <SwipeableListItem

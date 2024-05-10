@@ -1,3 +1,11 @@
+// TO DO:
+// organizar por fecha las transaccioens
+// graficas
+// Clasificar ls categorias y poner emojis
+// arreglar navbar en dispositivos grandes
+// cuando este en update no pueda modificar la tarjeta
+// importar desde un archivo de excel y exportar
+
 import { useEffect, useState } from 'react'
 import PortalLayout from './layout/PortalLayout.jsx'
 import { Input } from '@material-tailwind/react'
@@ -471,6 +479,7 @@ export default function App () {
         )}
 
         <div className='transactions mt-2.5'>
+          <h1 className='text-3xl font-bold'>Transactions</h1>
           <div className='overflow-x-hidden'>
             {transactions.map(transaction => (
               <SwipeableListItem
