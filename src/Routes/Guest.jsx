@@ -15,6 +15,7 @@ import SwipeableListItem from '../Components/SwipeableListItem'
 import { Select, Option } from '@material-tailwind/react'
 import { FaCreditCard } from 'react-icons/fa6'
 import Filter from '../Components/Filter'
+import FilterByTime from '../Components/FilterByTime'
 
 function Guest () {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'))
@@ -98,7 +99,12 @@ function Guest () {
       })
       if (response.ok) {
         const json = await response.json()
-        setTransactions(json.reverse())
+        // Ordenar las transacciones por la fecha
+        const sortedTransactions = json.sort((a, b) => {
+          // Convertir las fechas a objetos Date y comparar
+          return new Date(b.datetime) - new Date(a.datetime)
+        })
+        setTransactions(sortedTransactions)
       } else {
         const json = await response.json()
         console.log(json)
@@ -455,9 +461,16 @@ function Guest () {
           />
         )}
 
+        <div className='flex w-full justify-between items-center'>
+          <h1 className='text-3xl font-bold'>Transactions</h1>
+          <FilterByTime
+            setTransactions={setTransactions}
+            setLoading={setLoading}
+          />
+        </div>
+
         {!loading ? (
           <div className='transactions mt-2.5'>
-            <h1 className='text-3xl font-bold'>Transactions</h1>
             <div className='overflow-x-hidden'>
               {transactions.map(transaction => (
                 <SwipeableListItem
