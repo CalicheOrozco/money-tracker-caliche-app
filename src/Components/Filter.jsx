@@ -3,7 +3,13 @@ import { Select, Option } from '@material-tailwind/react'
 import Datepicker from 'react-tailwindcss-datepicker'
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from 'react-icons/md'
 
-export default function Filter ({ userID, setTransactions, cards, setLoading }) {
+export default function Filter ({
+  userID,
+  setTransactions,
+  cards,
+  setLoading,
+  categories
+}) {
   const [selectedCardFilter, setSelectedCardFilter] = useState([])
   const [categoryFilter, setCategoryFilter] = useState('')
   const [open, setOpen] = React.useState(false)
@@ -130,43 +136,22 @@ export default function Filter ({ userID, setTransactions, cards, setLoading }) 
               onChange={handleChangeCategoryFilter}
               value={categoryFilter}
             >
-              <Option value='Salary'>Salary</Option>
-              <Option value='Hourly Wages'>Hourly Wages</Option>
-              <Option value='Business Income'>Business Income</Option>
-              <Option value='Freelance Income'>Freelance Income</Option>
-              <Option value='Bonuses and Commissions'>
-                Bonuses and Commissions
-              </Option>
-              <Option value='Investment Income'>Investment Income</Option>
-              <Option value='Rental Income'>Rental Income</Option>
-              <Option value='Retirement Income'>Retirement Income</Option>
-              <Option value='Passive Income'>Passive Income</Option>
-              <Option value='Side Hustles'>Side Hustles</Option>
-              <Option value='Gifts Received'>Gifts Received</Option>
-              <Option value='Tax Refund'>Tax Refund</Option>
-
-              <Option value='Housing'>Housing</Option>
-              <Option value='Utilities'>Utilities</Option>
-              <Option value='Food'>Food</Option>
-              <Option value='Transportation'>Transportation</Option>
-              <Option value='Medical & Healthcare'>Medical & Healthcare</Option>
-              <Option value='Insurance'>Insurance</Option>
-              <Option value='Savings & Investments'>
-                Savings & Investments
-              </Option>
-              <Option value='Personal Spending'>Personal Spending</Option>
-              <Option value='Debts'>Debts</Option>
-              <Option value='Education & Training'>Education & Training</Option>
-              <Option value='Personal Care'>Personal Care</Option>
-              <Option value='Clothing'>Clothing</Option>
-              <Option value='Streaming Service'>Streaming Service</Option>
-              <Option value='Recreation & Entertainment'>
-                Recreation & Entertainment
-              </Option>
-              <Option value='Travel'>Travel</Option>
-              <Option value='Gifts & Donations'>Gifts & Donations</Option>
-              <Option value='Pets'>Pets</Option>
-              <Option value='Other'>Other</Option>
+              {/* Grupo de Ingresos */}
+              {categories.map((category, index) => {
+                if (category.disabled) {
+                  return (
+                    <Option key={index} disabled={true} value={category.value}>
+                      {category.label}
+                    </Option>
+                  )
+                } else {
+                  return (
+                    <Option key={index} value={category.value}>
+                      {category.label}
+                    </Option>
+                  )
+                }
+              })}
             </Select>
           </div>
 

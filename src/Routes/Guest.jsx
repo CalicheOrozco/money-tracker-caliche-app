@@ -36,6 +36,53 @@ function Guest () {
   const [addingCard, setAddingCard] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  const categories = [
+    { label: '📈 Incomes', value: 'disabled', disabled: true },
+    { label: '💼 Salary', value: 'Salary' },
+    { label: '⏰ Hourly Wages', value: 'Hourly Wages' },
+    { label: '🏢 Business Income', value: 'Business Income' },
+    { label: '🖋️ Freelance Income', value: 'Freelance Income' },
+    { label: '💸 Bonuses and Commissions', value: 'Bonuses and Commissions' },
+    { label: '📊 Investment Income', value: 'Investment Income' },
+    { label: '🏠 Rental Income', value: 'Rental Income' },
+    { label: '🛋️ Retirement Income', value: 'Retirement Income' },
+    { label: '🌴 Passive Income', value: 'Passive Income' },
+    { label: '👟 Side Hustles', value: 'Side Hustles' },
+    { label: '🎁 Gifts Received', value: 'Gifts Received' },
+    { label: '🧾 Tax Refund', value: 'Tax Refund' },
+    {
+      label: '📺 Subscription Reimbursement',
+      value: 'Subscription Reimbursement'
+    },
+    { label: '🔄 Friend Transfers', value: 'Friend Transfers' },
+    { label: '🤲 Loaned Money Received', value: 'Loaned Money Received' },
+
+    { label: '💸 Bills', value: 'disabled', disabled: true },
+    { label: '🏡 Housing', value: 'Housing' },
+    { label: '💡 Utilities', value: 'Utilities' },
+    { label: '🍽️ Food', value: 'Food' },
+    { label: '🚗 Transportation', value: 'Transportation' },
+    { label: '🏥 Medical & Healthcare', value: 'Medical & Healthcare' },
+    { label: '🔒 Insurance', value: 'Insurance' },
+    { label: '💰 Savings & Investments', value: 'Savings & Investments' },
+    { label: '💳 Personal Spending', value: 'Personal Spending' },
+    { label: '🔖 Debts', value: 'Debts' },
+    { label: '🎓 Education & Training', value: 'Education & Training' },
+    { label: '💅 Personal Care', value: 'Personal Care' },
+    { label: '👗 Clothing', value: 'Clothing' },
+    { label: '🎬 Streaming Service', value: 'Streaming Service' },
+    {
+      label: '🎡 Recreation & Entertainment',
+      value: 'Recreation & Entertainment'
+    },
+    { label: '✈️ Travel', value: 'Travel' },
+    { label: '🎁 Gifts & Donations', value: 'Gifts & Donations' },
+    { label: '🐾 Pets', value: 'Pets' },
+    { label: '💸 Money Lent to Friends', value: 'Money Lent to Friends' },
+    { label: '📝 Debts to Friends', value: 'Debts to Friends' },
+    { label: '❓ Other', value: 'Other' }
+  ]
+
   useEffect(() => {
     getTransactions()
     //   obtener fecha actual en formato 2024-12-08
@@ -328,47 +375,15 @@ function Guest () {
                 onChange={handleChangeCategory}
                 value={category}
               >
-                <Option value='Salary'>Salary</Option>
-                <Option value='Hourly Wages'>Hourly Wages</Option>
-                <Option value='Business Income'>Business Income</Option>
-                <Option value='Freelance Income'>Freelance Income</Option>
-                <Option value='Bonuses and Commissions'>
-                  Bonuses and Commissions
-                </Option>
-                <Option value='Investment Income'>Investment Income</Option>
-                <Option value='Rental Income'>Rental Income</Option>
-                <Option value='Retirement Income'>Retirement Income</Option>
-                <Option value='Passive Income'>Passive Income</Option>
-                <Option value='Side Hustles'>Side Hustles</Option>
-                <Option value='Gifts Received'>Gifts Received</Option>
-                <Option value='Tax Refund'>Tax Refund</Option>
-
-                <Option value='Housing'>Housing</Option>
-                <Option value='Utilities'>Utilities</Option>
-                <Option value='Food'>Food</Option>
-                <Option value='Transportation'>Transportation</Option>
-                <Option value='Medical & Healthcare'>
-                  Medical & Healthcare
-                </Option>
-                <Option value='Insurance'>Insurance</Option>
-                <Option value='Savings & Investments'>
-                  Savings & Investments
-                </Option>
-                <Option value='Personal Spending'>Personal Spending</Option>
-                <Option value='Debts'>Debts</Option>
-                <Option value='Education & Training'>
-                  Education & Training
-                </Option>
-                <Option value='Personal Care'>Personal Care</Option>
-                <Option value='Clothing'>Clothing</Option>
-                <Option value='Streaming Service'>Streaming Service</Option>
-                <Option value='Recreation & Entertainment'>
-                  Recreation & Entertainment
-                </Option>
-                <Option value='Travel'>Travel</Option>
-                <Option value='Gifts & Donations'>Gifts & Donations</Option>
-                <Option value='Pets'>Pets</Option>
-                <Option value='Other'>Other</Option>
+                {categories.map((category, index) => (
+                  <Option
+                    value={category.value}
+                    key={index}
+                    disabled={category.disabled}
+                  >
+                    {category.label}
+                  </Option>
+                ))}
               </Select>
             </div>
 
@@ -458,6 +473,7 @@ function Guest () {
             cards={cards}
             setTransactions={setTransactions}
             setLoading={setLoading}
+            categories={categories}
           />
         )}
 
@@ -480,6 +496,7 @@ function Guest () {
                 >
                   <Transaction
                     key={`Transaction-${transaction._id}`}
+                    categories={categories}
                     {...transaction}
                   />
                 </SwipeableListItem>
