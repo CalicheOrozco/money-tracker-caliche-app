@@ -1,11 +1,24 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-function Transaction ({ name, description, price, datetime, category, card }) {
+function Transaction ({
+  name,
+  description,
+  price,
+  datetime,
+  category,
+  card,
+  categories
+}) {
   // eliminar T00:00:00Z de la fecha y convertir a formato legible
   const date = new Date(datetime).toISOString().split('T')[0]
   const priceIndicator = price.slice(0, 1)
   const formattedPrice = `${priceIndicator} $${price.slice(1)}`
   const priceClass = priceIndicator === '+' ? 'text-green-400' : 'text-red-400'
+
+  // buscar la categoría en el arreglo de categorías y tomar el label
+  const categoryLabel = categories.find(cat => cat.value === category)
+  const formattedCategory = categoryLabel ? categoryLabel.label : null
+  category = formattedCategory
 
   return (
     <div className='transaction w-full flex justify-between py-1 border-b border-custom'>
