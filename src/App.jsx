@@ -384,7 +384,7 @@ export default function App () {
               label='Description'
             />
           </div>
-          <div className='flex w-full justify-between items-center text-white py-1.5'>
+          <div className='flex w-full flex-col lg:flex-row justify-between items-center text-white py-1.5'>
             {/* preguntar si se utilizo tarjeta */}
 
             <div className='w-72'>
@@ -503,7 +503,7 @@ export default function App () {
           />
         )}
 
-        <div className='flex w-full justify-between items-center'>
+        <div className='flex w-full flex-col lg:flex-row justify-between items-start lg:items-center gap-y-4'>
           <h1 className='text-3xl font-bold'>Transactions</h1>
           <FilterByTime
             setTransactions={setTransactions}

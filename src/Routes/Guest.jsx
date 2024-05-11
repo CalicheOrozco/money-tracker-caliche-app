@@ -363,7 +363,7 @@ function Guest () {
               label='Description'
             />
           </div>
-          <div className='flex w-full justify-between items-center text-white py-1.5'>
+          <div className='flex w-full flex-col lg:flex-row justify-between items-center text-white py-1.5'>
             {/* preguntar si se utilizo tarjeta */}
 
             <div className='w-72'>
@@ -427,20 +427,20 @@ function Guest () {
                   }}
                 >
                   {!editingTransactionId ? (
-                  <div
-                    className='py-1.5 w-full flex justify-center items-center'
-                    onClick={() => {
-                      setAddingCard(true)
-                    }}
-                  >
-                    <div className='flex justify-center items-center gap-x-2 cursor-pointer '>
-                      <FaPlus />
-                      New card
+                    <div
+                      className='py-1.5 w-full flex justify-center items-center'
+                      onClick={() => {
+                        setAddingCard(true)
+                      }}
+                    >
+                      <div className='flex justify-center items-center gap-x-2 cursor-pointer '>
+                        <FaPlus />
+                        New card
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <></>
-                )}
+                  ) : (
+                    <></>
+                  )}
                 </div>
               </div>
             </div>
@@ -488,7 +488,7 @@ function Guest () {
           />
         )}
 
-        <div className='flex w-full justify-between items-center'>
+        <div className='flex w-full flex-col lg:flex-row justify-between items-start lg:items-center gap-y-4'>
           <h1 className='text-3xl font-bold'>Transactions</h1>
           <FilterByTime
             setTransactions={setTransactions}
