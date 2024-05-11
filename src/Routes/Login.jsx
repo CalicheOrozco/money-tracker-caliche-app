@@ -47,8 +47,16 @@ export default function Login () {
   return (
     <DefaultLayout>
       {isLogin ? (
-        <div className='flex justify-center items-center'>
-          <div className='animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white' />
+        <div className='flex flex-col gap-5 justify-center items-center h-screen'>
+          <div
+            className='inline-block h-20 w-20 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]'
+            role='status'
+          >
+            <span className='!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]'>
+              Loading...
+            </span>
+          </div>
+          <div className='text-3xl'>Loading...</div>
         </div>
       ) : (
         <>
