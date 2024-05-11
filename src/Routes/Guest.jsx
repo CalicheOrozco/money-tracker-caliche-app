@@ -426,10 +426,21 @@ function Guest () {
                     setAddingCard(true)
                   }}
                 >
-                  <div className='flex justify-center items-center gap-x-2 cursor-pointer '>
-                    <FaPlus />
-                    New card
+                  {!editingTransactionId ? (
+                  <div
+                    className='py-1.5 w-full flex justify-center items-center'
+                    onClick={() => {
+                      setAddingCard(true)
+                    }}
+                  >
+                    <div className='flex justify-center items-center gap-x-2 cursor-pointer '>
+                      <FaPlus />
+                      New card
+                    </div>
                   </div>
+                ) : (
+                  <></>
+                )}
                 </div>
               </div>
             </div>

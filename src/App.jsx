@@ -1,8 +1,6 @@
 // TO DO:
 // graficas
-// Clasificar ls categorias y poner emojis
 // arreglar navbar en dispositivos grandes
-// cuando este en update no pueda modificar la tarjeta
 // importar desde un archivo de excel y exportar
 // agregar emoticones a las trjetas
 
@@ -443,17 +441,21 @@ export default function App () {
                     </Option>
                   ))}
                 </Select>
-                <div
-                  className='py-1.5 w-full flex justify-center items-center'
-                  onClick={() => {
-                    setAddingCard(true)
-                  }}
-                >
-                  <div className='flex justify-center items-center gap-x-2 cursor-pointer '>
-                    <FaPlus />
-                    New card
+                {!editingTransactionId ? (
+                  <div
+                    className='py-1.5 w-full flex justify-center items-center'
+                    onClick={() => {
+                      setAddingCard(true)
+                    }}
+                  >
+                    <div className='flex justify-center items-center gap-x-2 cursor-pointer '>
+                      <FaPlus />
+                      New card
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <></>
+                )}
               </div>
             </div>
           )}
