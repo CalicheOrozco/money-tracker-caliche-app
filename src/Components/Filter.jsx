@@ -73,7 +73,12 @@ export default function Filter ({ userID, setTransactions, cards, setLoading }) 
 
       if (response.ok) {
         const json = await response.json()
-        setTransactions(json.reverse())
+        // Ordenar las transacciones por la fecha
+        const sortedTransactions = json.sort((a, b) => {
+          // Convertir las fechas a objetos Date y comparar
+          return new Date(b.datetime) - new Date(a.datetime)
+        })
+        setTransactions(sortedTransactions)
         setLoading(false)
       } else {
         const json = await response.json()
