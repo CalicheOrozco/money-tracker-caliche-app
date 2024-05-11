@@ -18,6 +18,13 @@ function Transaction ({
   // buscar la categoría en el arreglo de categorías y tomar el label
   const categoryLabel = categories.find(cat => cat.value === category)
   const formattedCategory = categoryLabel ? categoryLabel.label : null
+
+  // capatializar la primera letra del name
+  name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
+  // Capitalizar la priemra letra de la descripción
+  description =
+    description.charAt(0).toUpperCase() + description.slice(1).toLowerCase()
+
   category = formattedCategory
 
   return (
