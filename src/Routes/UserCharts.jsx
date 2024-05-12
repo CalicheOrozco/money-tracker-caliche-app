@@ -99,6 +99,38 @@ export default function UserCharts () {
     }
   }
 
+  const options2 = {
+    maintainAspectRatio: false,
+    responsive: true,
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: tooltipItem => `$${tooltipItem.raw.toFixed(2)}`
+        },
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff'
+      },
+      legend: {
+        display: false
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: '#ffffff'
+        }
+      },
+      y: {
+        ticks: {
+          color: '#ffffff',
+          callback: function (value) {
+            return '$' + value
+          }
+        }
+      }
+    }
+  }
+
   const categories = [
     { label: '📈 Incomes', value: 'disabled', disabled: true },
     { label: '💼 Salary', value: 'Salary' },
@@ -313,13 +345,13 @@ export default function UserCharts () {
           </div>
         )}
         <SelectChart setSelectedChart={setSelectedChart} />
-        <div className=' flex justify-center mb-4 lg:mb-8 items-center w-full h-96'>
+        <div className=' flex justify-center my-4 lg:my-8 items-center w-full h-96'>
           {selectedChart === 'Doughnut' && (
             <Doughnut data={data} options={options} />
           )}
-          {selectedChart === 'Bar' && <Bar data={data} options={options} />}
+          {selectedChart === 'Bar' && <Bar data={data} options={options2} />}
           {selectedChart === 'Line' && (
-            <Line data={lineData} options={options} />
+            <Line data={lineData} options={options2} />
           )}
           {selectedChart === 'Pie' && <Pie data={data} options={options} />}
         </div>
