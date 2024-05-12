@@ -5,10 +5,35 @@ import Transaction from '../Components/Transaction.jsx'
 import SwipeableListItem from '../Components/SwipeableListItem'
 import Filter from '../Components/Filter.jsx'
 import FilterByTime from '../Components/FilterByTime.jsx'
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
-import { Doughnut } from 'react-chartjs-2'
+import SelectChart from '../Components/SelectChart.jsx'
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  BarElement,
+  Filler,
+  Legend
+} from 'chart.js'
 
-ChartJS.register(ArcElement, Tooltip, Legend)
+import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  ArcElement,
+  Filler,
+  Legend
+)
 
 export default function UserCharts () {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'))
@@ -20,11 +45,15 @@ export default function UserCharts () {
   const [loading, setLoading] = useState(false)
   const [income, setIncome] = useState(0)
   const [expenses, setExpenses] = useState(0)
+  const [allTransactions, setAllTransactions] = useState([])
+  const [allDates, setAllDates] = useState([])
+  const [selectedChart, setSelectedChart] = useState('Doughnut')
 
   const data = {
     labels: ['Incomes', 'Expenses'],
     datasets: [
       {
+        label: 'Incomes vs Expenses',
         data: [income, expenses],
         backgroundColor: [
           'rgba(52, 211, 153, 0.2)',
@@ -33,6 +62,20 @@ export default function UserCharts () {
         borderColor: ['rgba(52, 211, 153, 1)', 'rgba(251, 113, 133, 1)'],
 
         borderWidth: 1
+      }
+    ]
+  }
+
+  const lineData = {
+    labels: allDates,
+    datasets: [
+      {
+        label: 'Transactions',
+        data: allTransactions,
+        fill: false,
+        borderColor: 'rgba(52, 211, 153, 1)',
+        backgroundColor: 'rgba(52, 211, 153, 0.2)',
+        tension: 0.1
       }
     ]
   }
@@ -182,7 +225,25 @@ export default function UserCharts () {
   useEffect(() => {
     let income = 0
     let expenses = 0
+    let allTransactions = []
+    let allDates = []
     transactions.forEach(transaction => {
+      allTransactions.push(parseFloat(transaction.price))
+      //   Remover el T00:00:00.000Z de la fecha
+      transaction.datetime = transaction.datetime.split('T')[0]
+      //  convertir 2024-05-09 a May-09-2024
+      const date = transaction.datetime
+      // separar por -
+      const dateParts = date.split('-')
+      const year = dateParts[0]
+      const month = dateParts[1]
+      // obtener el nombre del mes
+      const monthName = getMonthName(parseInt(month))
+      const day = dateParts[2]
+      const finalDate = `${monthName}-${day}-${year}`
+
+      allDates.push(finalDate)
+
       if (transaction.price[0] === '+') {
         income += parseFloat(transaction.price.slice(1))
       } else {
@@ -191,7 +252,15 @@ export default function UserCharts () {
     })
     setIncome(income)
     setExpenses(expenses)
+    setAllTransactions(allTransactions)
+    setAllDates(allDates)
   }, [transactions])
+
+  function getMonthName (monthNumber) {
+    const date = new Date(Date.UTC(2020, monthNumber, 1))
+
+    return date.toLocaleString('en-US', { month: 'long' })
+  }
 
   const swipeRightOptions = id => (
     <div className='flex justify-center items-center gap-x-1'>
@@ -243,9 +312,16 @@ export default function UserCharts () {
             </Alert>
           </div>
         )}
-
+        <SelectChart setSelectedChart={setSelectedChart} />
         <div className=' flex justify-center mb-4 lg:mb-8 items-center w-full h-96'>
-          <Doughnut data={data} options={options} />
+          {selectedChart === 'Doughnut' && (
+            <Doughnut data={data} options={options} />
+          )}
+          {selectedChart === 'Bar' && <Bar data={data} options={options} />}
+          {selectedChart === 'Line' && (
+            <Line data={lineData} options={options} />
+          )}
+          {selectedChart === 'Pie' && <Pie data={data} options={options} />}
         </div>
         <h1 className='text-6xl font-bold text-center text-white m-0'>
           {balance < 0 ? '-$' + Math.abs(balance) : '$' + balance}
