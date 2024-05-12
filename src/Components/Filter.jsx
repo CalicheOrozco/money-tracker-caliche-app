@@ -98,8 +98,8 @@ export default function Filter ({
   }
 
   return (
-    <div class='w-full'>
-      <div class='flex flex-row justify-end items-center gap-4'>
+    <div className='w-full'>
+      <div className='flex flex-row justify-end items-center gap-4'>
         <button
           onClick={handleOpen}
           className='flex flex-row justify-center items-center my-4 btn-default overflow-hidden relative bg-stone-50 text-white py-3 px-3 rounded-xl font-bold uppercase transition-all duration-100 -- hover:shadow-md border border-stone-100 hover:bg-gradient-to-t hover:from-stone-100 before:to-stone-50 hover:-translate-y-[3px]'
@@ -113,8 +113,8 @@ export default function Filter ({
         </button>
       </div>
       {open ? (
-        <div class='flex pt-2 flex-col 2xl:flex-row gap-4 justify-center items-center'>
-          <div class='flex w-full 2xl:w-60 flex-col'>
+        <div className='flex pt-2 flex-col 2xl:flex-row gap-4 justify-center items-center'>
+          <div className='flex w-full 2xl:w-60 flex-col'>
             <Datepicker
               useRange={false}
               asSingle={false}
@@ -127,7 +127,7 @@ export default function Filter ({
             />
           </div>
 
-          <div class='flex w-full 2xl:w-60 flex-col'>
+          <div className='flex w-full 2xl:w-60 flex-col'>
             <Select
               label='Category'
               color='blue'
@@ -155,7 +155,7 @@ export default function Filter ({
             </Select>
           </div>
 
-          <div class='flex w-full 2xl:w-60 flex-col'>
+          <div className='flex w-full 2xl:w-60 flex-col'>
             <Select
               label='Cards'
               color='blue'
@@ -179,7 +179,7 @@ export default function Filter ({
             </Select>
           </div>
 
-          <div class='flex flex-row gap-4'>
+          <div className='flex flex-row gap-4'>
             <button
               onClick={handleReset}
               className='flex flex-row justify-center items-center gap-x-2 my-3 bg-gray-300 btn-default overflow-hidden relative bg-stone-50 text-gray-900 py-4 px-4 rounded-xl font-bold uppercase transition-all duration-100 -- hover:shadow-md border border-stone-100 hover:bg-gradient-to-t hover:from-stone-100 before:to-stone-50 hover:-translate-y-[3px]'
