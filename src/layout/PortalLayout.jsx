@@ -5,6 +5,7 @@ import { MdLogout } from 'react-icons/md'
 import { FaFileInvoiceDollar } from 'react-icons/fa'
 import { IoIosMenu } from 'react-icons/io'
 import { IoCloseOutline } from 'react-icons/io5'
+import { FaChartLine } from 'react-icons/fa'
 
 export default function PortalLayout ({ children }) {
   const auth = useAuth()
@@ -71,6 +72,15 @@ export default function PortalLayout ({ children }) {
                   >
                     <FaFileInvoiceDollar className='text-2xl' />
                     Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to='/charts'
+                    className='flex justify-center items-center  hover:text-blue-200 transition duration-300'
+                  >
+                    <FaChartLine className='text-2xl' />
+                    Charts
                   </Link>
                 </li>
 

@@ -2,13 +2,14 @@
 import { Link } from 'react-router-dom'
 import { FaSignInAlt } from 'react-icons/fa'
 import { FaUserPlus } from 'react-icons/fa'
+import { FaChartLine } from 'react-icons/fa'
 
 export default function DefaultLayout ({ children }) {
   return (
     <>
       <header className='bg-blue-600 text-white shadow-lg'>
         <nav className='container mx-auto p-4'>
-          <ul className='flex justify-between items-center'>
+          <ul className='flex justify-around items-center'>
             <li className='mr-6'>
               <Link
                 to='/login'
@@ -16,6 +17,15 @@ export default function DefaultLayout ({ children }) {
               >
                 <FaSignInAlt className='text-2xl' />
                 Login
+              </Link>
+            </li>
+            <li>
+              <Link
+                to='/guest-charts'
+                className='flex justify-center items-center gap-x-3 text-white hover:text-gray-300 text-lg transition duration-300 ease-in-out'
+              >
+                <FaChartLine className='text-2xl' />
+                Charts
               </Link>
             </li>
             <li>
