@@ -18,7 +18,6 @@ import Filter from '../Components/Filter'
 import FilterByTime from '../Components/FilterByTime'
 
 function Guest () {
-  const userInfo = JSON.parse(localStorage.getItem('userInfo'))
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
   const [datetime, setDatetime] = useState({
@@ -328,7 +327,7 @@ function Guest () {
           </div>
         )}
         <h1 className='text-6xl font-bold text-center text-white m-0'>
-          {`$${balance}`}
+          {balance < 0 ? '-$' + Math.abs(balance) : '$' + balance}
         </h1>
         <form className='mt-5' onSubmit={handleSubmit}>
           <div className='basic flex flex-col 2xl:flex-row gap-3 mb-1'>

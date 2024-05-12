@@ -3,6 +3,7 @@
 // arreglar navbar en dispositivos grandes
 // importar desde un archivo de excel y exportar
 // agregar emoticones a las trjetas
+// agregar un archivo para los staticos como categories
 
 import { useEffect, useState } from 'react'
 import PortalLayout from './layout/PortalLayout.jsx'
@@ -349,7 +350,7 @@ export default function App () {
           </div>
         )}
         <h1 className='text-6xl font-bold text-center text-white m-0'>
-          {`$${balance}`}
+          {balance < 0 ? '-$' + Math.abs(balance) : '$' + balance}
         </h1>
         <form className='mt-5' onSubmit={handleSubmit}>
           <div className='basic flex flex-col xl:flex-row gap-3 mb-1'>
@@ -508,6 +509,7 @@ export default function App () {
           <FilterByTime
             setTransactions={setTransactions}
             setLoading={setLoading}
+            userID={userID}
           />
         </div>
 
