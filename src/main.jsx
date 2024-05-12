@@ -7,7 +7,9 @@ import Login from './Routes/Login.jsx'
 import Signup from './Routes/Signup.jsx'
 import Guest from './Routes/Guest.jsx'
 import ProtectedRoute from './Routes/ProtectedRoute.jsx'
+import UserCharts from './Routes/UserCharts.jsx'
 import { AuthProvider } from './auth/AuthProvider.jsx'
+import GuestCharts from './Routes/GuestCharts.jsx'
 
 const router = createBrowserRouter([
   {
@@ -23,12 +25,20 @@ const router = createBrowserRouter([
     element: <Guest />
   },
   {
+    path: '/guest-charts',
+    element: <GuestCharts />
+  },
+  {
     path: '/',
     element: <ProtectedRoute />,
     children: [
       {
         path: '/',
         element: <App />
+      },
+      {
+        path: '/charts',
+        element: <UserCharts />
       }
     ]
   }
