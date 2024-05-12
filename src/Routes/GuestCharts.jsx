@@ -19,12 +19,16 @@ export default function GuestCharts () {
   const [expenses, setExpenses] = useState(0)
 
   const data = {
-    labels: ['Expenses', 'Incomes'],
+    labels: ['Incomes', 'Expenses'],
     datasets: [
       {
-        data: [expenses, income],
-        backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)'],
-        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'],
+        data: [income, expenses],
+        backgroundColor: [
+          'rgba(52, 211, 153, 0.2)',
+          'rgba(251, 113, 133, 0.2)'
+        ],
+        borderColor: ['rgba(52, 211, 153, 1)', 'rgba(251, 113, 133, 1)'],
+
         borderWidth: 1
       }
     ]
@@ -37,6 +41,13 @@ export default function GuestCharts () {
       tooltip: {
         callbacks: {
           label: tooltipItem => `$${tooltipItem.raw.toFixed(2)}`
+        },
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff'
+      },
+      legend: {
+        labels: {
+          color: '#ffffff'
         }
       }
     }
