@@ -1,9 +1,7 @@
 // TO DO:
-
-// arreglar navbar en dispositivos grandes
-// importar desde un archivo de excel y exportar
-// agregar emoticones a las trjetas
 // agregar un archivo para los staticos como categories
+// arreglar navbar en dispositivos grandes cuando hace login
+// importar desde un archivo de excel y exportar
 
 import { useEffect, useState } from 'react'
 import PortalLayout from './layout/PortalLayout.jsx'
@@ -21,6 +19,7 @@ import Transaction from './Components/Transaction.jsx'
 import SwipeableListItem from './Components/SwipeableListItem'
 import Filter from './Components/Filter.jsx'
 import FilterByTime from './Components/FilterByTime.jsx'
+import SelectIcon from './Components/SelectIcon.jsx'
 
 export default function App () {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'))
@@ -38,8 +37,9 @@ export default function App () {
   const [errorResponse, setErrorResponse] = useState('')
   const [checked, setChecked] = useState(false)
   const [category, setCategory] = useState('')
-  const [cards, setCards] = useState([])
+  const [cards, setCards] = useState('')
   const [selectedCard, setSelectedCard] = useState()
+  const [selectedIcon, setSelectedIcon] = useState()
   const [addingCard, setAddingCard] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -69,7 +69,6 @@ export default function App () {
 
   const handleChangeCard = value => {
     if (value !== '') {
-      console.log(value)
       setSelectedCard(value)
     }
   }
@@ -210,10 +209,8 @@ export default function App () {
       setEditingTransactionId(id) // Establecer la ID de la transacción que está siendo editada
       setCategory(transactionToEdit.category)
       const card = transactionToEdit.card
-      console.log(card)
 
       if (card !== '' && card !== null && card !== undefined) {
-        console.log(card)
         setChecked(true)
       }
       setSelectedCard(card)
@@ -233,6 +230,8 @@ export default function App () {
     setCategory('')
     setSelectedCard('')
     setChecked(false)
+    setAddingCard(false)
+    setSelectedIcon('')
   }
 
   async function handleSubmit (event) {
@@ -244,6 +243,12 @@ export default function App () {
       : `${import.meta.env.VITE_API_URL}/transaction/${userID}`
 
     const method = editingTransactionId ? 'PUT' : 'POST' // Usar PUT para editar, POST para agregar
+
+    //  buscar el icon en cards apartir del selectedCard
+    const findCard = cards.find(card => card.name === selectedCard)
+    const findIcon = findCard ? findCard.icon : null
+
+    const FinalIcon = editingTransactionId ? findIcon : selectedIcon
 
     // hacer el fetch
     try {
@@ -257,7 +262,9 @@ export default function App () {
           userID: userID,
           description: description,
           category: category,
-          card: selectedCard
+          card: selectedCard,
+          icon: FinalIcon,
+          cards: cards
         })
       })
       if (response.ok) {
@@ -425,8 +432,19 @@ export default function App () {
                   onChange={handleChangeCard}
                 >
                   {cards.map((card, index) => (
-                    <Option value={card} key={index}>
-                      {card}
+                    <Option value={card.name} key={index}>
+                      {card.icon ? (
+                        <div className='flex justify-start items-center gap-x-4'>
+                          <img
+                            src={`${card.icon}.png`}
+                            alt={`${card.icon} Logo`}
+                            className='w-8 h-6'
+                          />
+                          {card.name}
+                        </div>
+                      ) : (
+                        card.name
+                      )}
                     </Option>
                   ))}
                 </Select>
@@ -449,13 +467,19 @@ export default function App () {
             </div>
           )}
           {addingCard && (
-            <Input
-              value={selectedCard}
-              onChange={handleChangeNewCard}
-              className='py-1.5'
-              color='white'
-              label='Name of the card'
-            />
+            <div className='flex flex-col gap-y-2'>
+              <Input
+                value={selectedCard}
+                onChange={handleChangeNewCard}
+                className='py-1.5'
+                color='white'
+                label='Name of the card'
+              />
+              <SelectIcon
+                selectedIcon={selectedIcon}
+                setSelectedIcon={setSelectedIcon}
+              />
+            </div>
           )}
 
           {!editingTransactionId ? (
