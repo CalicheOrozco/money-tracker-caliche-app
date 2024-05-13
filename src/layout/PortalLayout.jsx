@@ -64,7 +64,7 @@ export default function PortalLayout ({ children }) {
             </>
           ) : (
             <div className='flex w-full justify-between'>
-              <ul className='flex flex-col lg:flex-row lg:gap-x-4 gap-y-2  justify-start items-start'>
+              <ul className='flex flex-col lg:flex-row lg:gap-x-4 gap-y-4  justify-start items-start'>
                 <li>
                   <Link
                     to='/'
@@ -102,15 +102,6 @@ export default function PortalLayout ({ children }) {
               />
             </div>
           )}
-          {/* 
-          /* <a
-                href='#'
-                onClick={handleSignOut}
-                className='flex justify-center items-center gap-x-3 hover:text-blue-200 transition duration-300'
-              >
-                <MdLogout className='text-2xl' />
-                Sign out
-              </a> */}
         </nav>
       </header>
 
