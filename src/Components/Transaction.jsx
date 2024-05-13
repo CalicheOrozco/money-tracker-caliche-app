@@ -7,6 +7,7 @@ function Transaction ({
   datetime,
   category,
   card,
+  icon,
   categories
 }) {
   // eliminar T00:00:00Z de la fecha y convertir a formato legible
@@ -54,7 +55,20 @@ function Transaction ({
         )}
         {/* Mostrar la información de la tarjeta si existe */}
         {card && (
-          <div className='card text-xs text-gray-500'>Card Used: {card}</div>
+          <div className='card text-xs text-gray-500'>
+            {icon ? (
+              <div className='flex justify-start items-center gap-x-4'>
+                <img
+                  src={`${icon}.png`}
+                  alt={`${icon} Logo`}
+                  className='w-8 h-6'
+                />
+                {card}
+              </div>
+            ) : (
+              card
+            )}
+          </div>
         )}
       </div>
       <div className='text-right'>
