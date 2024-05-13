@@ -10,7 +10,7 @@ export default function Filter ({
   setLoading,
   categories
 }) {
-  const [selectedCardFilter, setSelectedCardFilter] = useState([])
+  const [selectedCardFilter, setSelectedCardFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [open, setOpen] = React.useState(false)
   const [datetimeFilter, setDatetimeFilter] = useState({
@@ -167,8 +167,19 @@ export default function Filter ({
               {cards.length > 0 &&
               cards[0] !== 'No cards found. Add a new card' ? (
                 cards.map((card, index) => (
-                  <Option key={index} value={card}>
-                    {card}
+                  <Option key={index} value={card.name}>
+                    {card.icon ? (
+                      <div className='flex justify-start items-center gap-x-4'>
+                        <img
+                          src={`${card.icon}.png`}
+                          alt={`${card.icon} Logo`}
+                          className='w-8 h-6'
+                        />
+                        {card.name}
+                      </div>
+                    ) : (
+                      card.name
+                    )}
                   </Option>
                 ))
               ) : (
