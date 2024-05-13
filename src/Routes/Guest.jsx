@@ -242,7 +242,9 @@ function Guest () {
     const findCard = cards.find(card => card.name === selectedCard)
     const findIcon = findCard ? findCard.icon : null
 
-    const FinalIcon = editingTransactionId ? findIcon : selectedIcon
+
+    const FinalIcon =
+      editingTransactionId || !selectedIcon ? findIcon : selectedIcon
 
     // hacer el fetch
     try {

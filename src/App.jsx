@@ -246,10 +246,14 @@ export default function App () {
     const method = editingTransactionId ? 'PUT' : 'POST' // Usar PUT para editar, POST para agregar
 
     //  buscar el icon en cards apartir del selectedCard
+    console.log(selectedCard)
     const findCard = cards.find(card => card.name === selectedCard)
+    console.log('findCard', findCard)
     const findIcon = findCard ? findCard.icon : null
+    console.log('findIcon', findIcon)
 
-    const FinalIcon = editingTransactionId ? findIcon : selectedIcon
+    const FinalIcon =
+      editingTransactionId || !selectedIcon ? findIcon : selectedIcon
 
     // hacer el fetch
     try {
