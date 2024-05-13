@@ -61,7 +61,7 @@ function Transaction ({
                 <img
                   src={`${icon}.png`}
                   alt={`${icon} Logo`}
-                  className='w-8 h-6'
+                  className='w-9 h-8 bg-white rounded-md p-0.5'
                 />
                 {card}
               </div>
