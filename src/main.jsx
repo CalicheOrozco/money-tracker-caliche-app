@@ -10,6 +10,8 @@ import ProtectedRoute from './Routes/ProtectedRoute.jsx'
 import UserCharts from './Routes/UserCharts.jsx'
 import { AuthProvider } from './auth/AuthProvider.jsx'
 import GuestCharts from './Routes/GuestCharts.jsx'
+import Files from './Routes/Files.jsx'
+import BBVA from './Routes/BBVA.jsx'
 
 const router = createBrowserRouter([
   {
@@ -39,6 +41,14 @@ const router = createBrowserRouter([
       {
         path: '/charts',
         element: <UserCharts />
+      },
+      {
+        path: '/files',
+        element: <Files />
+      },
+      {
+        path: '/BBVA',
+        element: <BBVA />
       }
     ]
   }
