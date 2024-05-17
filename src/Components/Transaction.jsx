@@ -21,7 +21,15 @@ function Transaction ({
   const day = dateParts[2]
   date = `${monthName} ${day} ${year}`
   const priceIndicator = price.slice(0, 1)
-  const formattedPrice = `${priceIndicator} $${price.slice(1)}`
+  let numberPrice = price.slice(1)
+  //  si el precio tiene mil o millones, agregar una coma
+  if (numberPrice.length > 6) {
+    numberPrice = `${numberPrice.slice(0, -6)},${numberPrice.slice(-6)}`
+  } else if (numberPrice.length > 3) {
+    numberPrice = `${numberPrice.slice(0, -3)},${numberPrice.slice(-3)}`
+  }
+
+  const formattedPrice = `${priceIndicator} $${numberPrice}`
   const priceClass = priceIndicator === '+' ? 'text-green-400' : 'text-red-400'
 
   // buscar la categoría en el arreglo de categorías y tomar el label
@@ -30,9 +38,10 @@ function Transaction ({
 
   // capatializar la primera letra del name
   name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
-  // Capitalizar la priemra letra de la descripción
-  description =
-    description.charAt(0).toUpperCase() + description.slice(1).toLowerCase()
+  // Capitalizar la priemra letra de la descripción si existe
+  description = description
+    ? description.charAt(0).toUpperCase() + description.slice(1).toLowerCase()
+    : description
 
   category = formattedCategory
 
@@ -44,7 +53,7 @@ function Transaction ({
 
   return (
     <div className='transaction w-full flex justify-between py-1 border-b border-custom'>
-      <div className='text-left'>
+      <div className='text-left flex flex-col gap-y-2'>
         <div className='name text-base font-semibold'>{name}</div>
         <div className='description text-xs text-gray-500'>{description}</div>
         {/* Mostrar la categoría si existe */}
@@ -57,11 +66,11 @@ function Transaction ({
         {card && (
           <div className='card text-xs text-gray-500'>
             {icon ? (
-              <div className='flex justify-start items-center gap-x-4'>
+              <div className='flex justify-start items-center gap-x-2'>
                 <img
                   src={`${icon}.png`}
                   alt={`${icon} Logo`}
-                  className='w-9 h-8 bg-white rounded-md p-0.5'
+                  className='w-8 h-8 bg-white rounded-md p-0.5'
                 />
                 {card}
               </div>
@@ -71,7 +80,7 @@ function Transaction ({
           </div>
         )}
       </div>
-      <div className='text-right'>
+      <div className='text-right flex flex-col justify-center'>
         <div className={`price text-base font-semibold ${priceClass}`}>
           {formattedPrice}
         </div>
