@@ -6,6 +6,7 @@ import { FaFileInvoiceDollar } from 'react-icons/fa'
 import { IoIosMenu } from 'react-icons/io'
 import { IoCloseOutline } from 'react-icons/io5'
 import { FaChartLine } from 'react-icons/fa'
+import { FaFileCsv } from 'react-icons/fa'
 
 export default function PortalLayout ({ children }) {
   const auth = useAuth()
@@ -81,6 +82,15 @@ export default function PortalLayout ({ children }) {
                   >
                     <FaChartLine className='text-2xl' />
                     Charts
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to='/files'
+                    className='flex justify-center items-center  hover:text-blue-200 transition duration-300'
+                  >
+                    <FaFileCsv className='text-2xl' />
+                    Import
                   </Link>
                 </li>
 
