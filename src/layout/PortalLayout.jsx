@@ -7,12 +7,14 @@ import { IoIosMenu } from 'react-icons/io'
 import { IoCloseOutline } from 'react-icons/io5'
 import { FaChartLine } from 'react-icons/fa'
 import { FaFileCsv } from 'react-icons/fa'
+import { useEffect } from 'react'
 
 export default function PortalLayout ({ children }) {
   const auth = useAuth()
   const userInfo = JSON.parse(localStorage.getItem('userInfo'))
   const [isOpen, setIsOpen] = useState(false)
   const [isSignOut, setIsSignOut] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
 
   async function handleSignOut (e) {
     e.preventDefault()
@@ -42,6 +44,14 @@ export default function PortalLayout ({ children }) {
     setIsOpen(!isOpen)
   }
 
+  useEffect(() => {
+    // if the screen is desktop, we should open the menu
+    if (window.innerWidth > 1024) {
+      setIsOpen(true)
+      setIsDesktop(true)
+    }
+  }, [])
+
   return (
     <>
       <header className='bg-blue-600 text-white shadow-lg'>
@@ -64,8 +74,8 @@ export default function PortalLayout ({ children }) {
               </ul>
             </>
           ) : (
-            <div className='flex w-full justify-between'>
-              <ul className='flex flex-col lg:flex-row lg:gap-x-4 gap-y-4  justify-start items-start'>
+            <div className='flex w-full justify-between lg:justify-center'>
+              <ul className='flex flex-col lg:flex-row lg:gap-x-8 gap-y-4 justify-start items-star'>
                 <li>
                   <Link
                     to='/'
@@ -106,10 +116,12 @@ export default function PortalLayout ({ children }) {
                 </li>
               </ul>
 
-              <IoCloseOutline
-                className='text-3xl cursor-pointer'
-                onClick={handleMenu}
-              />
+              {!isDesktop && (
+                <IoCloseOutline
+                  className='text-3xl cursor-pointer'
+                  onClick={handleMenu}
+                />
+              )}
             </div>
           )}
         </nav>

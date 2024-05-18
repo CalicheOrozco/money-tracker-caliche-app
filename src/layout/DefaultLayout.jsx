@@ -7,13 +7,23 @@ import { FaChartLine } from 'react-icons/fa'
 import { FaFileInvoiceDollar } from 'react-icons/fa'
 import { IoIosMenu } from 'react-icons/io'
 import { IoCloseOutline } from 'react-icons/io5'
+import { useEffect } from 'react'
 
 export default function DefaultLayout ({ children }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
 
   function handleMenu () {
     setIsOpen(!isOpen)
   }
+
+  useEffect(() => {
+    // if the screen is desktop, we should open the menu
+    if (window.innerWidth > 1024) {
+      setIsOpen(true)
+      setIsDesktop(true)
+    }
+  }, [])
 
   return (
     <>
@@ -31,8 +41,8 @@ export default function DefaultLayout ({ children }) {
               </ul>
             </>
           ) : (
-            <div className='flex w-full justify-between'>
-              <ul className='flex flex-col lg:flex-row lg:gap-x-4 gap-y-4  justify-start items-start'>
+            <div className='flex w-full justify-between lg:justify-center'>
+              <ul className='flex flex-col lg:flex-row lg:gap-x-8 gap-y-4 justify-start items-start'>
                 <li>
                   <Link
                     to='/guest'
@@ -72,10 +82,12 @@ export default function DefaultLayout ({ children }) {
                 </li>
               </ul>
 
-              <IoCloseOutline
-                className='text-3xl cursor-pointer'
-                onClick={handleMenu}
-              />
+              {!isDesktop && (
+                <IoCloseOutline
+                  className='text-3xl cursor-pointer'
+                  onClick={handleMenu}
+                />
+              )}
             </div>
           )}
         </nav>
