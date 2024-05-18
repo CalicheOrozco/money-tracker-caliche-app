@@ -1,5 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
+import categories from '../constants/data.jsx'
+ 
 function Transaction ({
   name,
   description,
@@ -7,8 +9,7 @@ function Transaction ({
   datetime,
   category,
   card,
-  icon,
-  categories
+  icon
 }) {
   // eliminar T00:00:00Z de la fecha y convertir a formato legible
   let date = new Date(datetime).toISOString().split('T')[0]
