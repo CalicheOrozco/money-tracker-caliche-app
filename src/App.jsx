@@ -1,7 +1,3 @@
-// TO DO:
-// agregar para exportar a excel
-// arreglar navbar en dispositivos grandes cuando hace login
-
 import { useEffect, useState } from 'react'
 import PortalLayout from './layout/PortalLayout.jsx'
 import { Input } from '@material-tailwind/react'
@@ -20,6 +16,7 @@ import Filter from './Components/Filter.jsx'
 import FilterByTime from './Components/FilterByTime.jsx'
 import SelectIcon from './Components/SelectIcon.jsx'
 import categories from './constants/data.jsx'
+import Export from './Components/Export.jsx'
 
 export default function App () {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'))
@@ -467,16 +464,19 @@ export default function App () {
                 </>
               )}
             </form>
-            {/* Mostrar unicamente filter en caso de que cards no sea vacio un array vacio [] */}
-            {cards.length > 0 && (
-              <Filter
-                userID={userID}
-                cards={cards}
-                setTransactions={setTransactions}
-                setLoading={setLoading}
-                categories={categories}
-              />
-            )}
+            <div className='flex flex-row justify-center items-center'>
+              <Export transactions={transactions} />
+              {/* Mostrar unicamente filter en caso de que cards no sea vacio un array vacio [] */}
+              {cards.length > 0 && (
+                <Filter
+                  userID={userID}
+                  cards={cards}
+                  setTransactions={setTransactions}
+                  setLoading={setLoading}
+                  categories={categories}
+                />
+              )}
+            </div>
 
             <div className='flex w-full flex-col lg:flex-row justify-between items-start lg:items-center gap-y-4'>
               <h1 className='text-3xl font-bold'>Transactions</h1>
