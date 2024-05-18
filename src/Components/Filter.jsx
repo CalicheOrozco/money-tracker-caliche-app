@@ -2,14 +2,9 @@ import React, { useState } from 'react'
 import { Select, Option } from '@material-tailwind/react'
 import Datepicker from 'react-tailwindcss-datepicker'
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from 'react-icons/md'
+import categories from '../constants/data.jsx'
 
-export default function Filter ({
-  userID,
-  setTransactions,
-  cards,
-  setLoading,
-  categories
-}) {
+export default function Filter ({ userID, setTransactions, cards, setLoading }) {
   const [selectedCardFilter, setSelectedCardFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [open, setOpen] = React.useState(false)
