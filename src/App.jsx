@@ -1,3 +1,6 @@
+// TO DO:
+// arreglar el webapp para que se pueda instalar en el telefonoxxxxx|
+
 import { useEffect, useState } from 'react'
 import PortalLayout from './layout/PortalLayout.jsx'
 import { Input } from '@material-tailwind/react'
