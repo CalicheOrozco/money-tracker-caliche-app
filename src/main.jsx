@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { Navigate, Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth/AuthProvider.jsx'
 import AppLayout from './components/AppLayout.jsx'
+import ErrorScreen from './components/ErrorScreen.jsx'
 import { Spinner } from './components/ui.jsx'
 import './index.css'
 import { loadLogoConfig } from './lib/brandfetch.js'
@@ -39,6 +40,7 @@ const lazyScreen = element => <Suspense fallback={<Spinner />}>{element}</Suspen
 
 const router = createBrowserRouter([
   {
+    errorElement: <ErrorScreen />,
     element: <Gate />,
     children: [
       { path: '/login', element: <Auth mode='login' /> },

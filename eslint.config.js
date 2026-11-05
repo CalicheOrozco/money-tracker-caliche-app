@@ -21,9 +21,14 @@ export default [
       'react-hooks/exhaustive-deps': 'warn',
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true }
+        { allowConstantExport: true, allowExportNames: ['useAuth', 'useAppData', 'useAppUI'] }
       ]
     }
+  },
+  {
+    // The entry file is never hot-reloaded on its own.
+    files: ['src/main.jsx'],
+    rules: { 'react-refresh/only-export-components': 'off' }
   },
   {
     files: ['public/sw.js'],

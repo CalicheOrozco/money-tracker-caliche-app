@@ -6,7 +6,7 @@ function owned (fields, uniqueBy) {
   const schema = new Schema({
     userID: { type: String, required: true, index: true },
     ...fields
-  })
+  }, { timestamps: true })
   if (uniqueBy) schema.index({ userID: 1, [uniqueBy]: 1 }, { unique: true })
   return schema
 }
