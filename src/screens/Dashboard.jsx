@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import TransactionGroups from '../components/TransactionGroups.jsx'
-import { CardLogo, HideButton, Icon, Section, Spinner } from '../components/ui.jsx'
+import { CardLogo, ConfirmDialog, HideButton, Icon, Section, Spinner } from '../components/ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
 import { downloadTransactionsCsv } from '../lib/csv.js'
 import { CATEGORY_ICON, EXPENSE, INCOME, RANGE_LABEL, SECTIONS } from '../lib/constants.js'
@@ -308,9 +308,11 @@ function Transactions ({ onHide, category, setCategory }) {
 export default function Dashboard () {
   const { loading, hidden, setHidden, guest, setCardFilter } = useAppData()
   const [category, setCategory] = useState('')
+  const [hiding, setHiding] = useState(null)
   if (loading) return <Spinner />
 
-  const hide = key => () => setHidden({ ...hidden, [key]: true })
+  // Hide buttons are easy to hit by accident, so they ask first.
+  const hide = key => () => setHiding(SECTIONS.find(([section]) => section === key))
   const allHidden = SECTIONS.every(([key]) => hidden[key])
 
   if (allHidden) {
@@ -352,6 +354,19 @@ export default function Dashboard () {
           />
         )}
       </div>
+      {hiding && (
+        <ConfirmDialog
+          title={`Hide ${hiding[1]}?`}
+          confirmLabel='Hide section'
+          onCancel={() => setHiding(null)}
+          onConfirm={() => {
+            setHidden({ ...hidden, [hiding[0]]: true })
+            setHiding(null)
+          }}
+        >
+          It will disappear from your dashboard. Nothing is deleted, and you can bring it back anytime from Layout at the top of the dashboard.
+        </ConfirmDialog>
+      )}
     </div>
   )
 }

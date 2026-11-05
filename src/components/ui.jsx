@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { logoUrl } from '../lib/brandfetch.js'
 
 export function Icon ({ name, size = 20, fill = 0, weight = 400, className = '' }) {
@@ -98,6 +98,43 @@ export function HideButton ({ onClick }) {
     >
       <Icon name='visibility_off' size={18} />
     </button>
+  )
+}
+
+// Modal confirmation built on the native dialog, which handles focus and Escape.
+export function ConfirmDialog ({ title, children, confirmLabel, onConfirm, onCancel }) {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    ref.current.showModal()
+  }, [])
+
+  return (
+    <dialog
+      ref={ref}
+      aria-labelledby='confirm-title'
+      onCancel={e => {
+        e.preventDefault()
+        onCancel()
+      }}
+      onClick={e => {
+        if (e.target === ref.current) onCancel()
+      }}
+      className='m-auto w-[calc(100vw-32px)] max-w-100 rounded-[20px] border border-line-3 bg-panel p-0 text-ink backdrop:bg-black/60'
+    >
+      <div className='flex flex-col gap-2 p-5'>
+        <h2 id='confirm-title' className='m-0 text-[15px] font-semibold'>{title}</h2>
+        <p className='m-0 text-[13px] leading-relaxed text-muted'>{children}</p>
+        <div className='mt-3 flex justify-end gap-2'>
+          <button type='button' autoFocus onClick={onCancel} className='h-10.5 rounded-[11px] border border-line-3 px-4 text-ink hover:bg-hover'>
+            Cancel
+          </button>
+          <button type='button' onClick={onConfirm} className='h-10.5 rounded-[11px] bg-accent px-4.5 font-semibold text-accent-ink hover:bg-accent-hover'>
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </dialog>
   )
 }
 
