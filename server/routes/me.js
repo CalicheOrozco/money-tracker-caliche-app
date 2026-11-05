@@ -158,6 +158,24 @@ router.post('/rules/:id/apply', requireValidId, async (req, res) => {
   res.json({ modifiedCount })
 })
 
+const ensureCards = (userID, names, icons = {}) => Promise.all([...new Set(names)].map(name => Card.updateOne(
+  { userID, name },
+  { $setOnInsert: { icon: icons[name] || '' } },
+  { upsert: true }
+)))
+
+// Transfers from an imported file. Either all of them are saved or none.
+router.post('/transfers/bulk', async (req, res) => {
+  if (!Array.isArray(req.body)) throw badRequest('Send a list of transfers.')
+  const rows = req.body.map(body => {
+    const data = clean(COLLECTIONS.transfers.fields, body, false)
+    checkTransfer(data)
+    return { ...data, userID: req.user.id }
+  })
+  await ensureCards(req.user.id, rows.flatMap(row => [row.from, row.to]))
+  res.json(await Transfer.insertMany(rows))
+})
+
 const priceValue = t => parseFloat(String(t.price).replace(/[,\s+]/g, '')) || 0
 
 // Replaces one transaction, or both sides of a transfer, with a single transfer.
@@ -187,11 +205,7 @@ router.post('/transfers/convert', async (req, res) => {
 
   // A card can exist only through its transactions, so it is saved before they go.
   const icons = Object.fromEntries(found.filter(t => t.card).map(t => [t.card, t.icon || '']))
-  await Promise.all([data.from, data.to].map(name => Card.updateOne(
-    { userID, name },
-    { $setOnInsert: { icon: icons[name] || '' } },
-    { upsert: true }
-  )))
+  await ensureCards(userID, [data.from, data.to], icons)
   const transfer = await Transfer.create({ ...data, userID, source: found.map(t => t.toObject()) })
   await TransactionModel.deleteMany({ _id: { $in: ids }, userID })
   res.json(transfer)

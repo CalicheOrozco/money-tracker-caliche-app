@@ -260,9 +260,8 @@ function Transactions ({ onHide, category, setCategory }) {
             type='button'
             title='Export CSV'
             onClick={() => {
-              const rows = list.filter(t => !t.transfer)
-              downloadTransactionsCsv(rows)
-              showToast(`${rows.length} transactions exported`)
+              downloadTransactionsCsv(list)
+              showToast(`${list.length} rows exported`)
             }}
             className='flex h-9 items-center gap-1.5 rounded-[10px] border border-line-2 px-3 text-[13px] text-ink-2 hover:bg-raised'
           >

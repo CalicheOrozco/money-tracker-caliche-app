@@ -195,10 +195,12 @@ export function AppDataProvider ({ guest, children }) {
     await reload()
   }, [userID, reload])
 
-  const importRows = useCallback(async rows => {
-    await api(`/transactions/multi/${userID}`, { method: 'POST', body: rows })
-    await reload()
-  }, [userID, reload])
+  // Transfers go first because they are validated as a whole before anything is saved.
+  const importRows = useCallback(async (rows, transferRows = []) => {
+    if (transferRows.length) await api('/me/transfers/bulk', { method: 'POST', body: transferRows })
+    if (rows.length) await api(`/transactions/multi/${userID}`, { method: 'POST', body: rows })
+    await Promise.all([reload(), reloadTransfers()])
+  }, [userID, reload, reloadTransfers])
 
   const deleteAllTransactions = useCallback(async () => {
     await api('/profile/transactions', { method: 'DELETE' })

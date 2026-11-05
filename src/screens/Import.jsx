@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Icon } from '../components/ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
 import { EXPENSE, INCOME } from '../lib/constants.js'
-import { parseAmount, readStatement, rowProblem } from '../lib/statement.js'
+import { isTransferRow, parseAmount, readStatement, rowProblem } from '../lib/statement.js'
 
 const COLUMNS = 'grid grid-cols-[140px_minmax(0,1.2fr)_minmax(0,1.2fr)_120px_minmax(0,1fr)_minmax(0,1fr)_36px] gap-2'
 const STEPS = ['Upload', 'Review', 'Done']
@@ -19,7 +19,7 @@ export default function Import () {
   const [rows, setRows] = useState([])
   const [drag, setDrag] = useState(false)
   const [error, setError] = useState('')
-  const [saved, setSaved] = useState(0)
+  const [saved, setSaved] = useState('')
   const [busy, setBusy] = useState(false)
 
   const stepIndex = STEPS.findIndex(s => s.toLowerCase() === { upload: 'upload', preview: 'review', done: 'done' }[stage])
@@ -60,7 +60,7 @@ export default function Import () {
   }
 
   const problems = rows.filter(rowProblem).length
-  const cardNames = [...new Set([...cards.map(c => c.name), ...rows.map(r => r.card).filter(Boolean)])]
+  const cardNames = [...new Set([...cards.map(c => c.name), ...rows.flatMap(r => [r.card, r.transferTo]).filter(Boolean)])]
 
   async function save () {
     if (problems) {
@@ -68,7 +68,14 @@ export default function Import () {
       return
     }
 
-    const payload = rows.map(row => {
+    const transfers = rows.filter(isTransferRow).map(row => ({
+      from: row.card,
+      to: row.transferTo,
+      amount: Math.abs(parseAmount(row.amount)),
+      date: row.date,
+      note: row.desc
+    }))
+    const payload = rows.filter(row => !isTransferRow(row)).map(row => {
       const amount = parseAmount(row.amount)
       return [
         row.date,
@@ -83,8 +90,8 @@ export default function Import () {
 
     setBusy(true)
     try {
-      await importRows(payload)
-      setSaved(payload.length)
+      await importRows(payload, transfers)
+      setSaved(`${payload.length} transactions${transfers.length ? ` and ${transfers.length} transfers` : ''}`)
       setRows([])
       setStage('done')
     } catch (failure) {
@@ -153,7 +160,7 @@ export default function Import () {
               First row must be a header. Date, Name and Amount are required, and you can pick a category per row in the next step.
             </p>
             <div className='flex flex-wrap gap-1.5'>
-              {['Date', 'Name', 'Amount', 'Card', 'Description', 'Category'].map(column => (
+              {['Date', 'Name', 'Amount', 'Card', 'Description', 'Category', 'Transfer to'].map(column => (
                 <span key={column} className='rounded-[7px] border border-line-3 bg-raised px-2.25 py-1.25 font-mono text-xs text-ink-2'>
                   {column}
                 </span>
@@ -191,7 +198,7 @@ export default function Import () {
               <span className='font-mono text-xs text-faint'>{file}</span>
               {problems > 0 && (
                 <span className='text-xs text-danger'>
-                  {problems} {problems === 1 ? 'row needs' : 'rows need'} a date, a name and a non-zero amount.
+                  {problems} {problems === 1 ? 'row needs' : 'rows need'} a date, a name and a non-zero amount. Transfers need two different accounts.
                 </span>
               )}
             </div>
@@ -226,13 +233,20 @@ export default function Import () {
                       onChange={setRow(i, 'amount')}
                       className={`${cellClass(problem === 'amount')} tabular-nums ${negative ? '' : 'text-accent!'}`}
                     />
-                    <select aria-label='Category' value={row.category} onChange={setRow(i, 'category')} className={`${cellClass(false)} px-2`}>
-                      <option value=''>Pick category</option>
-                      <optgroup label='Incomes'>{INCOME.map(([c]) => <option key={c} value={c}>{c}</option>)}</optgroup>
-                      <optgroup label='Bills'>{EXPENSE.map(([c]) => <option key={c} value={c}>{c}</option>)}</optgroup>
-                    </select>
-                    <select aria-label='Card' value={row.card} onChange={setRow(i, 'card')} className={`${cellClass(false)} px-2`}>
-                      <option value=''>No card</option>
+                    {isTransferRow(row) ? (
+                      <select aria-label='Transfer to' value={row.transferTo} onChange={setRow(i, 'transferTo')} className={`${cellClass(problem === 'to')} px-2`}>
+                        <option value=''>Transfer to...</option>
+                        {cardNames.map(name => <option key={name} value={name}>Transfer to {name}</option>)}
+                      </select>
+                    ) : (
+                      <select aria-label='Category' value={row.category} onChange={setRow(i, 'category')} className={`${cellClass(false)} px-2`}>
+                        <option value=''>Pick category</option>
+                        <optgroup label='Incomes'>{INCOME.map(([c]) => <option key={c} value={c}>{c}</option>)}</optgroup>
+                        <optgroup label='Bills'>{EXPENSE.map(([c]) => <option key={c} value={c}>{c}</option>)}</optgroup>
+                      </select>
+                    )}
+                    <select aria-label={isTransferRow(row) ? 'Transfer from' : 'Card'} value={row.card} onChange={setRow(i, 'card')} className={`${cellClass(problem === 'from')} px-2`}>
+                      <option value=''>{isTransferRow(row) ? 'From...' : 'No card'}</option>
                       {cardNames.map(name => <option key={name} value={name}>{name}</option>)}
                     </select>
                     <button
@@ -257,7 +271,7 @@ export default function Import () {
           <div className='grid h-15 w-15 place-items-center rounded-full bg-accent-soft text-accent'>
             <Icon name='check' size={32} weight={600} />
           </div>
-          <div className='text-xl font-semibold'>{saved} transactions imported</div>
+          <div className='text-xl font-semibold'>{saved} imported</div>
           <div className='text-muted'>They&apos;re already in your balance and charts.</div>
           <div className='mt-1.5 flex gap-2'>
             <Link to='/' className='grid h-10.5 place-items-center rounded-[11px] bg-accent px-4.5 font-semibold text-accent-ink hover:bg-accent-hover hover:text-accent-ink'>

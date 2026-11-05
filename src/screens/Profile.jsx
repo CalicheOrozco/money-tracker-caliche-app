@@ -421,7 +421,8 @@ function Security () {
 
 function YourData () {
   const { endLocalSession } = useAuth()
-  const { transactions, deleteAllTransactions, showToast, showError } = useAppData()
+  const { transactions, transferList, deleteAllTransactions, showToast, showError } = useAppData()
+  const movements = `${transactions.length} transactions${transferList.length ? ` and ${transferList.length} transfers` : ''}`
   const navigate = useNavigate()
   const [confirming, setConfirming] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -435,7 +436,7 @@ function YourData () {
     try {
       await deleteAllTransactions()
       setConfirming(null)
-      showToast('All transactions deleted')
+      showToast('All transactions and transfers deleted')
     } catch (error) {
       showError(error)
     } finally {
@@ -461,13 +462,13 @@ function YourData () {
       <div className='flex items-center justify-between gap-3'>
         <span className='flex flex-col gap-0.75'>
           <span className='font-medium'>Export everything</span>
-          <span className='text-xs text-faint'>{transactions.length} transactions as CSV, ready to re-import</span>
+          <span className='text-xs text-faint'>{movements} as CSV, ready to re-import</span>
         </span>
         <button
           type='button'
           onClick={() => {
-            downloadTransactionsCsv(transactions)
-            showToast(`${transactions.length} transactions exported`)
+            downloadTransactionsCsv([...transactions, ...transferList].sort((a, b) => b.date.localeCompare(a.date)))
+            showToast(`${movements} exported`)
           }}
           className='flex h-9 items-center gap-1.5 rounded-[10px] border border-line-3 px-3.5 text-ink'
         >
@@ -479,7 +480,7 @@ function YourData () {
         <div className='text-xs font-semibold uppercase tracking-[.04em] text-danger'>Danger zone</div>
         {confirming === 'tx' ? (
           <div className='flex flex-wrap items-center justify-between gap-2.5'>
-            <span className='text-[13px] text-danger-soft'>Delete {transactions.length} transactions? This can’t be undone.</span>
+            <span className='text-[13px] text-danger-soft'>Delete {movements}? This can’t be undone.</span>
             <span className='flex gap-1.5'>
               <button type='button' onClick={() => setConfirming(null)} className={keepButton}>Keep</button>
               <button type='button' disabled={busy} onClick={deleteTransactions} className={confirmButton}>Yes, delete</button>
@@ -487,7 +488,7 @@ function YourData () {
           </div>
         ) : (
           <div className='flex items-center justify-between gap-3'>
-            <span className='text-[13px]'>Delete all transactions</span>
+            <span className='text-[13px]'>Delete all transactions and transfers</span>
             <button type='button' onClick={() => setConfirming('tx')} className={dangerButton}>Delete</button>
           </div>
         )}

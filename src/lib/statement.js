@@ -19,8 +19,16 @@ export function parseAmount (value) {
   return Number.isFinite(amount) ? amount : null
 }
 
+export const isTransferRow = row => row.category === 'Transfer' || !!row.transferTo
+
 export function rowProblem (row) {
   if (!row.date) return 'date'
+  if (isTransferRow(row)) {
+    if (!parseAmount(row.amount)) return 'amount'
+    if (!row.card) return 'from'
+    if (!row.transferTo || row.transferTo === row.card) return 'to'
+    return null
+  }
   if (!row.name.trim()) return 'name'
   if (!parseAmount(row.amount)) return 'amount'
   return null
@@ -65,6 +73,7 @@ export async function readStatement (file) {
       desc: cell(row, 'description'),
       amount: cell(row, 'amount'),
       card: cell(row, 'card'),
-      category: cell(row, 'category')
+      category: cell(row, 'category'),
+      transferTo: cell(row, 'transfer to')
     }))
 }
