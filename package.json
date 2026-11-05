@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "dev:web": "vite",
     "dev:api": "node --env-file-if-exists=.env --watch server/dev.js",
-    "seed:guest": "node --env-file-if-exists=.env server/scripts/seed-guest.js"
+    "seed:guest": "node --env-file-if-exists=.env server/scripts/seed-guest.js",
+    "test": "node --test",
+    "sync:mcp": "node scripts/sync-mcp-shared.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -36,7 +38,7 @@
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.14.0",
     "tailwindcss": "^4.3.4",
-    "vite": "^8.3.5"
+    "vite": "^8.3.6"
   },
   "engines": {
     "node": "26.x"
