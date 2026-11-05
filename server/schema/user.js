@@ -1,6 +1,7 @@
+import { sha256 } from '../lib/secureHash.js'
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
-import { generateAccessToken, generateRefreshToken } from '../auth/sign.js'
+import { generateAccessToken, generateRefreshToken, REFRESH_TOKEN_LIFETIME } from '../auth/sign.js'
 import getUserInfo from '../lib/getUserInfo.js'
 import Token from './token.js'
 
@@ -54,7 +55,11 @@ userSchema.methods.createAccessToken = function () {
 
 userSchema.methods.createRefreshToken = async function () {
   const refreshToken = generateRefreshToken(getUserInfo(this))
-  await new Token({ token: refreshToken, userID: this.id }).save()
+  await new Token({
+    hash: sha256(refreshToken),
+    userID: this.id,
+    expiresAt: new Date(Date.now() + REFRESH_TOKEN_LIFETIME * 1000)
+  }).save()
   return refreshToken
 }
 

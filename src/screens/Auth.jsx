@@ -31,6 +31,10 @@ export default function Auth ({ mode }) {
       setError(isLogin ? 'Enter your username and password.' : 'Fill in every field.')
       return
     }
+    if (!isLogin && password.length < 8) {
+      setError('The password needs at least 8 characters.')
+      return
+    }
 
     setBusy(true)
     try {

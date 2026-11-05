@@ -1,5 +1,5 @@
 import express from 'express'
-import Token from '../schema/token.js'
+import findRefreshToken from '../auth/findRefreshToken.js'
 import validateToken from '../auth/validateToken.js'
 
 const router = express.Router()
@@ -12,7 +12,8 @@ router.delete('/', async (req, res) => {
     return res.status(401).json({ error: error.message })
   }
 
-  await Token.findOneAndDelete({ token: refreshToken })
+  const stored = await findRefreshToken(refreshToken)
+  await stored?.deleteOne()
   res.json({ success: 'Token removed' })
 })
 

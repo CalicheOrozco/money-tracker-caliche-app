@@ -4,7 +4,7 @@ import BrandPicker from '../components/BrandPicker.jsx'
 import { useAuth } from '../auth/AuthProvider.jsx'
 import { CardLogo, Field, Icon, PasswordInput, Switch, inputClass } from '../components/ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
-import { api } from '../lib/api.js'
+import { api, setSession } from '../lib/api.js'
 import { downloadTransactionsCsv } from '../lib/csv.js'
 import { CURRENCIES, RANGES } from '../lib/constants.js'
 import { relativeTime } from '../lib/dates.js'
@@ -377,9 +377,11 @@ function Security () {
 
     setBusy(true)
     try {
-      setUser(await api('/profile/password', { method: 'POST', body: { current, next } }))
+      const { session, ...profile } = await api('/profile/password', { method: 'POST', body: { current, next } })
+      setSession(session.accessToken, session.refreshToken)
+      setUser(profile)
       close()
-      showToast('Password updated')
+      showToast('Password updated. Other devices and connected apps were signed out.')
     } catch (failure) {
       setError(failure.message)
     } finally {
@@ -425,7 +427,22 @@ function YourData () {
   const movements = `${transactions.length} transactions${transferList.length ? ` and ${transferList.length} transfers` : ''}`
   const navigate = useNavigate()
   const [confirming, setConfirming] = useState(null)
+  const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
+  const ask = kind => {
+    setPassword('')
+    setConfirming(kind)
+  }
+  const passwordField = (
+    <PasswordInput
+      aria-label='Your password'
+      value={password}
+      onChange={e => setPassword(e.target.value)}
+      autoComplete='current-password'
+      placeholder='Your password to confirm'
+      className='h-9 min-w-0 flex-1 basis-48 rounded-[9px]'
+    />
+  )
 
   const dangerButton = 'h-8.5 rounded-[9px] border border-danger/35 px-3 text-danger'
   const confirmButton = 'h-8.5 rounded-[9px] bg-danger px-3 font-semibold text-[#1a0808] disabled:opacity-60'
@@ -434,7 +451,7 @@ function YourData () {
   async function deleteTransactions () {
     setBusy(true)
     try {
-      await deleteAllTransactions()
+      await deleteAllTransactions(password)
       setConfirming(null)
       showToast('All transactions and transfers deleted')
     } catch (error) {
@@ -447,7 +464,7 @@ function YourData () {
   async function deleteAccount () {
     setBusy(true)
     try {
-      await api('/profile', { method: 'DELETE' })
+      await api('/profile', { method: 'DELETE', body: { password } })
       endLocalSession()
       navigate('/login')
     } catch (error) {
@@ -481,29 +498,31 @@ function YourData () {
         {confirming === 'tx' ? (
           <div className='flex flex-wrap items-center justify-between gap-2.5'>
             <span className='text-[13px] text-danger-soft'>Delete {movements}? This can’t be undone.</span>
+            {passwordField}
             <span className='flex gap-1.5'>
               <button type='button' onClick={() => setConfirming(null)} className={keepButton}>Keep</button>
-              <button type='button' disabled={busy} onClick={deleteTransactions} className={confirmButton}>Yes, delete</button>
+              <button type='button' disabled={busy || !password} onClick={deleteTransactions} className={confirmButton}>Yes, delete</button>
             </span>
           </div>
         ) : (
           <div className='flex items-center justify-between gap-3'>
             <span className='text-[13px]'>Delete all transactions and transfers</span>
-            <button type='button' onClick={() => setConfirming('tx')} className={dangerButton}>Delete</button>
+            <button type='button' onClick={() => ask('tx')} className={dangerButton}>Delete</button>
           </div>
         )}
         {confirming === 'account' ? (
           <div className='flex flex-wrap items-center justify-between gap-2.5'>
             <span className='text-[13px] text-danger-soft'>Your account and all data will be erased.</span>
+            {passwordField}
             <span className='flex gap-1.5'>
               <button type='button' onClick={() => setConfirming(null)} className={keepButton}>Cancel</button>
-              <button type='button' disabled={busy} onClick={deleteAccount} className={confirmButton}>Delete account</button>
+              <button type='button' disabled={busy || !password} onClick={deleteAccount} className={confirmButton}>Delete account</button>
             </span>
           </div>
         ) : (
           <div className='flex items-center justify-between gap-3'>
             <span className='text-[13px]'>Delete account</span>
-            <button type='button' onClick={() => setConfirming('account')} className={dangerButton}>Delete</button>
+            <button type='button' onClick={() => ask('account')} className={dangerButton}>Delete</button>
           </div>
         )}
       </div>

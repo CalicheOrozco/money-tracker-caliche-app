@@ -6,6 +6,8 @@ import PushSubscription from '../schema/pushSubscription.js'
 import Token from '../schema/token.js'
 import TransactionModel from '../schema/transaction.js'
 import User from '../schema/user.js'
+import { EMAIL_MAX, nameProblem, passwordProblem, usernameProblem } from '../lib/accountRules.js'
+import { limit } from '../lib/rateLimit.js'
 
 const router = express.Router()
 
@@ -61,16 +63,14 @@ router.patch('/', async (req, res) => {
   const { name, username, email, photo, settings } = req.body
 
   if (name !== undefined) {
-    if (typeof name !== 'string' || !name.trim()) {
-      return res.status(400).json({ error: 'The name must not be empty.' })
-    }
+    const problem = nameProblem(name)
+    if (problem) return res.status(400).json({ error: problem })
     user.name = name.trim()
   }
 
   if (username !== undefined) {
-    if (typeof username !== 'string' || !username.trim()) {
-      return res.status(400).json({ error: 'The username must not be empty.' })
-    }
+    const problem = usernameProblem(username)
+    if (problem) return res.status(400).json({ error: problem })
     if (await User.usernameExists(username, user.id)) {
       return res.status(409).json({ error: 'That username is already taken.' })
     }
@@ -78,7 +78,7 @@ router.patch('/', async (req, res) => {
   }
 
   if (email !== undefined) {
-    if (typeof email !== 'string') {
+    if (typeof email !== 'string' || email.trim().length > EMAIL_MAX) {
       return res.status(400).json({ error: 'The email is not valid.' })
     }
     user.email = email.trim()
@@ -98,17 +98,26 @@ router.patch('/', async (req, res) => {
   res.json(publicProfile(user))
 })
 
-router.post('/password', async (req, res) => {
+// Destructive actions ask for the password again, so a stolen session or a
+// connected assistant cannot run them alone.
+const PASSWORD_CHECKS = limit('password-check', 10, 15 * 60 * 1000, req => req.user.id)
+
+async function requirePassword (req, res, next) {
+  const { password } = req.body
+  if (typeof password !== 'string' || !(await User.isCorrectPassword(password, req.account.password))) {
+    return res.status(400).json({ error: 'Your password is incorrect.' })
+  }
+  next()
+}
+
+router.post('/password', PASSWORD_CHECKS, async (req, res) => {
   const { current, next } = req.body
 
   if (typeof current !== 'string' || typeof next !== 'string') {
     return res.status(400).json({ error: 'Enter your current and new password.' })
   }
-  if (next.length < 8) {
-    return res
-      .status(400)
-      .json({ error: 'New password needs at least 8 characters.' })
-  }
+  const problem = passwordProblem(next)
+  if (problem) return res.status(400).json({ error: problem.replace('The password', 'New password') })
   if (!(await User.isCorrectPassword(current, req.account.password))) {
     return res.status(400).json({ error: 'Your current password is incorrect.' })
   }
@@ -116,10 +125,17 @@ router.post('/password', async (req, res) => {
   req.account.password = next
   req.account.passwordChangedAt = new Date()
   await req.account.save()
-  res.json(publicProfile(req.account))
+
+  // Every other session ends, including connected assistants. This device gets a new one.
+  await Token.deleteMany({ userID: req.account.id })
+  const session = {
+    accessToken: req.account.createAccessToken(),
+    refreshToken: await req.account.createRefreshToken()
+  }
+  res.json({ ...publicProfile(req.account), session })
 })
 
-router.delete('/transactions', async (req, res) => {
+router.delete('/transactions', PASSWORD_CHECKS, requirePassword, async (req, res) => {
   const userID = req.account.id
   const [{ deletedCount }] = await Promise.all([
     TransactionModel.deleteMany({ userID }),
@@ -129,7 +145,7 @@ router.delete('/transactions', async (req, res) => {
   res.json({ deletedCount })
 })
 
-router.delete('/', async (req, res) => {
+router.delete('/', PASSWORD_CHECKS, requirePassword, async (req, res) => {
   const userID = req.account.id
   await Promise.all([
     TransactionModel.deleteMany({ userID }),

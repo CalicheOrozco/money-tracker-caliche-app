@@ -1,5 +1,4 @@
 import express from 'express'
-import authenticateToken from './auth/authenticateToken.js'
 import brandRoute from './routes/brand.js'
 import connectDB from './lib/connectDB.js'
 import { jsonResponse } from './lib/jsonResponse.js'
@@ -12,22 +11,25 @@ import cronRoute from './routes/cron.js'
 import profileRoute from './routes/profile.js'
 import pushRoute from './routes/push.js'
 import transactionsRoute from './routes/transactions.js'
-import userRoute from './routes/user.js'
+
+// Without these the API cannot work, so it says which ones are missing instead of
+// failing later in a confusing way.
+const REQUIRED_ENV = ['MONGODB_URI', 'ACCESS_TOKEN_SECRET', 'REFRESH_TOKEN_SECRET']
+const missingEnv = REQUIRED_ENV.filter(name => !process.env[name])
+if (missingEnv.length) console.error(`Missing environment variables: ${missingEnv.join(', ')}`)
 
 const app = express()
+app.disable('x-powered-by')
+// Vercel sits in front, so the client address comes from its forwarding headers.
+app.set('trust proxy', true)
 
-// Bank statement uploads go well past the 100kb default. Vercel caps request
-// bodies at 4.5mb, so this is the largest size that can actually arrive.
-app.use(express.json({ limit: '4mb' }))
+// The largest body is a profile photo, which is kept under 300kb.
+app.use(express.json({ limit: '1mb' }))
 
 // Express 5 leaves req.body undefined when a request has no JSON body.
 app.use((req, res, next) => {
   req.body ??= {}
   next()
-})
-
-app.get('/api/test', (req, res) => {
-  res.json('Hello World!')
 })
 
 // Settings the browser needs at runtime. Kept out of the build so they can be
@@ -38,6 +40,7 @@ app.get('/api/config', (req, res) => {
 })
 
 app.use('/api', async (req, res, next) => {
+  if (missingEnv.length) return res.status(503).json({ error: 'The server is not configured.' })
   try {
     await connectDB()
     next()
@@ -51,7 +54,6 @@ app.use('/api/signup', signupRoute)
 app.use('/api/login', loginRoute)
 app.use('/api/signout', logoutRoute)
 app.use('/api/refresh-token', refreshTokenRoute)
-app.use('/api/user', authenticateToken, userRoute)
 app.use('/api/profile', profileRoute)
 app.use('/api/me', meRoute)
 app.use('/api/push', pushRoute)

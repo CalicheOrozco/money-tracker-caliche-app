@@ -1,28 +1,25 @@
 import express from 'express'
 import User from '../schema/user.js'
 import { jsonResponse } from '../lib/jsonResponse.js'
+import { nameProblem, passwordProblem, usernameProblem } from '../lib/accountRules.js'
+import { limit } from '../lib/rateLimit.js'
 
 const router = express.Router()
 
-router.post('/', async (req, res) => {
+const fail = (res, status, error) => res.status(status).json(jsonResponse(status, { error }))
+
+router.post('/', limit('signup-ip', 10, 60 * 60 * 1000), async (req, res) => {
   const { username, password, name } = req.body
 
   // Non-string values would otherwise reach the query as Mongo operators.
-  const fields = [username, password, name]
-  if (fields.some(field => typeof field !== 'string' || !field)) {
-    return res.status(409).json(
-      jsonResponse(409, {
-        error: 'username, password, and name are required'
-      })
-    )
+  if ([username, password, name].some(field => typeof field !== 'string' || !field)) {
+    return fail(res, 409, 'username, password, and name are required')
   }
+  const problem = usernameProblem(username) || nameProblem(name) || passwordProblem(password)
+  if (problem) return fail(res, 400, problem)
 
   if (await User.usernameExists(username)) {
-    return res.status(409).json(
-      jsonResponse(409, {
-        error: 'username already exists'
-      })
-    )
+    return fail(res, 409, 'username already exists')
   }
 
   await new User({ username, password, name }).save()
