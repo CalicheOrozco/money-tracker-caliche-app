@@ -8,6 +8,7 @@ import {
   Goal,
   Holding,
   Merchant,
+  RecurringPayment,
   NetWorthSnapshot,
   RecurringOverride,
   Rule
@@ -32,6 +33,13 @@ const COLLECTIONS = {
     fields: { key: 'string!', type: 'enum:sub|bill', status: 'enum:confirmed|cancelled|dismissed' }
   },
   merchants: { Model: Merchant, fields: { name: 'string!', domain: 'domain', patterns: 'patterns', category: 'string' } },
+  recurring: {
+    Model: RecurringPayment,
+    fields: {
+      name: 'string!', amount: 'number!', type: 'enum:sub|bill', frequency: 'enum:weekly|monthly|yearly',
+      next: 'date!', category: 'string', card: 'string', match: 'string', active: 'boolean'
+    }
+  },
   'networth-snapshots': { Model: NetWorthSnapshot, upsertBy: 'date', fields: { date: 'date!', value: 'number' } }
 }
 

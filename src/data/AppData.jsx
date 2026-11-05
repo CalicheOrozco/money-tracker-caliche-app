@@ -87,6 +87,7 @@ export function AppDataProvider ({ guest, children }) {
   const rules = useCollection('rules', { enabled: !guest, onError: showError })
   const overrides = useCollection('recurring-overrides', { enabled: !guest, onError: showError })
   const merchants = useCollection('merchants', { enabled: !guest, onError: showError })
+  const manualRecurring = useCollection('recurring', { enabled: !guest, onError: showError })
 
   const reload = useCallback(async () => {
     const suffix = userID ? `/${userID}` : ''
@@ -203,8 +204,8 @@ export function AppDataProvider ({ guest, children }) {
 
   const metrics = useMemo(() => computeMetrics(transactions, range), [transactions, range])
   const recurring = useMemo(
-    () => recurringState(transactions, overrides.items),
-    [transactions, overrides.items]
+    () => recurringState(transactions, overrides.items, manualRecurring.items),
+    [transactions, overrides.items, manualRecurring.items]
   )
 
   const openNew = useCallback(preset => setDrawer({ open: true, editing: null, preset: preset || null }), [])
@@ -215,14 +216,14 @@ export function AppDataProvider ({ guest, children }) {
     () => ({
       guest, userID, settings, transactions, cards, loading, range, setRange, privacy, setPrivacy,
       hidden, setHidden, drawer, toast, setToast, showToast, showError, format, metrics,
-      recurring, rules, overrides, ruleFor, merchants, merchantOf, merchantFor, cardFilter, setCardFilter, openNew, openEdit,
+      recurring, manualRecurring, rules, overrides, ruleFor, merchants, merchantOf, merchantFor, cardFilter, setCardFilter, openNew, openEdit,
       closeDrawer, reload, saveTransaction, removeTransaction, saveCard, removeCard, importRows,
       deleteAllTransactions
     }),
     [
       guest, userID, settings, transactions, cards, loading, range, privacy, hidden, setHidden,
       drawer, toast, showToast, showError, format, metrics, recurring, rules, overrides, ruleFor,
-      merchants, merchantOf, merchantFor,
+      merchants, merchantOf, merchantFor, manualRecurring,
       cardFilter, openNew, openEdit, closeDrawer, reload, saveTransaction, removeTransaction,
       saveCard, removeCard, importRows, deleteAllTransactions
     ]

@@ -62,6 +62,20 @@ export const Merchant = model('Merchant', owned({
   category: { type: String, default: '' }
 }))
 
+// Subscriptions and bills the user adds by hand, for charges the automatic
+// detection misses. `match` finds the matching transactions for history.
+export const RecurringPayment = model('RecurringPayment', owned({
+  name: { type: String, required: true },
+  amount: { type: Number, required: true },
+  type: { type: String, enum: ['sub', 'bill'], default: 'sub' },
+  frequency: { type: String, enum: ['weekly', 'monthly', 'yearly'], default: 'monthly' },
+  next: { type: String, required: true },
+  category: { type: String, default: '' },
+  card: { type: String, default: '' },
+  match: { type: String, default: '' },
+  active: { type: Boolean, default: true }
+}))
+
 // One value per day, so the net worth chart is built from real history.
 export const NetWorthSnapshot = model('NetWorthSnapshot', owned({
   date: { type: String, required: true },
@@ -69,5 +83,5 @@ export const NetWorthSnapshot = model('NetWorthSnapshot', owned({
 }, 'date'))
 
 export const PLANNING_MODELS = [
-  Budget, Goal, Debt, Holding, Rule, RecurringOverride, NetWorthSnapshot, Merchant
+  Budget, Goal, Debt, Holding, Rule, RecurringOverride, NetWorthSnapshot, Merchant, RecurringPayment
 ]

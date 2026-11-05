@@ -1,14 +1,110 @@
 import { useState } from 'react'
-import { Icon, Segmented, Spinner, panelClass } from '../components/ui.jsx'
+import { Field, Icon, MoneyInput, Segmented, Spinner, inputClass, panelClass } from '../components/ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
-import { CATEGORY_ICON } from '../lib/constants.js'
-import { parseDay } from '../lib/dates.js'
+import { CATEGORY_ICON, EXPENSE } from '../lib/constants.js'
+import { parseDay, toISODate } from '../lib/dates.js'
+import { decimalOnly, toNumber } from '../lib/numbers.js'
 import { daysUntil, monthlyAmount } from '../lib/recurring.js'
 
 const shortDate = date => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+const FREQUENCY_LABEL = { weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' }
 
-function RecurringRow ({ r, open, onToggle }) {
-  const { format, privacy, overrides, showToast, showError } = useAppData()
+const emptyPayment = () => ({
+  id: '', name: '', amount: '', type: 'sub', frequency: 'monthly',
+  next: toISODate(new Date()), category: '', card: '', match: ''
+})
+
+const fromEntry = r => ({
+  id: r.id, name: r.name, amount: String(r.avg), type: r.type, frequency: r.frequency,
+  next: r.anchor, category: r.category === 'Other' ? '' : r.category, card: r.card, match: r.matchText
+})
+
+function PaymentForm ({ initial, onClose }) {
+  const { manualRecurring, cards, transactions, format, showToast, showError } = useAppData()
+  const [form, setForm] = useState(initial)
+  const [busy, setBusy] = useState(false)
+  const patch = values => setForm(current => ({ ...current, ...values }))
+  const editing = Boolean(initial.id)
+
+  // Preview how many past charges the matching text finds, like the detection would.
+  const pattern = (form.match || form.name).toLowerCase().replace(/[^a-z0-9]/g, '')
+  const matches = pattern
+    ? transactions.filter(t => t.amount < 0 && `${t.name} ${t.desc}`.toLowerCase().replace(/[^a-z0-9]/g, '').includes(pattern))
+    : []
+
+  async function save () {
+    const amount = toNumber(form.amount)
+    if (!form.name.trim() || !(amount > 0)) return showError(new Error('Add a name and an amount.'))
+    if (!form.next) return showError(new Error('Pick the date of the next charge.'))
+    const body = {
+      name: form.name.trim(), amount, type: form.type, frequency: form.frequency, next: form.next,
+      category: form.category, card: form.card, match: form.match.trim()
+    }
+    setBusy(true)
+    try {
+      if (editing) await manualRecurring.update(initial.id, body)
+      else await manualRecurring.create({ ...body, active: true })
+      showToast(editing ? `${body.name} updated` : `${body.name} added to recurring`)
+      onClose()
+    } catch (error) {
+      showError(error)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className={`grid grid-cols-[minmax(0,1fr)] gap-x-6 gap-y-3.5 border-[#2c5a3d]! p-5 wide:grid-cols-2 ${panelClass}`}>
+      <h2 className='m-0 text-[15px] font-semibold wide:col-span-2'>{editing ? 'Edit recurring payment' : 'Add a recurring payment'}</h2>
+      <Field label='Name'>
+        <input value={form.name} onChange={e => patch({ name: e.target.value })} placeholder='e.g. Public Mobile' className={`${inputClass} bg-rail`} />
+      </Field>
+      <Field label='Amount per charge'>
+        <MoneyInput symbol={format.symbol} value={form.amount} onChange={e => patch({ amount: decimalOnly(e.target.value) })} placeholder='0.00' className='h-11 rounded-[11px]' />
+      </Field>
+      <div className='flex flex-col gap-1.75'>
+        <span className='text-xs font-medium text-muted'>Type</span>
+        <Segmented label='Type' value={form.type} onChange={type => patch({ type })} options={[['sub', 'Subscription'], ['bill', 'Bill']]} buttonClass='h-8.5 flex-1' />
+      </div>
+      <div className='flex flex-col gap-1.75'>
+        <span className='text-xs font-medium text-muted'>Charged</span>
+        <Segmented label='Frequency' value={form.frequency} onChange={frequency => patch({ frequency })} options={Object.entries(FREQUENCY_LABEL)} buttonClass='h-8.5 flex-1' />
+      </div>
+      <Field label='Next charge'>
+        <input type='date' value={form.next} onChange={e => patch({ next: e.target.value })} className={`${inputClass} bg-rail px-2.5`} />
+      </Field>
+      <Field label='Category' hint='optional'>
+        <select value={form.category} onChange={e => patch({ category: e.target.value })} className={`${inputClass} bg-rail px-2.5`}>
+          <option value=''>Other</option>
+          {EXPENSE.map(([c]) => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </Field>
+      <Field label='Card' hint='optional'>
+        <select value={form.card} onChange={e => patch({ card: e.target.value })} className={`${inputClass} bg-rail px-2.5`}>
+          <option value=''>No card</option>
+          {cards.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+        </select>
+      </Field>
+      <Field label='Find its charges by' hint='optional'>
+        <input value={form.match} onChange={e => patch({ match: e.target.value })} placeholder={form.name ? `Uses the name: ${form.name}` : 'Text in the transaction name'} className={`${inputClass} bg-rail`} />
+      </Field>
+      <span className='text-xs text-faint wide:col-span-2'>
+        {pattern
+          ? `${matches.length} past ${matches.length === 1 ? 'charge matches' : 'charges match'}. They show as its history, and a detected duplicate is hidden.`
+          : 'Type a name to see which past charges match.'}
+      </span>
+      <div className='flex justify-end gap-2 wide:col-span-2'>
+        <button type='button' onClick={onClose} className='h-10.5 rounded-[11px] border border-line-3 px-4 text-ink'>Cancel</button>
+        <button type='button' disabled={busy} onClick={save} className='h-10.5 rounded-[11px] bg-accent px-4.5 font-semibold text-accent-ink disabled:opacity-60'>
+          {editing ? 'Save changes' : 'Add payment'}
+        </button>
+      </div>
+    </section>
+  )
+}
+
+function RecurringRow ({ r, open, onToggle, onEdit }) {
+  const { format, privacy, overrides, manualRecurring, showToast, showError } = useAppData()
   const varies = r.max - r.min > r.avg * 0.04
   const due = daysUntil(r.next)
   const history = r.list.slice(-6)
@@ -23,9 +119,17 @@ function RecurringRow ({ r, open, onToggle }) {
   const statusClass = r.inactive ? 'bg-[#1a1d1b] text-muted' : due <= 3 ? 'bg-[#e0c45a]/10 text-[#e0c45a]' : 'bg-accent/10 text-accent'
   const iconClass = r.inactive ? 'bg-[#141816] text-faint' : r.type === 'sub' ? 'bg-accent/10 text-accent' : 'bg-line-4 text-[#aab3ac]'
 
+  // Manual payments are edited directly; detected ones keep their choices as overrides.
   const set = async (values, message) => {
     try {
-      await overrides.create({ key: r.key, ...values })
+      if (r.manual) {
+        const manual = {}
+        if (values.type) manual.type = values.type
+        if (values.status) manual.active = values.status !== 'cancelled'
+        await manualRecurring.update(r.id, manual)
+      } else {
+        await overrides.create({ key: r.key, ...values })
+      }
       if (message) showToast(message)
     } catch (error) {
       showError(error)
@@ -37,7 +141,10 @@ function RecurringRow ({ r, open, onToggle }) {
       <button type='button' aria-expanded={open} onClick={onToggle} className='flex w-full items-center gap-3 rounded-xl px-1.5 py-3 text-left'>
         <span className={`grid h-10 w-10 flex-none place-items-center rounded-[11px] ${iconClass}`}><Icon name={CATEGORY_ICON[r.category] || 'category'} /></span>
         <span className='flex min-w-0 flex-1 flex-col gap-0.75'>
-          <span className={`truncate font-medium ${r.inactive ? 'text-muted' : ''}`}>{r.name}</span>
+          <span className={`flex min-w-0 items-center gap-1.5 font-medium ${r.inactive ? 'text-muted' : ''}`}>
+            <span className='truncate'>{r.name}</span>
+            {r.manual && <span className='flex-none rounded-md bg-raised px-1.5 py-px font-mono text-[10px] font-normal text-faint'>Added</span>}
+          </span>
           <span className='truncate text-xs text-faint'>{r.category}{r.card ? ` · ${r.card}` : ''}</span>
         </span>
         <span className={`hidden whitespace-nowrap rounded-full px-2 py-1 text-[11px] sm:inline ${statusClass}`}>{status}</span>
@@ -50,13 +157,20 @@ function RecurringRow ({ r, open, onToggle }) {
       {open && (
         <div className='mb-3.5 flex flex-col gap-3.5 rounded-[14px] border border-line bg-rail p-3.5 sm:ml-14.5'>
           <div className='flex flex-wrap justify-between gap-1.5 text-xs text-muted'>
-            <span>Monthly · around day {Number(r.last.date.slice(8))}</span>
             <span>
-              {r.inactive && !r.cancelled
-                ? `No charge since ${shortDate(parseDay(r.last.date))}`
-                : `Last charged ${shortDate(parseDay(r.last.date))} · ${r.list.length} charges found`}
+              {r.manual
+                ? `${FREQUENCY_LABEL[r.frequency]} · next ${shortDate(r.next)}`
+                : `Monthly · around day ${Number(r.last.date.slice(8))}`}
+            </span>
+            <span>
+              {!r.last
+                ? 'No matching charges yet'
+                : r.inactive && !r.cancelled
+                  ? `No charge since ${shortDate(parseDay(r.last.date))}`
+                  : `Last charged ${shortDate(parseDay(r.last.date))} · ${r.list.length} charges found`}
             </span>
           </div>
+          {history.length > 0 && (
           <div className='flex h-22.5 items-end gap-2'>
             {history.map(t => (
               <div key={t.id} className='flex h-full flex-1 flex-col items-center justify-end gap-1.25'>
@@ -69,7 +183,13 @@ function RecurringRow ({ r, open, onToggle }) {
               </div>
             ))}
           </div>
+          )}
           <div className='flex flex-wrap gap-2'>
+            {r.manual && (
+              <button type='button' onClick={onEdit} className='h-8 rounded-[9px] border border-line-3 px-3 text-[13px] text-ink'>
+                Edit
+              </button>
+            )}
             <button
               type='button'
               onClick={() => set({ status: r.cancelled ? 'confirmed' : 'cancelled' }, `${r.name} ${r.cancelled ? 'reactivated' : 'marked as cancelled'}`)}
@@ -84,9 +204,19 @@ function RecurringRow ({ r, open, onToggle }) {
             >
               {r.type === 'sub' ? 'Move to bills' : 'Move to subscriptions'}
             </button>
-            <button type='button' onClick={() => set({ status: 'dismissed' })} className='h-8 rounded-[9px] px-3 text-[13px] text-muted'>
-              Not recurring
-            </button>
+            {r.manual ? (
+              <button
+                type='button'
+                onClick={() => manualRecurring.remove(r.id).then(() => showToast(`${r.name} removed`)).catch(showError)}
+                className='h-8 rounded-[9px] px-3 text-[13px] text-danger'
+              >
+                Delete
+              </button>
+            ) : (
+              <button type='button' onClick={() => set({ status: 'dismissed' })} className='h-8 rounded-[9px] px-3 text-[13px] text-muted'>
+                Not recurring
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -95,11 +225,12 @@ function RecurringRow ({ r, open, onToggle }) {
 }
 
 export default function Recurring () {
-  const { recurring, format, loading, overrides, showToast, showError } = useAppData()
+  const { recurring, format, loading, overrides, manualRecurring, showToast, showError } = useAppData()
   const [tab, setTab] = useState('subs')
   const [open, setOpen] = useState(null)
+  const [form, setForm] = useState(null)
 
-  if (loading || overrides.loading) return <Spinner />
+  if (loading || overrides.loading || manualRecurring.loading) return <Spinner />
 
   const { lists, review, upcoming, income } = recurring
   const total = list => list.reduce((sum, r) => sum + monthlyAmount(r), 0)
@@ -120,6 +251,19 @@ export default function Recurring () {
 
   return (
     <div className='flex flex-col gap-5'>
+      {form ? (
+        <PaymentForm key={form.id || 'new'} initial={form} onClose={() => setForm(null)} />
+      ) : (
+        <div className='flex justify-end'>
+          <button
+            type='button'
+            onClick={() => setForm(emptyPayment())}
+            className='flex h-9.5 items-center gap-1.5 rounded-[11px] border border-[#2c5a3d] bg-accent-soft pl-2.5 pr-3.5 font-semibold text-accent'
+          >
+            <Icon name='add' />Add recurring payment
+          </button>
+        </div>
+      )}
       <div className='grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4'>
         <section className={`relative flex flex-col gap-2.5 overflow-hidden p-5 ${panelClass}`}>
           <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(360px_180px_at_100%_0%,rgba(52,210,123,.12),transparent_70%)]' />
@@ -194,18 +338,27 @@ export default function Recurring () {
                 'bg-[#1f2a23] text-ink'
               ])}
             />
-            <span className='flex items-center gap-1.5 text-xs text-faint'><Icon name='auto_awesome' size={16} />Detected from your transactions</span>
+            <span className='flex items-center gap-1.5 text-xs text-faint'><Icon name='auto_awesome' size={16} />Detected from your transactions, or added by you</span>
           </div>
           {rows.length === 0 ? (
             <div className='px-5 py-10 text-center text-muted'>
               {tab === 'inactive'
                 ? 'Nothing inactive.'
-                : 'Nothing detected yet. Payments show up here once they repeat about monthly at least three times.'}
+                : 'Nothing here yet. Payments show up once they repeat about monthly three times, or add one with “Add recurring payment”.'}
             </div>
           ) : (
             <div className='flex flex-col'>
               {rows.map(r => (
-                <RecurringRow key={r.key} r={r} open={open === r.key} onToggle={() => setOpen(open === r.key ? null : r.key)} />
+                <RecurringRow
+                  key={r.key}
+                  r={r}
+                  open={open === r.key}
+                  onToggle={() => setOpen(open === r.key ? null : r.key)}
+                  onEdit={() => {
+                    setForm(fromEntry(r))
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                />
               ))}
             </div>
           )}
