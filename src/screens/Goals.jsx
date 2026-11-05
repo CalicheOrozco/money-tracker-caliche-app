@@ -79,7 +79,7 @@ export default function Goals () {
                   </svg>
                   <span className='absolute inset-0 grid place-items-center text-accent'><Icon name={goal.icon} size={22} /></span>
                 </div>
-                <div className='flex min-w-0 flex-1 flex-col gap-[3px]'>
+                <div className='flex min-w-0 flex-1 flex-col gap-0.75'>
                   <span className='truncate text-base font-semibold'>{goal.name}</span>
                   <span className='text-xs text-faint'>
                     {goal.due && `By ${parseDay(goal.due).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} · `}
@@ -127,7 +127,7 @@ export default function Goals () {
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
               placeholder='What are you saving for?'
-              className={`${inputClass} h-[42px] rounded-[10px] bg-rail`}
+              className={`${inputClass} h-10.5 rounded-[10px] bg-rail`}
             />
             <div className='grid grid-cols-2 gap-2'>
               <MoneyInput
@@ -136,14 +136,14 @@ export default function Goals () {
                 value={form.target}
                 onChange={e => setForm({ ...form, target: decimalOnly(e.target.value) })}
                 placeholder='Target'
-                className='h-[42px]'
+                className='h-10.5'
               />
               <input
                 type='date'
                 aria-label='Due date'
                 value={form.due}
                 onChange={e => setForm({ ...form, due: e.target.value })}
-                className={`${inputClass} h-[42px] rounded-[10px] bg-rail px-2.5 text-[13px]`}
+                className={`${inputClass} h-10.5 rounded-[10px] bg-rail px-2.5 text-[13px]`}
               />
             </div>
             <div className='flex flex-wrap gap-1.5'>
@@ -154,7 +154,7 @@ export default function Goals () {
                   aria-label={icon.replace(/_/g, ' ')}
                   aria-pressed={form.icon === icon}
                   onClick={() => setForm({ ...form, icon })}
-                  className={`grid h-[38px] w-[38px] place-items-center rounded-[10px] border ${
+                  className={`grid h-9.5 w-9.5 place-items-center rounded-[10px] border ${
                     form.icon === icon ? 'border-accent bg-accent-soft text-accent' : 'border-line-2 bg-rail text-muted'
                   }`}
                 >
@@ -163,8 +163,8 @@ export default function Goals () {
               ))}
             </div>
             <div className='flex justify-end gap-2'>
-              <button type='button' onClick={() => setForm(null)} className='h-[38px] rounded-[10px] border border-line-3 px-3.5 text-ink'>Cancel</button>
-              <button type='button' onClick={create} className='h-[38px] rounded-[10px] bg-accent px-3.5 font-semibold text-accent-ink'>Create goal</button>
+              <button type='button' onClick={() => setForm(null)} className='h-9.5 rounded-[10px] border border-line-3 px-3.5 text-ink'>Cancel</button>
+              <button type='button' onClick={create} className='h-9.5 rounded-[10px] bg-accent px-3.5 font-semibold text-accent-ink'>Create goal</button>
             </div>
           </section>
         ) : (

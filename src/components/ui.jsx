@@ -30,12 +30,12 @@ export function Logo ({ size = 30 }) {
 export function Switch ({ on }) {
   return (
     <span
-      className={`relative h-[22px] w-[38px] flex-none rounded-full transition-colors ${
+      className={`relative h-5.5 w-9.5 flex-none rounded-full transition-colors ${
         on ? 'bg-accent' : 'bg-line-3'
       }`}
     >
       <span
-        className={`absolute left-0.5 top-0.5 h-[18px] w-[18px] rounded-full transition-transform duration-200 ${
+        className={`absolute left-0.5 top-0.5 h-4.5 w-4.5 rounded-full transition-transform duration-200 ${
           on ? 'translate-x-4 bg-accent-ink' : 'bg-muted'
         }`}
       />
@@ -45,7 +45,7 @@ export function Switch ({ on }) {
 
 // A card logo is either a bundled bank image (by key) or a brand domain whose
 // logo is loaded live from the logo service.
-export function CardLogo ({ icon, className = 'h-6 w-[34px]' }) {
+export function CardLogo ({ icon, className = 'h-6 w-8.5' }) {
   const [failed, setFailed] = useState('')
   const isBrand = icon?.includes('.')
   const src = isBrand ? logoUrl(icon, 96) : icon ? `/${icon}.png` : ''
@@ -94,7 +94,7 @@ export function HideButton ({ onClick }) {
       onClick={onClick}
       title='Hide section'
       aria-label='Hide section'
-      className='grid h-[30px] w-[30px] place-items-center rounded-lg text-faint hover:bg-hover hover:text-ink'
+      className='grid h-7.5 w-7.5 place-items-center rounded-lg text-faint hover:bg-hover hover:text-ink'
     >
       <Icon name='visibility_off' size={18} />
     </button>
@@ -103,7 +103,7 @@ export function HideButton ({ onClick }) {
 
 export function Field ({ label, hint, children }) {
   return (
-    <label className='flex min-w-0 flex-col gap-[7px]'>
+    <label className='flex min-w-0 flex-col gap-1.75'>
       <span className='text-xs font-medium text-muted'>
         {label}
         {hint && <span className='font-normal text-faint'> · {hint}</span>}
@@ -152,7 +152,7 @@ export const panelClass = 'rounded-[20px] border border-line bg-panel'
 
 export function Segmented ({ options, value, onChange, label, buttonClass = 'h-8 px-3' }) {
   return (
-    <div role='group' aria-label={label} className='flex rounded-[10px] border border-line bg-rail p-[3px]'>
+    <div role='group' aria-label={label} className='flex rounded-[10px] border border-line bg-rail p-0.75'>
       {options.map(([key, text, activeClass]) => (
         <button
           key={key}
@@ -200,7 +200,7 @@ export function Empty ({ children }) {
 
 export function RowIcon ({ name, className = 'bg-line-4 text-[#aab3ac]' }) {
   return (
-    <span className={`grid h-[34px] w-[34px] flex-none place-items-center rounded-[10px] ${className}`}>
+    <span className={`grid h-8.5 w-8.5 flex-none place-items-center rounded-[10px] ${className}`}>
       <Icon name={name} size={18} />
     </span>
   )

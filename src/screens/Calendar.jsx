@@ -50,7 +50,7 @@ export default function Calendar () {
     const date = new Date(y, m + delta, 1)
     return { year: date.getFullYear(), month: date.getMonth() }
   })
-  const navButton = 'grid h-[34px] w-[34px] place-items-center rounded-[9px] border border-line-2 text-ink-2'
+  const navButton = 'grid h-8.5 w-8.5 place-items-center rounded-[9px] border border-line-2 text-ink-2'
 
   return (
     <div className='grid grid-cols-[minmax(0,1fr)] items-start gap-5 dash:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)]'>
@@ -58,7 +58,7 @@ export default function Calendar () {
         <div className='flex flex-wrap items-center justify-between gap-2.5'>
           <div className='flex items-center gap-1.5'>
             <button type='button' aria-label='Previous month' onClick={() => shift(-1)} className={navButton}><Icon name='chevron_left' /></button>
-            <h2 className='m-0 min-w-[140px] px-1.5 text-center text-[17px] font-semibold'>
+            <h2 className='m-0 min-w-35 px-1.5 text-center text-[17px] font-semibold'>
               {new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </h2>
             <button type='button' aria-label='Next month' onClick={() => shift(1)} className={navButton}><Icon name='chevron_right' /></button>
@@ -68,7 +68,7 @@ export default function Calendar () {
                 setView({ year: today.getFullYear(), month: today.getMonth() })
                 setSelected(toISODate(today))
               }}
-              className='h-[34px] rounded-[9px] px-3 text-accent'
+              className='h-8.5 rounded-[9px] px-3 text-accent'
             >
               Today
             </button>
@@ -85,7 +85,7 @@ export default function Calendar () {
             <span key={i} className='pb-0.5 text-center font-mono text-[11px] text-faint'>{d}</span>
           ))}
           {cells.map((day, i) => {
-            if (!day) return <div key={`blank-${i}`} className='min-h-[76px]' />
+            if (!day) return <div key={`blank-${i}`} className='min-h-19' />
             const iso = `${prefix}-${String(day).padStart(2, '0')}`
             const spent = spentBy[day] || 0
             const isToday = iso === toISODate(today)
@@ -97,7 +97,7 @@ export default function Calendar () {
                 aria-pressed={isSelected}
                 aria-label={parseDay(iso).toDateString()}
                 onClick={() => setSelected(iso)}
-                className={`flex min-h-[76px] min-w-0 flex-col justify-between rounded-[11px] border-[1.5px] p-1 text-left text-ink nav:p-[7px] ${
+                className={`flex min-h-19 min-w-0 flex-col justify-between rounded-[11px] border-[1.5px] p-1 text-left text-ink nav:p-1.75 ${
                   isSelected ? 'border-accent' : isToday ? 'border-[#3a5a45]' : 'border-line-4'
                 }`}
                 style={{ background: spent ? `rgba(52,210,123,${(0.07 + (0.45 * spent) / maxSpent).toFixed(2)})` : '#0b0e0c' }}
@@ -106,7 +106,7 @@ export default function Calendar () {
                   <span className={`text-xs font-semibold ${parseDay(iso) > today ? 'text-faint' : ''}`}>{day}</span>
                   {incomeBy[day] && <span className='h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_0_2px_rgba(52,210,123,.2)]' />}
                 </span>
-                <span className='flex min-w-0 flex-col gap-[3px]'>
+                <span className='flex min-w-0 flex-col gap-0.75'>
                   {spent > 0 && (
                     <span className='truncate text-[10px] tabular-nums nav:text-[11px]'>
                       <span className='hidden nav:inline'>{format.compact(spent)}</span>
@@ -114,7 +114,7 @@ export default function Calendar () {
                     </span>
                   )}
                   {dues[day] && (
-                    <span className='flex items-center gap-[3px] truncate text-[10px] text-[#e0c45a]'>
+                    <span className='flex items-center gap-0.75 truncate text-[10px] text-[#e0c45a]'>
                       <Icon name='event_repeat' size={12} />
                       {dues[day].length}<span className='hidden nav:inline'>&nbsp;due</span>
                     </span>

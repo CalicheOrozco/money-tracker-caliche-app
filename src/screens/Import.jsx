@@ -123,7 +123,7 @@ export default function Import () {
               setDrag(false)
               load(e.dataTransfer.files[0])
             }}
-            className={`flex min-h-[320px] cursor-pointer flex-col items-center justify-center gap-3.5 rounded-[20px] border-[1.5px] border-dashed p-8 text-center transition-colors ${
+            className={`flex min-h-80 cursor-pointer flex-col items-center justify-center gap-3.5 rounded-[20px] border-[1.5px] border-dashed p-8 text-center transition-colors ${
               drag ? 'border-accent bg-accent/5' : 'border-line-3 bg-panel'
             }`}
           >
@@ -154,7 +154,7 @@ export default function Import () {
             </p>
             <div className='flex flex-wrap gap-1.5'>
               {['Date', 'Name', 'Amount', 'Card', 'Description', 'Category'].map(column => (
-                <span key={column} className='rounded-[7px] border border-line-3 bg-raised px-[9px] py-[5px] font-mono text-xs text-ink-2'>
+                <span key={column} className='rounded-[7px] border border-line-3 bg-raised px-2.25 py-1.25 font-mono text-xs text-ink-2'>
                   {column}
                 </span>
               ))}
@@ -208,7 +208,7 @@ export default function Import () {
             </div>
           </div>
           <div className='overflow-x-auto'>
-            <div className='flex min-w-[900px] flex-col'>
+            <div className='flex min-w-225 flex-col'>
               <div className={`${COLUMNS} px-1 pb-2 font-mono text-[11px] uppercase tracking-[.06em] text-faint`}>
                 <span>Date</span><span>Name</span><span>Description</span><span>Amount</span><span>Category</span><span>Card</span><span />
               </div>
@@ -254,16 +254,16 @@ export default function Import () {
 
       {stage === 'done' && (
         <div className='flex flex-col items-center gap-3.5 rounded-[20px] border border-line bg-panel px-6 py-14 text-center'>
-          <div className='grid h-[60px] w-[60px] place-items-center rounded-full bg-accent-soft text-accent'>
+          <div className='grid h-15 w-15 place-items-center rounded-full bg-accent-soft text-accent'>
             <Icon name='check' size={32} weight={600} />
           </div>
           <div className='text-xl font-semibold'>{saved} transactions imported</div>
           <div className='text-muted'>They&apos;re already in your balance and charts.</div>
           <div className='mt-1.5 flex gap-2'>
-            <Link to='/' className='grid h-[42px] place-items-center rounded-[11px] bg-accent px-[18px] font-semibold text-accent-ink hover:bg-accent-hover hover:text-accent-ink'>
+            <Link to='/' className='grid h-10.5 place-items-center rounded-[11px] bg-accent px-4.5 font-semibold text-accent-ink hover:bg-accent-hover hover:text-accent-ink'>
               View dashboard
             </Link>
-            <button type='button' onClick={reset} className='h-[42px] rounded-[11px] border border-line-3 px-[18px] text-ink'>
+            <button type='button' onClick={reset} className='h-10.5 rounded-[11px] border border-line-3 px-4.5 text-ink'>
               Import another
             </button>
           </div>

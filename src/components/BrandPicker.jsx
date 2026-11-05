@@ -70,7 +70,7 @@ export default function BrandPicker ({ value, onChange }) {
             aria-label={label}
             aria-pressed={value === key}
             onClick={() => onChange(key)}
-            className={`flex h-[42px] items-center justify-center overflow-hidden rounded-[10px] border-[1.5px] bg-white p-1.5 ${
+            className={`flex h-10.5 items-center justify-center overflow-hidden rounded-[10px] border-[1.5px] bg-white p-1.5 ${
               value === key ? 'border-accent' : 'border-transparent'
             }`}
           >

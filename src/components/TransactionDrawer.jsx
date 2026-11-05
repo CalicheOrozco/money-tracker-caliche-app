@@ -135,18 +135,18 @@ export default function TransactionDrawer () {
         aria-modal='true'
         aria-label={editing ? 'Edit transaction' : 'New transaction'}
         inert={!open}
-        className={`fixed inset-y-0 right-0 z-[41] flex w-full flex-col border-l border-line-2 bg-[#0d110f] transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)] nav:w-[460px] ${
+        className={`fixed inset-y-0 right-0 z-[41] flex w-full flex-col border-l border-line-2 bg-[#0d110f] transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)] nav:w-115 ${
           open ? 'translate-x-0' : 'translate-x-[105%]'
         }`}
       >
-        <div className='flex items-center justify-between border-b border-line-4 px-5 py-[18px]'>
+        <div className='flex items-center justify-between border-b border-line-4 px-5 py-4.5'>
           <h2 className='m-0 text-[17px] font-semibold'>{editing ? 'Edit transaction' : 'New transaction'}</h2>
-          <button type='button' aria-label='Close' onClick={closeDrawer} className='grid h-[34px] w-[34px] place-items-center rounded-[9px] text-muted hover:bg-raised hover:text-ink'>
+          <button type='button' aria-label='Close' onClick={closeDrawer} className='grid h-8.5 w-8.5 place-items-center rounded-[9px] text-muted hover:bg-raised hover:text-ink'>
             <Icon name='close' />
           </button>
         </div>
 
-        <form id='transaction-form' onSubmit={submit} noValidate className='flex flex-1 flex-col gap-[18px] overflow-y-auto p-5'>
+        <form id='transaction-form' onSubmit={submit} noValidate className='flex flex-1 flex-col gap-4.5 overflow-y-auto p-5'>
           <div className='grid grid-cols-2 rounded-xl border border-line-2 bg-field p-1'>
             <button
               type='button'
@@ -176,7 +176,7 @@ export default function TransactionDrawer () {
                 inputMode='decimal'
                 placeholder='0.00'
                 style={{ width: `${Math.max(4, (form.amount || '0.00').length + 0.5)}ch` }}
-                className='min-w-[2ch] max-w-[260px] border-0 bg-transparent text-left tabular-nums outline-hidden'
+                className='min-w-[2ch] max-w-65 border-0 bg-transparent text-left tabular-nums outline-hidden'
               />
             </div>
             {errors.amount && <span className='text-xs text-danger'>Enter an amount greater than 0</span>}
@@ -226,7 +226,7 @@ export default function TransactionDrawer () {
             <input value={form.tags} onChange={e => patch({ tags: e.target.value })} placeholder='viaje-cancún, regalo' className={inputClass} />
           </Field>
 
-          <div className='flex flex-col gap-[9px]'>
+          <div className='flex flex-col gap-2.25'>
             <span className='text-xs font-medium text-muted'>Category</span>
             <div className='flex flex-wrap gap-1.5'>
               {(isIncome ? INCOME : EXPENSE).map(([label, icon]) => {
@@ -237,7 +237,7 @@ export default function TransactionDrawer () {
                     type='button'
                     aria-pressed={selected}
                     onClick={() => patch({ category: selected ? '' : label })}
-                    className={`flex h-[34px] items-center gap-1.5 rounded-[10px] border pl-[9px] pr-[11px] text-[13px] ${
+                    className={`flex h-8.5 items-center gap-1.5 rounded-[10px] border pl-2.25 pr-2.75 text-[13px] ${
                       selected
                         ? `border-accent text-ink ${isIncome ? 'bg-accent/15' : 'bg-[#1d2420]'}`
                         : 'border-line-2 bg-field text-[#aab3ac]'
@@ -284,7 +284,7 @@ export default function TransactionDrawer () {
                         selected ? 'border-accent bg-accent-soft' : 'border-line-2 bg-rail'
                       }`}
                     >
-                      <CardLogo icon={card.icon} className='h-[21px] w-[30px]' />
+                      <CardLogo icon={card.icon} className='h-5.25 w-7.5' />
                       <span className='truncate text-[13px]'>{card.name}</span>
                     </button>
                   )
@@ -308,7 +308,7 @@ export default function TransactionDrawer () {
                   value={form.newCard}
                   onChange={e => patch({ newCard: e.target.value })}
                   placeholder='Card name, e.g. Santander LikeU'
-                  className={`${inputClass} h-[42px] bg-rail`}
+                  className={`${inputClass} h-10.5 bg-rail`}
                 />
                 <BrandPicker value={form.newIcon} onChange={newIcon => patch({ newIcon })} />
                 {cards.length > 0 && (
@@ -328,19 +328,19 @@ export default function TransactionDrawer () {
               aria-label='Delete transaction'
               disabled={busy}
               onClick={handleDelete}
-              className='grid h-[46px] place-items-center rounded-xl border border-danger/30 px-3.5 text-danger hover:bg-danger/10'
+              className='grid h-11.5 place-items-center rounded-xl border border-danger/30 px-3.5 text-danger hover:bg-danger/10'
             >
               <Icon name='delete' />
             </button>
           )}
-          <button type='button' onClick={closeDrawer} className='h-[46px] rounded-xl border border-line-3 px-[18px] text-ink'>
+          <button type='button' onClick={closeDrawer} className='h-11.5 rounded-xl border border-line-3 px-4.5 text-ink'>
             Cancel
           </button>
           <button
             type='submit'
             form='transaction-form'
             disabled={busy}
-            className='h-[46px] flex-1 rounded-xl bg-accent text-[15px] font-semibold text-accent-ink hover:bg-accent-hover disabled:cursor-wait disabled:opacity-60'
+            className='h-11.5 flex-1 rounded-xl bg-accent text-[15px] font-semibold text-accent-ink hover:bg-accent-hover disabled:cursor-wait disabled:opacity-60'
           >
             {busy ? 'Saving...' : editing ? 'Save changes' : 'Add transaction'}
           </button>

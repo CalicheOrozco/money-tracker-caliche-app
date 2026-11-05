@@ -68,7 +68,7 @@ function Sidebar ({ groups, pathname }) {
   const pct = month.income ? Math.max(0, Math.min(100, Math.round((saved / month.income) * 100))) : 0
 
   return (
-    <aside className='sticky top-0 hidden h-screen w-[232px] flex-none flex-col gap-5 border-r border-line-4 bg-rail px-3.5 py-5 print:hidden nav:flex'>
+    <aside className='sticky top-0 hidden h-screen w-58 flex-none flex-col gap-5 border-r border-line-4 bg-rail px-3.5 py-5 print:hidden nav:flex'>
       <div className='flex items-center gap-2.5 px-2 py-1'>
         <Logo />
         <span className='text-base font-semibold tracking-[-.01em]'>Caliche</span>
@@ -84,7 +84,7 @@ function Sidebar ({ groups, pathname }) {
                   key={to}
                   to={to}
                   aria-current={active ? 'page' : undefined}
-                  className={`flex h-[37px] flex-none items-center gap-3 rounded-[10px] px-3 font-medium hover:text-ink ${
+                  className={`flex h-9.25 flex-none items-center gap-3 rounded-[10px] px-3 font-medium hover:text-ink ${
                     active ? 'bg-raised text-ink' : 'text-muted'
                   }`}
                 >
@@ -175,7 +175,7 @@ function LayoutMenu () {
         type='button'
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className='flex h-[38px] items-center gap-[7px] rounded-[11px] border border-line bg-field px-3 font-medium text-ink-2 hover:border-line-3'
+        className='flex h-9.5 items-center gap-1.75 rounded-[11px] border border-line bg-field px-3 font-medium text-ink-2 hover:border-line-3'
       >
         <Icon name='dashboard_customize' size={19} />
         Layout
@@ -186,7 +186,7 @@ function LayoutMenu () {
         )}
       </button>
       {open && (
-        <div className='absolute left-0 top-[46px] z-30 w-[270px] rounded-[14px] border border-line-3 bg-[#121714] p-2 shadow-[0_20px_50px_rgba(0,0,0,.5)] nav:left-auto nav:right-0'>
+        <div className='absolute left-0 top-11.5 z-30 w-67.5 rounded-[14px] border border-line-3 bg-[#121714] p-2 shadow-[0_20px_50px_rgba(0,0,0,.5)] nav:left-auto nav:right-0'>
           <div className='px-2.5 pb-2.5 pt-2 text-xs text-muted'>Show sections</div>
           {SECTIONS.map(([key, label, icon]) => (
             <button
@@ -195,7 +195,7 @@ function LayoutMenu () {
               role='switch'
               aria-checked={!hidden[key]}
               onClick={() => setHidden({ ...hidden, [key]: !hidden[key] })}
-              className='flex w-full items-center gap-2.5 rounded-[9px] px-2.5 py-[9px] text-left text-ink hover:bg-hover'
+              className='flex w-full items-center gap-2.5 rounded-[9px] px-2.5 py-2.25 text-left text-ink hover:bg-hover'
             >
               <Icon name={icon} size={19} className='text-muted' />
               <span className='flex-1'>{label}</span>
@@ -225,14 +225,14 @@ function Header ({ title, screen }) {
       </div>
       <div className='flex flex-wrap items-center gap-2 print:hidden'>
         {showRange && (
-          <div className='flex rounded-[11px] border border-line bg-field p-[3px]'>
+          <div className='flex rounded-[11px] border border-line bg-field p-0.75'>
             {Object.keys(RANGES).map(key => (
               <button
                 key={key}
                 type='button'
                 aria-pressed={range === key}
                 onClick={() => setRange(key)}
-                className={`h-[30px] rounded-lg px-[11px] font-mono text-xs font-medium ${
+                className={`h-7.5 rounded-lg px-2.75 font-mono text-xs font-medium ${
                   range === key ? 'bg-accent-soft text-accent' : 'text-muted hover:text-ink'
                 }`}
               >
@@ -247,7 +247,7 @@ function Header ({ title, screen }) {
           aria-label={privacy ? 'Show amounts' : 'Hide amounts'}
           title={privacy ? 'Show amounts' : 'Hide amounts'}
           onClick={() => setPrivacy(!privacy)}
-          className={`grid h-[38px] w-[38px] place-items-center rounded-[11px] border border-line bg-field hover:border-line-3 ${
+          className={`grid h-9.5 w-9.5 place-items-center rounded-[11px] border border-line bg-field hover:border-line-3 ${
             privacy ? 'text-accent' : 'text-muted'
           }`}
         >
@@ -257,7 +257,7 @@ function Header ({ title, screen }) {
         <button
           type='button'
           onClick={() => openNew()}
-          className='flex h-[38px] items-center gap-1.5 rounded-[11px] bg-accent pl-3 pr-4 font-semibold text-accent-ink hover:bg-accent-hover'
+          className='flex h-9.5 items-center gap-1.5 rounded-[11px] bg-accent pl-3 pr-4 font-semibold text-accent-ink hover:bg-accent-hover'
         >
           <Icon name='add' weight={600} />
           New transaction
@@ -274,7 +274,7 @@ function Toast () {
   return (
     <div
       role={toast.error ? 'alert' : 'status'}
-      className='fixed bottom-[92px] left-1/2 print:hidden z-[60] flex max-w-[calc(100vw-32px)] items-center gap-3.5 rounded-[14px] bg-ink py-3 pl-4 pr-3.5 font-medium text-rail shadow-[0_16px_40px_rgba(0,0,0,.45)] [animation:toast-up_.25s_ease-out] [transform:translateX(-50%)] nav:bottom-7'
+      className='fixed bottom-23 left-1/2 print:hidden z-[60] flex max-w-[calc(100vw-32px)] items-center gap-3.5 rounded-[14px] bg-ink py-3 pl-4 pr-3.5 font-medium text-rail shadow-[0_16px_40px_rgba(0,0,0,.45)] [animation:toast-up_.25s_ease-out] [transform:translateX(-50%)] nav:bottom-7'
     >
       <Icon
         name={toast.error ? 'error' : 'check_circle'}
@@ -283,7 +283,7 @@ function Toast () {
       />
       <span className='min-w-0'>{toast.message}</span>
       {toast.undo && (
-        <button type='button' onClick={toast.undo} className='h-[30px] flex-none rounded-lg bg-rail px-3 font-medium text-ink'>
+        <button type='button' onClick={toast.undo} className='h-7.5 flex-none rounded-lg bg-rail px-3 font-medium text-ink'>
           Undo
         </button>
       )}
@@ -311,7 +311,7 @@ function Shell () {
     <div className='flex min-h-screen'>
       <Sidebar groups={groups} pathname={pathname} />
       <main className='min-w-0 flex-1 px-4 pb-24 pt-5 nav:px-9 nav:pb-12 nav:pt-7 print:p-0'>
-        <div className='mx-auto flex max-w-[1240px] flex-col gap-6'>
+        <div className='mx-auto flex max-w-310 flex-col gap-6'>
           <Header title={title} screen={screen} />
           <Outlet />
         </div>
@@ -325,7 +325,7 @@ function Shell () {
               key={to}
               to={to}
               aria-current={active ? 'page' : undefined}
-              className={`flex h-[52px] min-w-[70px] flex-none flex-col items-center justify-center gap-[3px] px-1 text-[11px] hover:text-ink ${
+              className={`flex h-13 min-w-17.5 flex-none flex-col items-center justify-center gap-0.75 px-1 text-[11px] hover:text-ink ${
                 active ? 'text-ink' : 'text-faint'
               }`}
             >

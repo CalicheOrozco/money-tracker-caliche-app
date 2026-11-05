@@ -15,7 +15,7 @@ function BudgetCard ({ budget, spent, last, projection, onSave, onRemove }) {
   const bar = ratio > 1 ? 'bg-danger' : ratio > 0.8 ? 'bg-[#e0c45a]' : 'bg-accent'
 
   return (
-    <section className={`flex flex-col gap-3 p-[18px] ${panelClass}`}>
+    <section className={`flex flex-col gap-3 p-4.5 ${panelClass}`}>
       <div className='flex items-center gap-2.5'>
         <span className='grid h-9 w-9 place-items-center rounded-[10px] bg-line-4 text-ink-2'><Icon name={CATEGORY_ICON[budget.category] || 'category'} size={19} /></span>
         <span className='min-w-0 flex-1 truncate font-semibold'>{budget.category}</span>
@@ -36,7 +36,7 @@ function BudgetCard ({ budget, spent, last, projection, onSave, onRemove }) {
               else setLimit(String(budget.limit))
             }}
             inputMode='decimal'
-            className='h-[26px] w-[76px] rounded-[7px] border border-line-2 bg-rail px-1.5 text-xs text-ink outline-hidden tabular-nums focus:border-accent'
+            className='h-6.5 w-19 rounded-[7px] border border-line-2 bg-rail px-1.5 text-xs text-ink outline-hidden tabular-nums focus:border-accent'
           />
         </span>
       </div>
@@ -133,7 +133,7 @@ export default function Budgets () {
             onRemove={() => budgets.remove(budget._id).catch(showError)}
           />
         ))}
-        <section className='flex flex-col justify-center gap-2.5 rounded-[20px] border-[1.5px] border-dashed border-[#2a332e] p-[18px]'>
+        <section className='flex flex-col justify-center gap-2.5 rounded-[20px] border-[1.5px] border-dashed border-[#2a332e] p-4.5'>
           <span className='font-semibold'>New budget</span>
           <select
             aria-label='Budget category'

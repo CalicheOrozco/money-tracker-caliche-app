@@ -115,7 +115,7 @@ function CurrencyDisplay () {
               type='button'
               aria-pressed={selected}
               onClick={() => save({ currency: code })}
-              className={`flex flex-col gap-[3px] rounded-xl border px-3 py-2.5 text-left text-ink ${
+              className={`flex flex-col gap-0.75 rounded-xl border px-3 py-2.5 text-left text-ink ${
                 selected ? 'border-accent bg-accent-soft' : 'border-line-2 bg-rail'
               }`}
             >
@@ -135,18 +135,18 @@ function CurrencyDisplay () {
       <div className='text-xs leading-normal text-faint'>Only changes how amounts are shown. Existing amounts are not converted.</div>
       <div className='h-px bg-line' />
       <div className='flex flex-wrap items-center justify-between gap-2.5'>
-        <div className='flex flex-col gap-[3px]'>
+        <div className='flex flex-col gap-0.75'>
           <span className='font-medium'>Default time range</span>
           <span className='text-xs text-faint'>What the dashboard shows when you open it</span>
         </div>
-        <div className='flex rounded-[10px] border border-line bg-rail p-[3px]'>
+        <div className='flex rounded-[10px] border border-line bg-rail p-0.75'>
           {Object.keys(RANGES).map(key => (
             <button
               key={key}
               type='button'
               aria-pressed={settings.defaultRange === key}
               onClick={() => save({ defaultRange: key })}
-              className={`h-7 rounded-[7px] px-[9px] font-mono text-xs ${
+              className={`h-7 rounded-[7px] px-2.25 font-mono text-xs ${
                 settings.defaultRange === key ? 'bg-accent-soft text-accent' : 'text-muted'
               }`}
             >
@@ -162,7 +162,7 @@ function CurrencyDisplay () {
         onClick={() => save({ privacyOnOpen: !settings.privacyOnOpen })}
         className='flex items-center gap-3 text-left text-ink'
       >
-        <span className='flex flex-1 flex-col gap-[3px]'>
+        <span className='flex flex-1 flex-col gap-0.75'>
           <span className='font-medium'>Hide amounts when the app opens</span>
           <span className='text-xs text-faint'>Useful if you check your balance in public</span>
         </span>
@@ -252,7 +252,7 @@ function Notifications () {
           onClick={() => toggle(key)}
           className='flex items-center gap-3 text-left text-ink disabled:opacity-60'
         >
-          <span className='flex flex-1 flex-col gap-[3px]'>
+          <span className='flex flex-1 flex-col gap-0.75'>
             <span className='font-medium'>{title}</span>
             <span className='text-xs leading-[1.45] text-faint'>{description}</span>
           </span>
@@ -271,7 +271,7 @@ function Notifications () {
               updateProfile({ settings: { largeAmount: parseFloat(limit.replace(/,/g, '')) || 0 } }).catch(showError)
             }
             inputMode='decimal'
-            className='w-[100px] border-0 bg-transparent text-right text-sm text-ink outline-hidden tabular-nums'
+            className='w-25 border-0 bg-transparent text-right text-sm text-ink outline-hidden tabular-nums'
           />
         </div>
       )}
@@ -322,7 +322,7 @@ function MyCards () {
             title='Remove card'
             aria-label={`Remove ${card.name}`}
             onClick={() => remove(card.name)}
-            className='grid h-[30px] w-[30px] place-items-center rounded-lg text-faint hover:bg-danger/10 hover:text-danger'
+            className='grid h-7.5 w-7.5 place-items-center rounded-lg text-faint hover:bg-danger/10 hover:text-danger'
           >
             <Icon name='delete' size={18} />
           </button>
@@ -334,7 +334,7 @@ function MyCards () {
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder='New card name'
-          className={`${darkInput} h-10 min-w-[140px] flex-1 rounded-[10px]`}
+          className={`${darkInput} h-10 min-w-35 flex-1 rounded-[10px]`}
         />
         <button
           type='button'
@@ -392,7 +392,7 @@ function Security () {
       <Heading icon='lock'>Security</Heading>
       {!open ? (
         <div className='flex items-center justify-between gap-3'>
-          <span className='flex flex-col gap-[3px]'>
+          <span className='flex flex-col gap-0.75'>
             <span className='font-medium'>Password</span>
             <span className='text-xs text-faint'>
               {user.passwordChangedAt ? `Last changed ${relativeTime(user.passwordChangedAt)}` : 'Not changed since you signed up'}
@@ -402,16 +402,16 @@ function Security () {
         </div>
       ) : (
         <div className='flex flex-col gap-2.5'>
-          <PasswordInput aria-label='Current password' value={current} onChange={e => setCurrent(e.target.value)} autoComplete='current-password' placeholder='Current password' className='h-[42px] rounded-[10px] bg-rail' />
-          <PasswordInput aria-label='New password' value={next} onChange={e => setNext(e.target.value)} autoComplete='new-password' placeholder='New password · 8+ characters' className='h-[42px] rounded-[10px] bg-rail' />
+          <PasswordInput aria-label='Current password' value={current} onChange={e => setCurrent(e.target.value)} autoComplete='current-password' placeholder='Current password' className='h-10.5 rounded-[10px] bg-rail' />
+          <PasswordInput aria-label='New password' value={next} onChange={e => setNext(e.target.value)} autoComplete='new-password' placeholder='New password · 8+ characters' className='h-10.5 rounded-[10px] bg-rail' />
           <div className='h-1 overflow-hidden rounded-full bg-line'>
             <div className={`h-full transition-[width] duration-200 ${strength[1]}`} style={{ width: strength[0] }} />
           </div>
-          <PasswordInput aria-label='Confirm new password' value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete='new-password' placeholder='Confirm new password' className='h-[42px] rounded-[10px] bg-rail' />
+          <PasswordInput aria-label='Confirm new password' value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete='new-password' placeholder='Confirm new password' className='h-10.5 rounded-[10px] bg-rail' />
           {error && <div role='alert' className='text-xs text-danger'>{error}</div>}
           <div className='flex justify-end gap-2'>
-            <button type='button' onClick={close} className='h-[38px] rounded-[10px] border border-line-3 px-3.5 text-ink'>Cancel</button>
-            <button type='button' disabled={busy} onClick={save} className='h-[38px] rounded-[10px] bg-accent px-3.5 font-semibold text-accent-ink disabled:opacity-60'>Update password</button>
+            <button type='button' onClick={close} className='h-9.5 rounded-[10px] border border-line-3 px-3.5 text-ink'>Cancel</button>
+            <button type='button' disabled={busy} onClick={save} className='h-9.5 rounded-[10px] bg-accent px-3.5 font-semibold text-accent-ink disabled:opacity-60'>Update password</button>
           </div>
         </div>
       )}
@@ -426,9 +426,9 @@ function YourData () {
   const [confirming, setConfirming] = useState(null)
   const [busy, setBusy] = useState(false)
 
-  const dangerButton = 'h-[34px] rounded-[9px] border border-danger/35 px-3 text-danger'
-  const confirmButton = 'h-[34px] rounded-[9px] bg-danger px-3 font-semibold text-[#1a0808] disabled:opacity-60'
-  const keepButton = 'h-[34px] rounded-[9px] border border-line-3 px-3 text-ink'
+  const dangerButton = 'h-8.5 rounded-[9px] border border-danger/35 px-3 text-danger'
+  const confirmButton = 'h-8.5 rounded-[9px] bg-danger px-3 font-semibold text-[#1a0808] disabled:opacity-60'
+  const keepButton = 'h-8.5 rounded-[9px] border border-line-3 px-3 text-ink'
 
   async function deleteTransactions () {
     setBusy(true)
@@ -459,7 +459,7 @@ function YourData () {
     <section className={panelClass}>
       <Heading icon='database'>Your data</Heading>
       <div className='flex items-center justify-between gap-3'>
-        <span className='flex flex-col gap-[3px]'>
+        <span className='flex flex-col gap-0.75'>
           <span className='font-medium'>Export everything</span>
           <span className='text-xs text-faint'>{transactions.length} transactions as CSV, ready to re-import</span>
         </span>
@@ -533,20 +533,20 @@ export default function Profile () {
     <div className='flex flex-col gap-5'>
       <section className='relative flex flex-wrap items-center gap-5 overflow-hidden rounded-[20px] border border-line bg-panel p-6'>
         <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(500px_200px_at_0%_0%,rgba(52,210,123,.12),transparent_70%)]' />
-        <label title='Change photo' className='relative h-[88px] w-[88px] flex-none cursor-pointer'>
+        <label title='Change photo' className='relative h-22 w-22 flex-none cursor-pointer'>
           {user.photo ? (
-            <img src={user.photo} alt='' className='h-[88px] w-[88px] rounded-full border-2 border-[#1f2a23] object-cover' />
+            <img src={user.photo} alt='' className='h-22 w-22 rounded-full border-2 border-[#1f2a23] object-cover' />
           ) : (
-            <span className='grid h-[88px] w-[88px] place-items-center rounded-full border-2 border-[#1f2a23] bg-accent-soft text-[34px] font-semibold text-accent'>
+            <span className='grid h-22 w-22 place-items-center rounded-full border-2 border-[#1f2a23] bg-accent-soft text-[34px] font-semibold text-accent'>
               {user.name.charAt(0).toUpperCase()}
             </span>
           )}
-          <span className='absolute -bottom-0.5 -right-0.5 grid h-[30px] w-[30px] place-items-center rounded-full border-[3px] border-panel bg-accent text-accent-ink'>
+          <span className='absolute -bottom-0.5 -right-0.5 grid h-7.5 w-7.5 place-items-center rounded-full border-[3px] border-panel bg-accent text-accent-ink'>
             <Icon name='photo_camera' size={16} fill={1} />
           </span>
           <input type='file' accept='image/*' aria-label='Change photo' onChange={onPhoto} className='sr-only' />
         </label>
-        <div className='relative flex min-w-[200px] flex-1 flex-col gap-1.5'>
+        <div className='relative flex min-w-50 flex-1 flex-col gap-1.5'>
           <div className='text-2xl font-semibold tracking-[-.02em]'>{user.name}</div>
           <div className='text-muted'>@{user.username}{user.email ? ` · ${user.email}` : ''}</div>
           <div className='mt-1 flex flex-wrap gap-1.5'>
@@ -556,13 +556,13 @@ export default function Profile () {
           </div>
         </div>
         <div className='relative flex flex-wrap gap-2'>
-          <label className='flex h-[38px] cursor-pointer items-center gap-1.5 rounded-[11px] border border-line-3 bg-field px-3.5 font-medium'>
+          <label className='flex h-9.5 cursor-pointer items-center gap-1.5 rounded-[11px] border border-line-3 bg-field px-3.5 font-medium'>
             <Icon name='upload' size={18} />
             Upload photo
             <input type='file' accept='image/*' aria-label='Upload photo' onChange={onPhoto} className='sr-only' />
           </label>
           {user.photo && (
-            <button type='button' onClick={() => updateProfile({ photo: '' }).catch(showError)} className='h-[38px] rounded-[11px] border border-line-3 px-3.5 text-muted'>
+            <button type='button' onClick={() => updateProfile({ photo: '' }).catch(showError)} className='h-9.5 rounded-[11px] border border-line-3 px-3.5 text-muted'>
               Remove
             </button>
           )}
@@ -572,7 +572,7 @@ export default function Profile () {
               await signout()
               navigate('/login')
             }}
-            className='flex h-[38px] items-center gap-1.5 rounded-[11px] border border-line-3 px-3.5 text-ink hover:border-danger hover:text-danger'
+            className='flex h-9.5 items-center gap-1.5 rounded-[11px] border border-line-3 px-3.5 text-ink hover:border-danger hover:text-danger'
           >
             <Icon name='logout' size={18} />
             Sign out

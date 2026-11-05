@@ -69,10 +69,10 @@ export default function Debts () {
     const owed = debt.dir === 'owed'
     return (
       <div key={debt._id} className='flex flex-wrap items-center gap-3 border-t border-line-4 py-2.5'>
-        <span className={`grid h-[38px] w-[38px] flex-none place-items-center rounded-full font-semibold ${owed ? 'bg-accent-soft text-accent' : 'bg-[#2a1617] text-danger-soft'}`}>
+        <span className={`grid h-9.5 w-9.5 flex-none place-items-center rounded-full font-semibold ${owed ? 'bg-accent-soft text-accent' : 'bg-[#2a1617] text-danger-soft'}`}>
           {debt.person.charAt(0).toUpperCase()}
         </span>
-        <div className='flex min-w-[120px] flex-1 flex-col gap-0.5'>
+        <div className='flex min-w-30 flex-1 flex-col gap-0.5'>
           <span className='font-medium'>{debt.person}</span>
           <span className='text-xs text-faint'>{debt.note || 'No note'}{debt.date && ` · ${date(debt.date)}`}</span>
         </div>
@@ -115,9 +115,9 @@ export default function Debts () {
           onChange={dir => setForm({ ...form, dir })}
           options={[['owed', 'They owe me', 'bg-accent-soft text-accent'], ['owe', 'I owe them', 'bg-[#2a1617] text-danger-soft']]}
         />
-        <input aria-label='Who' value={form.person} onChange={e => setForm({ ...form, person: e.target.value })} placeholder='Who?' className={`${inputClass} h-10 min-w-[110px] flex-1 rounded-[10px] bg-rail`} />
-        <MoneyInput symbol={format.symbol} aria-label='Amount' value={form.amount} onChange={e => setForm({ ...form, amount: decimalOnly(e.target.value) })} placeholder='0' className='w-[130px]' />
-        <input aria-label='What for' value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder='What for?' className={`${inputClass} h-10 min-w-[130px] flex-[1.4] rounded-[10px] bg-rail`} />
+        <input aria-label='Who' value={form.person} onChange={e => setForm({ ...form, person: e.target.value })} placeholder='Who?' className={`${inputClass} h-10 min-w-27.5 flex-1 rounded-[10px] bg-rail`} />
+        <MoneyInput symbol={format.symbol} aria-label='Amount' value={form.amount} onChange={e => setForm({ ...form, amount: decimalOnly(e.target.value) })} placeholder='0' className='w-32.5' />
+        <input aria-label='What for' value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder='What for?' className={`${inputClass} h-10 min-w-32.5 flex-[1.4] rounded-[10px] bg-rail`} />
         <button type='button' onClick={add} className='h-10 rounded-[10px] bg-accent px-4 font-semibold text-accent-ink'>Add</button>
       </section>
 

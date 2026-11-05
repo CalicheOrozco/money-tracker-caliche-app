@@ -25,7 +25,7 @@ function HoldingRow ({ item, color, share, onSave, onRemove }) {
         onBlur={() => {
           if (toNumber(value) !== item.value) onSave(toNumber(value))
         }}
-        className='h-[34px] w-[130px] rounded-[9px] [&_input]:text-right [&_input]:text-[13px]'
+        className='h-8.5 w-32.5 rounded-[9px] [&_input]:text-right [&_input]:text-[13px]'
       />
       <button type='button' aria-label={`Remove ${item.name}`} onClick={onRemove} className='grid h-7 w-7 place-items-center rounded-lg text-[#4a524c] hover:text-danger'>
         <Icon name='close' size={17} />
@@ -102,7 +102,7 @@ export default function NetWorth () {
           <span className='text-muted'>Debts <span className='text-danger-soft tabular-nums'>{format.money(totalDebts)}</span></span>
         </div>
         {paths ? (
-          <svg viewBox='0 0 600 150' preserveAspectRatio='none' role='img' aria-label='Net worth history' className='relative -mx-6 mt-2.5 block h-[150px] w-[calc(100%+48px)] max-w-none'>
+          <svg viewBox='0 0 600 150' preserveAspectRatio='none' role='img' aria-label='Net worth history' className='relative -mx-6 mt-2.5 block h-37.5 w-[calc(100%+48px)] max-w-none'>
             <defs>
               <linearGradient id='networth-area' x1='0' y1='0' x2='0' y2='1'>
                 <stop offset='0' stopColor='#34d27b' stopOpacity='.3' />
@@ -165,11 +165,11 @@ export default function NetWorth () {
               value={form.side}
               onChange={side => setForm({ ...form, side })}
               options={[['asset', 'Asset'], ['liab', 'Debt']]}
-              buttonClass='h-[30px] px-2.5 text-[13px]'
+              buttonClass='h-7.5 px-2.5 text-[13px]'
             />
-            <input aria-label='Name' value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder='Name' className={`${inputClass} h-[38px] min-w-[100px] flex-1 rounded-[10px] bg-rail text-[13px]`} />
-            <MoneyInput symbol={format.symbol} aria-label='Value' value={form.value} onChange={e => setForm({ ...form, value: decimalOnly(e.target.value) })} placeholder='Value' className='h-[38px] w-[120px]' />
-            <button type='button' onClick={add} className='h-[38px] rounded-[10px] bg-accent-soft px-3.5 font-semibold text-accent'>Add</button>
+            <input aria-label='Name' value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder='Name' className={`${inputClass} h-9.5 min-w-25 flex-1 rounded-[10px] bg-rail text-[13px]`} />
+            <MoneyInput symbol={format.symbol} aria-label='Value' value={form.value} onChange={e => setForm({ ...form, value: decimalOnly(e.target.value) })} placeholder='Value' className='h-9.5 w-30' />
+            <button type='button' onClick={add} className='h-9.5 rounded-[10px] bg-accent-soft px-3.5 font-semibold text-accent'>Add</button>
           </div>
         </section>
       </div>

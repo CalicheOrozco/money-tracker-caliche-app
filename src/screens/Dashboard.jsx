@@ -28,7 +28,7 @@ function Balance ({ onHide }) {
             {metrics.balance < 0 ? '−' : ''}{format.money(metrics.balance)}
           </div>
           <div className='flex flex-wrap items-center gap-2 text-[13px]'>
-            <span className={`inline-flex items-center gap-1 rounded-full px-[9px] py-1 font-medium tabular-nums ${
+            <span className={`inline-flex items-center gap-1 rounded-full px-2.25 py-1 font-medium tabular-nums ${
               positive ? 'bg-accent-soft text-accent' : 'bg-[#2a1617] text-danger-soft'
             }`}>
               <Icon name={positive ? 'trending_up' : 'trending_down'} size={16} />
@@ -44,7 +44,7 @@ function Balance ({ onHide }) {
         aria-label={`Balance trend, ${RANGE_LABEL[range]}`}
         viewBox='0 0 600 150'
         preserveAspectRatio='none'
-        className='relative -mx-6 mt-[18px] block h-[150px] w-[calc(100%+48px)] max-w-none'
+        className='relative -mx-6 mt-4.5 block h-37.5 w-[calc(100%+48px)] max-w-none'
       >
         <defs>
           <linearGradient id='balance-area' x1='0' y1='0' x2='0' y2='1'>
@@ -150,7 +150,7 @@ function Categories ({ onHide, chartsPath }) {
                 <Icon name={c.icon || CATEGORY_ICON[c.name] || 'category'} size={18} className='text-muted' />
                 <span className='min-w-0 flex-1 truncate'>{c.name}</span>
                 <span className='font-mono text-xs text-faint'>{pct(c.amount)}</span>
-                <span className='w-[92px] text-right tabular-nums'>{format.money(c.amount)}</span>
+                <span className='w-23 text-right tabular-nums'>{format.money(c.amount)}</span>
               </div>
             ))}
           </div>
@@ -176,7 +176,7 @@ function TransactionRow ({ t }) {
         className='flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2.5 text-left'
       >
         <TxIcon t={t} />
-        <span className='flex min-w-0 flex-1 flex-col gap-[3px]'>
+        <span className='flex min-w-0 flex-1 flex-col gap-0.75'>
           <span className='truncate font-medium'>{t.name}</span>
           <span className='flex min-w-0 items-center gap-1.5 text-xs text-faint'>
             <span className='truncate'>
@@ -184,9 +184,9 @@ function TransactionRow ({ t }) {
               {t.tags.length > 0 && ` · ${t.tags.map(tag => '#' + tag).join(' ')}`}
             </span>
             {t.card && (
-              <span className='inline-flex flex-none items-center gap-[5px]'>
+              <span className='inline-flex flex-none items-center gap-1.25'>
                 <span>·</span>
-                <CardLogo icon={logo} className='h-[13px] w-[18px] rounded-[3px]! p-px!' />
+                <CardLogo icon={logo} className='h-3.25 w-4.5 rounded-[3px]! p-px!' />
                 <span>{t.card}</span>
               </span>
             )}
@@ -201,7 +201,7 @@ function TransactionRow ({ t }) {
         title='Delete'
         aria-label={`Delete ${t.name}`}
         onClick={() => removeTransaction(t).catch(showError)}
-        className='mr-2 grid h-[30px] w-[30px] flex-none place-items-center rounded-lg text-[#4a524c] hover:bg-danger/10 hover:text-danger'
+        className='mr-2 grid h-7.5 w-7.5 flex-none place-items-center rounded-lg text-[#4a524c] hover:bg-danger/10 hover:text-danger'
       >
         <Icon name='delete' size={18} />
       </button>
@@ -256,7 +256,7 @@ function Transactions ({ onHide }) {
           <span className='font-mono text-xs text-faint'>{list.length}</span>
         </div>
         <div className='flex flex-wrap items-center gap-2'>
-          <div className='flex h-9 min-w-[180px] items-center gap-2 rounded-[10px] border border-line-2 bg-rail px-3'>
+          <div className='flex h-9 min-w-45 items-center gap-2 rounded-[10px] border border-line-2 bg-rail px-3'>
             <Icon name='search' size={18} className='text-faint' />
             <input
               aria-label='Search transactions'
@@ -359,9 +359,9 @@ export default function Dashboard () {
 
   if (allHidden) {
     return (
-      <div className='flex flex-col items-center gap-3 rounded-[20px] border border-dashed border-line-3 px-5 py-[60px] text-center text-muted'>
+      <div className='flex flex-col items-center gap-3 rounded-[20px] border border-dashed border-line-3 px-5 py-15 text-center text-muted'>
         Every section is hidden.
-        <button type='button' onClick={() => setHidden({})} className='h-[38px] rounded-[10px] bg-accent-soft px-4 font-medium text-accent'>
+        <button type='button' onClick={() => setHidden({})} className='h-9.5 rounded-[10px] bg-accent-soft px-4 font-medium text-accent'>
           Show all sections
         </button>
       </div>

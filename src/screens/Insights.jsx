@@ -149,7 +149,7 @@ export default function Insights () {
         <div className={`relative grid h-16 w-16 place-items-center rounded-[18px] bg-accent-soft ${hero.tone}`}>
           <Icon name={hero.icon} size={34} />
         </div>
-        <div className='relative flex min-w-[240px] flex-1 flex-col gap-2'>
+        <div className='relative flex min-w-60 flex-1 flex-col gap-2'>
           <span className='font-mono text-[11px] uppercase tracking-[.12em] text-muted'>{hero.kicker}</span>
           <span className={`text-[clamp(28px,3.6vw,42px)] font-semibold leading-[1.05] tracking-[-.03em] ${hero.tone}`}>{hero.big}</span>
           <span className='text-[15px] text-ink-2 text-pretty'>{hero.text}</span>

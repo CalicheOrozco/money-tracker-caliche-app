@@ -36,19 +36,19 @@ function RecurringRow ({ r, open, onToggle }) {
     <div className='border-t border-line-4'>
       <button type='button' aria-expanded={open} onClick={onToggle} className='flex w-full items-center gap-3 rounded-xl px-1.5 py-3 text-left'>
         <span className={`grid h-10 w-10 flex-none place-items-center rounded-[11px] ${iconClass}`}><Icon name={CATEGORY_ICON[r.category] || 'category'} /></span>
-        <span className='flex min-w-0 flex-1 flex-col gap-[3px]'>
+        <span className='flex min-w-0 flex-1 flex-col gap-0.75'>
           <span className={`truncate font-medium ${r.inactive ? 'text-muted' : ''}`}>{r.name}</span>
           <span className='truncate text-xs text-faint'>{r.category}{r.card ? ` · ${r.card}` : ''}</span>
         </span>
         <span className={`hidden whitespace-nowrap rounded-full px-2 py-1 text-[11px] sm:inline ${statusClass}`}>{status}</span>
-        <span className='flex min-w-[90px] flex-col items-end gap-0.5'>
+        <span className='flex min-w-22.5 flex-col items-end gap-0.5'>
           <span className='font-semibold tabular-nums'>{amount}</span>
           <span className='text-[11px] text-faint tabular-nums'>{format.money(monthlyAmount(r) * 12)}/yr</span>
         </span>
         <Icon name={open ? 'expand_less' : 'expand_more'} className='text-faint' />
       </button>
       {open && (
-        <div className='mb-3.5 flex flex-col gap-3.5 rounded-[14px] border border-line bg-rail p-3.5 sm:ml-[58px]'>
+        <div className='mb-3.5 flex flex-col gap-3.5 rounded-[14px] border border-line bg-rail p-3.5 sm:ml-14.5'>
           <div className='flex flex-wrap justify-between gap-1.5 text-xs text-muted'>
             <span>Monthly · around day {Number(r.last.date.slice(8))}</span>
             <span>
@@ -57,12 +57,12 @@ function RecurringRow ({ r, open, onToggle }) {
                 : `Last charged ${shortDate(parseDay(r.last.date))} · ${r.list.length} charges found`}
             </span>
           </div>
-          <div className='flex h-[90px] items-end gap-2'>
+          <div className='flex h-22.5 items-end gap-2'>
             {history.map(t => (
-              <div key={t.id} className='flex h-full flex-1 flex-col items-center justify-end gap-[5px]'>
+              <div key={t.id} className='flex h-full flex-1 flex-col items-center justify-end gap-1.25'>
                 <span className='text-[10px] text-muted tabular-nums'>{format.compact(Math.abs(t.amount))}</span>
                 <div
-                  className={`w-full max-w-[30px] rounded-t-[5px] rounded-b-sm opacity-85 ${r.type === 'sub' && !r.inactive ? 'bg-accent' : 'bg-[#aab3ac]'}`}
+                  className={`w-full max-w-7.5 rounded-t-[5px] rounded-b-sm opacity-85 ${r.type === 'sub' && !r.inactive ? 'bg-accent' : 'bg-[#aab3ac]'}`}
                   style={{ height: `${Math.max(8, Math.round((Math.abs(t.amount) / historyMax) * 100))}%` }}
                 />
                 <span className='font-mono text-[10px] text-faint'>{parseDay(t.date).toLocaleDateString('en-US', { month: 'short' })}</span>
@@ -157,7 +157,7 @@ export default function Recurring () {
           </div>
           {review.map(r => (
             <div key={r.key} className='flex flex-wrap items-center gap-3 border-t border-[#2a2618] py-2'>
-              <span className='grid h-[34px] w-[34px] flex-none place-items-center rounded-[10px] bg-[#1d1b12] text-[#e0c45a]'>
+              <span className='grid h-8.5 w-8.5 flex-none place-items-center rounded-[10px] bg-[#1d1b12] text-[#e0c45a]'>
                 <Icon name={CATEGORY_ICON[r.category] || 'category'} size={18} />
               </span>
               <div className='flex min-w-40 flex-1 flex-col gap-0.5'>
@@ -224,7 +224,7 @@ export default function Recurring () {
               const days = daysUntil(r.next)
               return (
                 <div key={r.key} className='flex items-center gap-3 px-1 py-2'>
-                  <div className='flex w-[42px] flex-none flex-col items-center rounded-[10px] border border-line bg-rail py-[5px]'>
+                  <div className='flex w-10.5 flex-none flex-col items-center rounded-[10px] border border-line bg-rail py-1.25'>
                     <span className='font-mono text-[9px] uppercase text-faint'>{r.next.toLocaleDateString('en-US', { weekday: 'short' })}</span>
                     <span className='text-base font-semibold leading-[1.1]'>{r.next.getDate()}</span>
                   </div>

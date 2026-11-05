@@ -81,7 +81,7 @@ function IncomeVsExpenses () {
       </div>
 
       {type === 'donut' ? (
-        <div className='relative mx-auto my-1 h-[200px] w-[200px]'>
+        <div className='relative mx-auto my-1 h-50 w-50'>
           <Doughnut
             data={data}
             options={{
@@ -98,7 +98,7 @@ function IncomeVsExpenses () {
           </div>
         </div>
       ) : (
-        <div className='h-[208px]'>
+        <div className='h-52'>
           <Bar
             data={{
               labels: data.labels,
@@ -147,7 +147,7 @@ function MonthlyCashflow () {
         <h2 className='m-0 text-[15px] font-semibold'>Monthly cashflow</h2>
         <span className='font-mono text-[11px] text-faint'>LAST 6 MONTHS</span>
       </div>
-      <div className='h-[220px]'>
+      <div className='h-55'>
         <Bar
           data={{
             labels: months.map(m => m.label),
@@ -194,7 +194,7 @@ function BalanceOverTime () {
         <h2 className='m-0 text-[15px] font-semibold'>Balance over time</h2>
         <span className='text-xs text-faint'>{RANGE_LABEL[range]}</span>
       </div>
-      <div className='h-[240px]'>
+      <div className='h-60'>
         <Line
           data={{
             labels: series.map(p => p.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
@@ -262,13 +262,13 @@ function SpendingByCategory () {
       {categories.length === 0 && <p className='m-0 text-[13px] text-muted'>No expenses in this period.</p>}
       <div className='grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-x-7 gap-y-2.5'>
         {categories.map(c => (
-          <div key={c.name} className='flex flex-col gap-[7px] py-1.5'>
+          <div key={c.name} className='flex flex-col gap-1.75 py-1.5'>
             <div className='flex items-center gap-2.5'>
               <Icon name={CATEGORY_ICON[c.name] || 'category'} size={18} className='flex-none' />
               <span className='min-w-0 flex-1 truncate'>{c.name}</span>
               <span className='tabular-nums'>{format.money(c.amount)}</span>
             </div>
-            <div className='h-[5px] overflow-hidden rounded-full bg-line'>
+            <div className='h-1.25 overflow-hidden rounded-full bg-line'>
               <div className='h-full rounded-full' style={{ width: `${Math.round((c.amount / max) * 100)}%`, background: c.color }} />
             </div>
           </div>

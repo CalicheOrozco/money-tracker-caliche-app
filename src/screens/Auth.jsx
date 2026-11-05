@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthProvider.jsx'
 import { Field, Icon, Logo, PasswordInput, inputClass } from '../components/ui.jsx'
 
 const tabClass = active =>
-  `flex items-center justify-center rounded-[9px] p-[9px] font-medium ${
+  `flex items-center justify-center rounded-[9px] p-2.25 font-medium ${
     active ? 'bg-accent-soft text-accent' : 'text-muted hover:text-ink'
   }`
 
@@ -63,7 +63,7 @@ export default function Auth ({ mode }) {
           <Logo size={32} />
           <span className='text-[17px] font-semibold tracking-[-.01em]'>Caliche</span>
         </div>
-        <div className='relative flex max-w-[460px] flex-col gap-5'>
+        <div className='relative flex max-w-115 flex-col gap-5'>
           <div className='font-mono text-xs uppercase tracking-[.12em] text-accent'>Money tracker</div>
           <h1 className='m-0 text-[52px] font-semibold leading-[1.02] tracking-[-.035em] text-pretty'>
             Every peso, accounted for.
@@ -80,7 +80,7 @@ export default function Auth ({ mode }) {
       </div>
 
       <div className='grid place-items-center px-5 py-8'>
-        <form onSubmit={handleSubmit} noValidate className='flex w-full max-w-[380px] flex-col gap-[18px]'>
+        <form onSubmit={handleSubmit} noValidate className='flex w-full max-w-95 flex-col gap-4.5'>
           <div className='flex flex-col gap-1.5'>
             <h2 className='m-0 text-[28px] font-semibold tracking-[-.02em]'>
               {isLogin ? 'Welcome back' : 'Create your account'}
@@ -116,7 +116,7 @@ export default function Auth ({ mode }) {
                 onChange={e => setName(e.target.value)}
                 autoComplete='name'
                 placeholder='User'
-                className={`h-[46px] text-[15px] ${inputClass}`}
+                className={`h-11.5 text-[15px] ${inputClass}`}
               />
             </Field>
           )}
@@ -128,7 +128,7 @@ export default function Auth ({ mode }) {
               autoComplete='username'
               autoCapitalize='none'
               placeholder='User'
-              className={`h-[46px] text-[15px] ${inputClass}`}
+              className={`h-11.5 text-[15px] ${inputClass}`}
             />
           </Field>
 
@@ -138,7 +138,7 @@ export default function Auth ({ mode }) {
               onChange={e => setPassword(e.target.value)}
               autoComplete={isLogin ? 'current-password' : 'new-password'}
               placeholder='••••••••'
-              className='h-[46px] text-[15px]'
+              className='h-11.5 text-[15px]'
             />
           </Field>
 
@@ -158,7 +158,7 @@ export default function Auth ({ mode }) {
 
           <Link
             to='/guest'
-            className='grid h-[46px] place-items-center rounded-xl border border-line-3 font-medium text-ink hover:bg-field hover:text-ink'
+            className='grid h-11.5 place-items-center rounded-xl border border-line-3 font-medium text-ink hover:bg-field hover:text-ink'
           >
             Continue as guest
           </Link>

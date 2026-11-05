@@ -58,7 +58,7 @@ export default function Reports () {
           options={months.map(key => [key, monthLabel(key, 'short')])}
           value={selected}
           onChange={setSelected}
-          buttonClass='h-[30px] px-3 font-mono text-xs'
+          buttonClass='h-7.5 px-3 font-mono text-xs'
         />
         <div className='flex gap-2'>
           <button
@@ -91,12 +91,12 @@ export default function Reports () {
           <div className={tileClass}>
             <span className='text-xs text-muted'>Income</span>
             <span className='truncate text-[22px] font-semibold tabular-nums'>{format.money(income)}</span>
-            <span className={`self-start whitespace-nowrap rounded-full px-[7px] py-[3px] text-[11px] ${incomePill.className}`}>{incomePill.text} vs {prevName}</span>
+            <span className={`self-start whitespace-nowrap rounded-full px-1.75 py-0.75 text-[11px] ${incomePill.className}`}>{incomePill.text} vs {prevName}</span>
           </div>
           <div className={tileClass}>
             <span className='text-xs text-muted'>Expenses</span>
             <span className='truncate text-[22px] font-semibold tabular-nums'>{format.money(expense)}</span>
-            <span className={`self-start whitespace-nowrap rounded-full px-[7px] py-[3px] text-[11px] ${expensePill.className}`}>{expensePill.text} vs {prevName}</span>
+            <span className={`self-start whitespace-nowrap rounded-full px-1.75 py-0.75 text-[11px] ${expensePill.className}`}>{expensePill.text} vs {prevName}</span>
           </div>
           <div className={tileClass}>
             <span className='text-xs text-muted'>Net</span>
@@ -113,7 +113,7 @@ export default function Reports () {
         </div>
         <div className='relative flex flex-col gap-2'>
           <span className='text-xs text-muted'>Daily spending</span>
-          <div className='flex h-20 items-end gap-[3px]'>
+          <div className='flex h-20 items-end gap-0.75'>
             {daily.map((value, i) => (
               <div
                 key={i}
@@ -159,9 +159,9 @@ export default function Reports () {
                   <span className={`min-w-11 text-right font-mono text-[11px] ${last ? pill.className.split(' ').pop() : 'text-[#5fc9e0]'}`}>
                     {last ? pill.text : 'new'}
                   </span>
-                  <span className='min-w-[92px] text-right tabular-nums'>{format.money(amount)}</span>
+                  <span className='min-w-23 text-right tabular-nums'>{format.money(amount)}</span>
                 </div>
-                <div className='h-[5px] overflow-hidden rounded-full bg-line'>
+                <div className='h-1.25 overflow-hidden rounded-full bg-line'>
                   <div
                     className='h-full rounded-full'
                     style={{ width: `${Math.round((amount / categories[0][1]) * 100)}%`, background: PALETTE[Math.min(i, 5)] }}

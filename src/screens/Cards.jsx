@@ -22,14 +22,14 @@ function CardFace ({ card, spent, selected, onClick }) {
       type={onClick ? 'button' : undefined}
       aria-pressed={onClick ? selected : undefined}
       onClick={onClick}
-      className={`relative flex aspect-[1.586] w-full min-w-0 flex-col justify-between overflow-hidden rounded-[18px] border p-[18px] text-left ${
+      className={`relative flex aspect-[1.586] w-full min-w-0 flex-col justify-between overflow-hidden rounded-[18px] border p-4.5 text-left ${
         isLightTone(card.tone) ? 'text-[#0b0e0c]' : 'text-ink'
       } ${selected ? 'border-accent shadow-[0_0_0_4px_rgba(52,210,123,.15)]' : 'border-white/5'}`}
       style={{ background: cardBackground(card.tone) }}
     >
       <span className='pointer-events-none absolute inset-0 bg-[radial-gradient(280px_160px_at_100%_0%,rgba(255,255,255,.08),transparent_70%)]' />
       <span className='relative flex items-center justify-between'>
-        <CardLogo icon={card.icon} className='h-[30px] w-[46px] rounded-[7px] p-1' />
+        <CardLogo icon={card.icon} className='h-7.5 w-11.5 rounded-[7px] p-1' />
         <span className='font-mono text-[10px] uppercase tracking-[.12em] opacity-70'>{card.type === 'debit' ? 'Debit' : 'Credit'}</span>
       </span>
       <span className='relative flex items-end justify-between gap-2.5'>
@@ -118,7 +118,7 @@ function CardForm ({ initial, onClose }) {
     <section className={`grid grid-cols-[minmax(0,1fr)] gap-6 p-5 wide:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] ${panelClass}`}>
       <div className='flex flex-col gap-3'>
         <span className='text-xs text-muted'>Preview</span>
-        <div className='w-full max-w-[380px]'>
+        <div className='w-full max-w-95'>
           <CardFace card={form} />
         </div>
       </div>
@@ -132,7 +132,7 @@ function CardForm ({ initial, onClose }) {
             className={`${inputClass} bg-rail disabled:text-muted`}
           />
         </Field>
-        <div className='flex flex-col gap-[7px]'>
+        <div className='flex flex-col gap-1.75'>
           <span className='text-xs font-medium text-muted'>Bank logo</span>
           <BrandPicker value={form.icon} onChange={icon => patch({ icon })} />
         </div>
@@ -147,14 +147,14 @@ function CardForm ({ initial, onClose }) {
             />
           </Field>
         </div>
-        <div className='flex flex-col gap-[7px]'>
+        <div className='flex flex-col gap-1.75'>
           <span className='text-xs font-medium text-muted'>Type</span>
           <Segmented
             label='Card type'
             options={[['credit', 'Credit'], ['debit', 'Debit']]}
             value={form.type}
             onChange={type => patch({ type })}
-            buttonClass='h-[34px] flex-1'
+            buttonClass='h-8.5 flex-1'
           />
         </div>
         {form.type === 'credit' && (
@@ -168,7 +168,7 @@ function CardForm ({ initial, onClose }) {
             />
           </Field>
         )}
-        <div className='flex flex-col gap-[7px]'>
+        <div className='flex flex-col gap-1.75'>
           <span className='text-xs font-medium text-muted'>Color</span>
           {brandColors.length > 0 && (
             <div className='flex flex-wrap items-center gap-2'>
@@ -212,8 +212,8 @@ function CardForm ({ initial, onClose }) {
         </div>
         {error && <div role='alert' className='text-xs text-danger'>{error}</div>}
         <div className='flex justify-end gap-2'>
-          <button type='button' onClick={() => onClose()} className='h-[42px] rounded-[11px] border border-line-3 px-4 text-ink'>Cancel</button>
-          <button type='button' disabled={busy} onClick={save} className='h-[42px] rounded-[11px] bg-accent px-[18px] font-semibold text-accent-ink disabled:opacity-60'>
+          <button type='button' onClick={() => onClose()} className='h-10.5 rounded-[11px] border border-line-3 px-4 text-ink'>Cancel</button>
+          <button type='button' disabled={busy} onClick={save} className='h-10.5 rounded-[11px] bg-accent px-4.5 font-semibold text-accent-ink disabled:opacity-60'>
             Save card
           </button>
         </div>
@@ -262,7 +262,7 @@ export default function Cards () {
           <button
             type='button'
             onClick={() => setForm(emptyCard())}
-            className='flex h-[38px] items-center gap-1.5 rounded-[11px] border border-[#2c5a3d] bg-accent-soft pl-2.5 pr-3.5 font-semibold text-accent'
+            className='flex h-9.5 items-center gap-1.5 rounded-[11px] border border-[#2c5a3d] bg-accent-soft pl-2.5 pr-3.5 font-semibold text-accent'
           >
             <Icon name='add_card' />Register card
           </button>
@@ -300,10 +300,10 @@ export default function Cards () {
       </div>
 
       {selected && (
-        <section className={`flex flex-col gap-[18px] p-5 ${panelClass}`}>
+        <section className={`flex flex-col gap-4.5 p-5 ${panelClass}`}>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div className='flex min-w-0 items-center gap-3'>
-              <CardLogo icon={selected.icon} className='h-[30px] w-11 rounded-[7px]' />
+              <CardLogo icon={selected.icon} className='h-7.5 w-11 rounded-[7px]' />
               <div className='flex min-w-0 flex-col gap-0.5'>
                 <span className='truncate text-[17px] font-semibold'>{selected.name}</span>
                 <span className='text-xs text-faint'>
@@ -383,7 +383,7 @@ export default function Cards () {
                 className='flex items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-[#141a16]'
               >
                 <TxIcon t={t} size={36} />
-                <span className='flex min-w-0 flex-1 flex-col gap-[3px]'>
+                <span className='flex min-w-0 flex-1 flex-col gap-0.75'>
                   <span className='truncate font-medium'>{t.name}</span>
                   <span className='text-xs text-faint'>
                     {t.category} · {parseDay(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

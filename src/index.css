@@ -36,8 +36,13 @@
     background: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    font-size: 14px;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Only the body text is 14px. The root keeps the browser's 16px so rem based
+     sizes like h-11 or text-sm match the design exactly. */
+  body {
+    font-size: 14px;
   }
 
   a {

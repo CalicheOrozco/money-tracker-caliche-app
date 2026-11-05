@@ -6,7 +6,7 @@ import { api } from '../lib/api.js'
 import { CATEGORY_ICON, EXPENSE, INCOME } from '../lib/constants.js'
 import { normalizeTag } from '../lib/tags.js'
 
-const fieldClass = 'h-[38px] rounded-[9px] border border-line-3 bg-rail px-2.5 text-sm text-ink outline-hidden focus:border-accent'
+const fieldClass = 'h-9.5 rounded-[9px] border border-line-3 bg-rail px-2.5 text-sm text-ink outline-hidden focus:border-accent'
 
 export default function Rules () {
   const { transactions, rules, format, loading, reload, setRange, showToast, showError } = useAppData()
@@ -71,15 +71,15 @@ export default function Rules () {
           </div>
           <div className='flex flex-wrap items-center gap-2 text-sm text-muted'>
             <span>If the name contains</span>
-            <input aria-label='Text to match' value={form.match} onChange={e => setForm({ ...form, match: e.target.value })} placeholder='oxxo' className={`${fieldClass} w-[140px] font-mono`} />
+            <input aria-label='Text to match' value={form.match} onChange={e => setForm({ ...form, match: e.target.value })} placeholder='oxxo' className={`${fieldClass} w-35 font-mono`} />
             <span>set category to</span>
-            <select aria-label='Category' value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className={`${fieldClass} max-w-[220px] px-2`}>
+            <select aria-label='Category' value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className={`${fieldClass} max-w-55 px-2`}>
               <option value=''>Category…</option>
               <optgroup label='Incomes'>{INCOME.map(([c]) => <option key={c} value={c}>{c}</option>)}</optgroup>
               <optgroup label='Bills'>{EXPENSE.map(([c]) => <option key={c} value={c}>{c}</option>)}</optgroup>
             </select>
             <span>and tag</span>
-            <div className={`${fieldClass} flex w-[130px] items-center`}>
+            <div className={`${fieldClass} flex w-32.5 items-center`}>
               <span className='text-faint'>#</span>
               <input aria-label='Tag' value={form.tag} onChange={e => setForm({ ...form, tag: normalizeTag(e.target.value) })} placeholder='optional' className='min-w-0 flex-1 border-0 bg-transparent text-ink outline-hidden' />
             </div>
@@ -90,7 +90,7 @@ export default function Rules () {
               type='button'
               disabled={!canCreate}
               onClick={create}
-              className={`h-[38px] rounded-[10px] px-4 font-semibold ${canCreate ? 'bg-accent text-accent-ink' : 'bg-raised text-faint'}`}
+              className={`h-9.5 rounded-[10px] px-4 font-semibold ${canCreate ? 'bg-accent text-accent-ink' : 'bg-raised text-faint'}`}
             >
               Create rule
             </button>
@@ -99,12 +99,12 @@ export default function Rules () {
 
         <section className={`flex flex-col gap-2 p-5 ${panelClass}`}>
           <div className='mb-1 flex flex-wrap items-center justify-between gap-2.5'>
-            <div className='flex flex-col gap-[3px]'>
+            <div className='flex flex-col gap-0.75'>
               <h2 className='m-0 text-[15px] font-semibold'>Rules</h2>
               <span className='text-xs text-faint'>Applied automatically to new and imported transactions</span>
             </div>
             {totalToFix > 0 && (
-              <button type='button' disabled={busy} onClick={() => apply(rules.items.filter(r => toFix(r).length))} className='h-[34px] rounded-[9px] bg-accent-soft px-3 font-medium text-accent disabled:opacity-60'>
+              <button type='button' disabled={busy} onClick={() => apply(rules.items.filter(r => toFix(r).length))} className='h-8.5 rounded-[9px] bg-accent-soft px-3 font-medium text-accent disabled:opacity-60'>
                 Apply all to {totalToFix} past
               </button>
             )}
@@ -117,10 +117,10 @@ export default function Rules () {
                 <span className='whitespace-nowrap rounded-[7px] border border-line-3 bg-raised px-2 py-1 font-mono text-[13px]'>“{rule.match}”</span>
                 <Icon name='arrow_forward' size={18} className='text-faint' />
                 <span className='flex items-center gap-1.5'><Icon name={CATEGORY_ICON[rule.category] || 'category'} size={17} className='text-muted' />{rule.category}</span>
-                {rule.tag && <span className='rounded-full bg-accent-soft px-2 py-[3px] text-xs text-accent'>#{rule.tag}</span>}
+                {rule.tag && <span className='rounded-full bg-accent-soft px-2 py-0.75 text-xs text-accent'>#{rule.tag}</span>}
                 <span className='ml-auto text-xs text-faint'>{matches(rule).length} matches</span>
                 {pending > 0 && (
-                  <button type='button' disabled={busy} onClick={() => apply([rule])} className='h-[30px] rounded-lg border border-[#2c5a3d] px-2.5 text-xs text-accent disabled:opacity-60'>
+                  <button type='button' disabled={busy} onClick={() => apply([rule])} className='h-7.5 rounded-lg border border-[#2c5a3d] px-2.5 text-xs text-accent disabled:opacity-60'>
                     Apply to {pending}
                   </button>
                 )}
@@ -134,7 +134,7 @@ export default function Rules () {
       </div>
 
       <section className={`flex min-w-0 flex-col gap-2 p-5 ${panelClass}`}>
-        <div className='mb-1 flex flex-col gap-[3px]'>
+        <div className='mb-1 flex flex-col gap-0.75'>
           <h2 className='m-0 text-[15px] font-semibold'>Tags</h2>
           <span className='text-xs text-faint'>Add tags when you create a transaction. Click one to see its transactions.</span>
         </div>

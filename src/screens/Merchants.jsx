@@ -201,15 +201,15 @@ function MerchantForm ({ initial, onClose }) {
             confirmDelete ? (
               <span className='mr-auto flex items-center gap-1.5 text-[13px] text-danger-soft'>
                 Remove this merchant?
-                <button type='button' onClick={remove} className='h-[34px] rounded-[9px] bg-danger px-3 font-semibold text-[#1a0808]'>Remove</button>
-                <button type='button' onClick={() => setConfirmDelete(false)} className='h-[34px] rounded-[9px] border border-line-3 px-3 text-ink'>Keep</button>
+                <button type='button' onClick={remove} className='h-8.5 rounded-[9px] bg-danger px-3 font-semibold text-[#1a0808]'>Remove</button>
+                <button type='button' onClick={() => setConfirmDelete(false)} className='h-8.5 rounded-[9px] border border-line-3 px-3 text-ink'>Keep</button>
               </span>
             ) : (
-              <button type='button' onClick={() => setConfirmDelete(true)} className='mr-auto h-[42px] rounded-[11px] border border-danger/30 px-3.5 text-danger'>Delete</button>
+              <button type='button' onClick={() => setConfirmDelete(true)} className='mr-auto h-10.5 rounded-[11px] border border-danger/30 px-3.5 text-danger'>Delete</button>
             )
           )}
-          <button type='button' onClick={onClose} className='h-[42px] rounded-[11px] border border-line-3 px-4 text-ink'>Cancel</button>
-          <button type='button' disabled={busy} onClick={save} className='h-[42px] rounded-[11px] bg-accent px-[18px] font-semibold text-accent-ink disabled:opacity-60'>
+          <button type='button' onClick={onClose} className='h-10.5 rounded-[11px] border border-line-3 px-4 text-ink'>Cancel</button>
+          <button type='button' disabled={busy} onClick={save} className='h-10.5 rounded-[11px] bg-accent px-4.5 font-semibold text-accent-ink disabled:opacity-60'>
             Save merchant
           </button>
         </div>
@@ -264,12 +264,12 @@ export default function Merchants () {
           <span className='font-mono text-xs text-faint'>{merchants.items.length}</span>
         </div>
         <div className='flex flex-wrap gap-2'>
-          <div className='flex h-[38px] min-w-[180px] items-center gap-2 rounded-[11px] border border-line-2 bg-rail px-3'>
+          <div className='flex h-9.5 min-w-45 items-center gap-2 rounded-[11px] border border-line-2 bg-rail px-3'>
             <Icon name='search' size={18} className='text-faint' />
             <input aria-label='Search merchants' value={filter} onChange={e => setFilter(e.target.value)} placeholder='Search' className='min-w-0 flex-1 border-0 bg-transparent text-[13px] text-ink outline-hidden' />
           </div>
           {!form && (
-            <button type='button' onClick={() => openNew()} className='flex h-[38px] items-center gap-1.5 rounded-[11px] border border-[#2c5a3d] bg-accent-soft pl-2.5 pr-3.5 font-semibold text-accent'>
+            <button type='button' onClick={() => openNew()} className='flex h-9.5 items-center gap-1.5 rounded-[11px] border border-[#2c5a3d] bg-accent-soft pl-2.5 pr-3.5 font-semibold text-accent'>
               <Icon name='add_business' />Add merchant
             </button>
           )}
@@ -322,7 +322,7 @@ export default function Merchants () {
         </section>
 
         <section className={`flex min-w-0 flex-col gap-2 p-5 ${panelClass}`}>
-          <div className='mb-1 flex flex-col gap-[3px]'>
+          <div className='mb-1 flex flex-col gap-0.75'>
             <h2 className='m-0 text-[15px] font-semibold'>Needs a merchant</h2>
             <span className='text-xs text-faint'>Names from your transactions that no merchant recognizes yet.</span>
           </div>
