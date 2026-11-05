@@ -10,8 +10,10 @@ import { RANGE_LABEL, TONES } from '../lib/constants.js'
 import { parseDay } from '../lib/dates.js'
 import { decimalOnly, toNumber } from '../lib/numbers.js'
 import { currentMonthKey, expensesOf, inMonth, monthLabel } from '../lib/periods.js'
+import { byNewest, isCreditAccount, transfersInRange } from '../lib/transfers.js'
 
 const NO_COLORS = []
+const ACCOUNT_LABEL = { credit: 'Credit', debit: 'Debit', savings: 'Savings', investment: 'Investment' }
 
 const emptyCard = () => ({ name: '', icon: 'VisaIcon', type: 'credit', last4: '', limit: '', tone: 'emerald', editing: false })
 
@@ -30,7 +32,7 @@ function CardFace ({ card, spent, selected, onClick }) {
       <span className='pointer-events-none absolute inset-0 bg-[radial-gradient(280px_160px_at_100%_0%,rgba(255,255,255,.08),transparent_70%)]' />
       <span className='relative flex items-center justify-between'>
         <CardLogo icon={card.icon} className='h-7.5 w-11.5 rounded-[7px] p-1' />
-        <span className='font-mono text-[10px] uppercase tracking-[.12em] opacity-70'>{card.type === 'debit' ? 'Debit' : 'Credit'}</span>
+        <span className='font-mono text-[10px] uppercase tracking-[.12em] opacity-70'>{ACCOUNT_LABEL[card.type] || 'Credit'}</span>
       </span>
       <span className='relative flex items-end justify-between gap-2.5'>
         <span className='flex min-w-0 flex-col gap-1'>
@@ -151,7 +153,7 @@ function CardForm ({ initial, onClose }) {
           <span className='text-xs font-medium text-muted'>Type</span>
           <Segmented
             label='Card type'
-            options={[['credit', 'Credit'], ['debit', 'Debit']]}
+            options={Object.entries(ACCOUNT_LABEL)}
             value={form.type}
             onChange={type => patch({ type })}
             buttonClass='h-8.5 flex-1'
@@ -223,7 +225,7 @@ function CardForm ({ initial, onClose }) {
 }
 
 export default function Cards () {
-  const { cards, transactions, metrics, range, format, loading, openNew, openEdit, removeCard, setCardFilter, showToast, showError } = useAppData()
+  const { cards, transactions, transferList, metrics, range, format, loading, openNew, openEdit, removeCard, setCardFilter, showToast, showError } = useAppData()
   const navigate = useNavigate()
   const [selectedName, setSelectedName] = useState('')
   const [form, setForm] = useState(null)
@@ -235,9 +237,18 @@ export default function Cards () {
   const cardTx = selected ? metrics.inRange.filter(t => t.card === selected.name) : []
   const spent = selected ? spentOn(metrics.inRange, selected.name) : 0
   const purchases = cardTx.filter(t => t.amount < 0)
+  const cardTransfers = selected ? transfersInRange(transferList, range).filter(t => t.from === selected.name || t.to === selected.name) : []
+  const activity = [...cardTx, ...cardTransfers].sort(byNewest)
   const usedThisMonth = selected ? spentOn(inMonth(transactions, currentMonthKey()), selected.name) : 0
   const limit = selected?.limit || 0
   const usedPct = limit ? Math.min(100, Math.round((usedThisMonth / limit) * 100)) : 0
+  const editCard = card => setForm({
+    ...emptyCard(),
+    ...card,
+    limit: card.limit ? String(card.limit) : '',
+    tone: card.tone || 'graphite',
+    editing: true
+  })
   const tile = 'flex min-w-0 flex-col gap-1.5 rounded-[14px] border border-line bg-rail p-3.5'
 
   async function remove () {
@@ -307,7 +318,7 @@ export default function Cards () {
               <div className='flex min-w-0 flex-col gap-0.5'>
                 <span className='truncate text-[17px] font-semibold'>{selected.name}</span>
                 <span className='text-xs text-faint'>
-                  {selected.type === 'debit' ? 'Debit card' : 'Credit card'}
+                  {{ debit: 'Debit card', savings: 'Savings account', investment: 'Investment account' }[selected.type] || 'Credit card'}
                   {selected.last4 && <span className='font-mono'> · •••• {selected.last4}</span>}
                 </span>
               </div>
@@ -324,7 +335,7 @@ export default function Cards () {
                 type='button'
                 title='Edit card'
                 aria-label='Edit card'
-                onClick={() => setForm({ ...emptyCard(), ...selected, limit: selected.limit ? String(selected.limit) : '', tone: selected.tone || 'graphite', editing: true })}
+                onClick={() => editCard(selected)}
                 className='grid h-9 w-9 place-items-center rounded-[10px] border border-line-3 text-muted hover:text-ink'
               >
                 <Icon name='edit' size={18} />
@@ -347,7 +358,7 @@ export default function Cards () {
             <div className={tile}><span className='text-xs text-muted'>Avg. per purchase</span><span className='truncate text-[19px] font-semibold tabular-nums'>{format.money(purchases.length ? spent / purchases.length : 0)}</span></div>
           </div>
 
-          {selected.type !== 'debit' && (
+          {isCreditAccount(selected) && (
             <div className='flex flex-col gap-2'>
               <div className='flex flex-wrap justify-between gap-1.5 text-[13px]'>
                 <span className='text-muted'>Credit used in {monthLabel(currentMonthKey())}</span>
@@ -374,8 +385,8 @@ export default function Cards () {
 
           <div className='flex flex-col'>
             <div className='px-1 pb-1.5 text-xs font-medium text-faint'>Recent activity</div>
-            {cardTx.length === 0 && <div className='p-7 text-center text-muted'>No transactions on this card for this period.</div>}
-            {cardTx.slice(0, 12).map(t => (
+            {activity.length === 0 && <div className='p-7 text-center text-muted'>No transactions on this card for this period.</div>}
+            {activity.slice(0, 12).map(t => (
               <button
                 key={t.id}
                 type='button'
@@ -384,15 +395,17 @@ export default function Cards () {
               >
                 <TxIcon t={t} size={36} />
                 <span className='flex min-w-0 flex-1 flex-col gap-0.75'>
-                  <span className='truncate font-medium'>{t.name}</span>
+                  <span className='truncate font-medium'>{t.transfer ? t.note || 'Transfer' : t.name}</span>
                   <span className='text-xs text-faint'>
-                    {t.category} · {parseDay(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {t.transfer ? (t.from === selected.name ? `To ${t.to}` : `From ${t.from}`) : t.category} · {parseDay(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </span>
                 </span>
-                <span className={`font-semibold tabular-nums ${t.amount > 0 ? 'text-accent' : ''}`}>{format.signed(t.amount)}</span>
+                {t.transfer
+                  ? <span className='font-semibold tabular-nums text-ink-2'>{format.signed(t.from === selected.name ? -t.value : t.value)}</span>
+                  : <span className={`font-semibold tabular-nums ${t.amount > 0 ? 'text-accent' : ''}`}>{format.signed(t.amount)}</span>}
               </button>
             ))}
-            {cardTx.length > 12 && (
+            {activity.length > 12 && (
               <button
                 type='button'
                 onClick={() => {

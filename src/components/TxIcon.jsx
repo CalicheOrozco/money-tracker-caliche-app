@@ -36,6 +36,14 @@ export default function TxIcon ({ t, size = 38 }) {
   const merchant = merchantOf(t)
   const income = t.amount > 0
 
+  if (t.transfer) {
+    return (
+      <span className='grid flex-none place-items-center rounded-[11px] bg-[#16262a] text-[#5fc9e0]' style={{ width: size, height: size }}>
+        <Icon name='swap_horiz' size={Math.round(size * 0.52)} />
+      </span>
+    )
+  }
+
   if (merchant?.domain) {
     return <MerchantLogo domain={merchant.domain} size={size} fallback={CATEGORY_ICON[t.category] || 'category'} />
   }

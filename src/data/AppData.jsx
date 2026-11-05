@@ -13,6 +13,7 @@ import { CURRENCIES, DEFAULT_SETTINGS } from '../lib/constants.js'
 import { computeMetrics } from '../lib/metrics.js'
 import { patternMatch, resolveMerchant } from '../lib/merchants.js'
 import { recurringState } from '../lib/recurring.js'
+import { byNewest, fromApiTransfer, transferSuggestions } from '../lib/transfers.js'
 import { useCollection } from './useCollection.js'
 
 const AppDataContext = createContext(null)
@@ -56,6 +57,8 @@ function toApi (t) {
   }
 }
 
+const transferBody = record => ({ from: record.from, to: record.to, amount: record.value, date: record.date, note: record.note })
+
 export function AppDataProvider ({ guest, children }) {
   const { user } = useAuth()
   const userID = guest ? null : user?.id
@@ -89,6 +92,9 @@ export function AppDataProvider ({ guest, children }) {
   const overrides = useCollection('recurring-overrides', { enabled: !guest, onError: showError })
   const merchants = useCollection('merchants', { enabled: !guest, onError: showError })
   const manualRecurring = useCollection('recurring', { enabled: !guest, onError: showError })
+  const transfers = useCollection('transfers', { enabled: !guest, onError: showError })
+  const transferDismissals = useCollection('transfer-dismissals', { enabled: !guest, onError: showError })
+  const { reload: reloadTransfers } = transfers
 
   const reload = useCallback(async () => {
     const suffix = userID ? `/${userID}` : ''
@@ -143,6 +149,42 @@ export function AppDataProvider ({ guest, children }) {
     })
   }, [reload, saveTransaction, showError, showToast])
 
+  const saveTransfer = useCallback(async (record, editingId) => {
+    await api(editingId ? `/me/transfers/${editingId}` : '/me/transfers', {
+      method: editingId ? 'PATCH' : 'POST',
+      body: transferBody(record)
+    })
+    await reloadTransfers()
+  }, [reloadTransfers])
+
+  const revertTransfer = useCallback(async id => {
+    await api(`/me/transfers/${id}/revert`, { method: 'POST' })
+    await Promise.all([reload(), reloadTransfers()])
+  }, [reload, reloadTransfers])
+
+  const removeTransfer = useCallback(async transfer => {
+    await api(`/me/transfers/${transfer.id}`, { method: 'DELETE' })
+    await reloadTransfers()
+    showToast('Transfer deleted', {
+      undo: async () => {
+        setToast(null)
+        await saveTransfer(transfer).catch(showError)
+      }
+    })
+  }, [reloadTransfers, saveTransfer, showError, showToast])
+
+  // Replaces transactions with a transfer. Undo brings the originals back.
+  const convertToTransfer = useCallback(async (transactionIds, details) => {
+    const saved = await api('/me/transfers/convert', { method: 'POST', body: { transactionIds, ...details } })
+    await Promise.all([reload(), reloadTransfers()])
+    showToast('Saved as a transfer', {
+      undo: async () => {
+        setToast(null)
+        await revertTransfer(saved._id).catch(showError)
+      }
+    })
+  }, [reload, reloadTransfers, revertTransfer, showError, showToast])
+
   const saveCard = useCallback(async card => {
     await api(`/cards/${userID}`, { method: 'POST', body: card })
     await reload()
@@ -160,8 +202,8 @@ export function AppDataProvider ({ guest, children }) {
 
   const deleteAllTransactions = useCallback(async () => {
     await api('/profile/transactions', { method: 'DELETE' })
-    await reload()
-  }, [reload])
+    await Promise.all([reload(), reloadTransfers()])
+  }, [reload, reloadTransfers])
 
   // The first rule whose text appears in the name or description wins.
   const ruleFor = useCallback(text => {
@@ -209,6 +251,12 @@ export function AppDataProvider ({ guest, children }) {
     [transactions, overrides.items, manualRecurring.items]
   )
 
+  const transferList = useMemo(() => transfers.items.map(fromApiTransfer).sort(byNewest), [transfers.items])
+  const transferHints = useMemo(
+    () => (guest ? [] : transferSuggestions(transactions, transferDismissals.items.map(d => d.key), cards)),
+    [guest, transactions, transferDismissals.items, cards]
+  )
+
   const openNew = useCallback(preset => setDrawer({ open: true, editing: null, preset: preset || null }), [])
   const openEdit = useCallback(transaction => setDrawer({ open: true, editing: transaction, preset: null }), [])
   const closeDrawer = useCallback(() => setDrawer(d => ({ ...d, open: false })), [])
@@ -219,14 +267,16 @@ export function AppDataProvider ({ guest, children }) {
       hidden, setHidden, drawer, toast, setToast, showToast, showError, format, metrics,
       recurring, manualRecurring, rules, overrides, ruleFor, merchants, merchantOf, merchantFor, cardFilter, setCardFilter, openNew, openEdit,
       closeDrawer, reload, saveTransaction, removeTransaction, saveCard, removeCard, importRows,
-      deleteAllTransactions
+      deleteAllTransactions, transfers, transferDismissals, transferList, transferHints, saveTransfer, removeTransfer,
+      revertTransfer, convertToTransfer
     }),
     [
       guest, userID, settings, transactions, cards, loading, range, privacy, hidden, setHidden,
       drawer, toast, showToast, showError, format, metrics, recurring, rules, overrides, ruleFor,
       merchants, merchantOf, merchantFor, manualRecurring,
       cardFilter, openNew, openEdit, closeDrawer, reload, saveTransaction, removeTransaction,
-      saveCard, removeCard, importRows, deleteAllTransactions
+      saveCard, removeCard, importRows, deleteAllTransactions, transfers, transferDismissals, transferList, transferHints,
+      saveTransfer, removeTransfer, revertTransfer, convertToTransfer
     ]
   )
 

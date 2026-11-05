@@ -11,8 +11,11 @@ import {
   RecurringPayment,
   NetWorthSnapshot,
   RecurringOverride,
-  Rule
+  Rule,
+  Transfer,
+  TransferDismissal
 } from '../schema/planning.js'
+import Card from '../schema/card.js'
 import TransactionModel from '../schema/transaction.js'
 
 const router = express.Router()
@@ -40,7 +43,18 @@ const COLLECTIONS = {
       next: 'date!', category: 'string', card: 'string', match: 'string', active: 'boolean'
     }
   },
+  transfers: {
+    Model: Transfer,
+    fields: { from: 'string!', to: 'string!', amount: 'number!', date: 'date!', note: 'string' },
+    check: checkTransfer
+  },
+  'transfer-dismissals': { Model: TransferDismissal, upsertBy: 'key', fields: { key: 'string!' } },
   'networth-snapshots': { Model: NetWorthSnapshot, upsertBy: 'date', fields: { date: 'date!', value: 'number' } }
+}
+
+function checkTransfer ({ from, to, amount }) {
+  if (from === to) throw badRequest('Choose two different accounts.')
+  if (!(amount > 0)) throw badRequest('The amount must be greater than 0.')
 }
 
 function badRequest (message) {
@@ -144,14 +158,64 @@ router.post('/rules/:id/apply', requireValidId, async (req, res) => {
   res.json({ modifiedCount })
 })
 
+const priceValue = t => parseFloat(String(t.price).replace(/[,\s+]/g, '')) || 0
+
+// Replaces one transaction, or both sides of a transfer, with a single transfer.
+router.post('/transfers/convert', async (req, res) => {
+  const userID = req.user.id
+  const { transactionIds: ids, from, to, note } = req.body ?? {}
+  if (!Array.isArray(ids) || ![1, 2].includes(ids.length) || new Set(ids).size !== ids.length || !ids.every(mongoose.isValidObjectId)) {
+    throw badRequest('Choose one transaction, or the two sides of a transfer.')
+  }
+
+  const found = await TransactionModel.find({ _id: { $in: ids }, userID })
+  if (found.length !== ids.length) return res.status(404).json({ error: 'Transaction not found.' })
+  const values = found.map(priceValue)
+  if (found.length === 2 && (values[0] * values[1] >= 0 || Math.abs(values[0] + values[1]) > 0.005)) {
+    throw badRequest('The two sides must be an expense and an income with the same amount.')
+  }
+
+  const outgoing = found[values.findIndex(value => value < 0)] || found[0]
+  const data = clean(COLLECTIONS.transfers.fields, {
+    from,
+    to,
+    amount: req.body.amount ?? Math.abs(values[0]),
+    date: req.body.date ?? outgoing.datetime.toISOString().slice(0, 10),
+    note: note ?? outgoing.name
+  }, false)
+  checkTransfer(data)
+
+  // A card can exist only through its transactions, so it is saved before they go.
+  const icons = Object.fromEntries(found.filter(t => t.card).map(t => [t.card, t.icon || '']))
+  await Promise.all([data.from, data.to].map(name => Card.updateOne(
+    { userID, name },
+    { $setOnInsert: { icon: icons[name] || '' } },
+    { upsert: true }
+  )))
+  const transfer = await Transfer.create({ ...data, userID, source: found.map(t => t.toObject()) })
+  await TransactionModel.deleteMany({ _id: { $in: ids }, userID })
+  res.json(transfer)
+})
+
+// Puts back the transactions a conversion replaced.
+router.post('/transfers/:id/revert', requireValidId, async (req, res) => {
+  const transfer = await Transfer.findOne({ _id: req.params.id, userID: req.user.id })
+  if (!transfer) return res.status(404).json({ error: 'Not found.' })
+  if (!transfer.source.length) throw badRequest('This transfer was not converted from transactions.')
+  const restored = await TransactionModel.insertMany(transfer.source)
+  await transfer.deleteOne()
+  res.json(restored)
+})
+
 router.get('/:collection', async (req, res) => {
   const { Model } = collection(req)
   res.json(await Model.find({ userID: req.user.id }).sort({ _id: 1 }))
 })
 
 router.post('/:collection', async (req, res) => {
-  const { Model, fields, upsertBy } = collection(req)
+  const { Model, fields, upsertBy, check } = collection(req)
   const data = clean(fields, req.body, false)
+  check?.(data)
 
   if (upsertBy) {
     const item = await Model.findOneAndUpdate(
@@ -166,10 +230,16 @@ router.post('/:collection', async (req, res) => {
 })
 
 router.patch('/:collection/:id', requireValidId, async (req, res) => {
-  const { Model, fields } = collection(req)
+  const { Model, fields, check } = collection(req)
+  const data = clean(fields, req.body, true)
+  if (check) {
+    const current = await Model.findOne({ _id: req.params.id, userID: req.user.id })
+    if (!current) return res.status(404).json({ error: 'Not found.' })
+    check({ from: current.from, to: current.to, amount: current.amount, ...data })
+  }
   const item = await Model.findOneAndUpdate(
     { _id: req.params.id, userID: req.user.id },
-    { $set: clean(fields, req.body, true) },
+    { $set: data },
     { returnDocument: 'after', runValidators: true }
   )
   if (!item) return res.status(404).json({ error: 'Not found.' })

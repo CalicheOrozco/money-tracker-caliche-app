@@ -6,6 +6,7 @@ import { PALETTE } from '../lib/constants.js'
 import { daysAgo, parseDay, toISODate } from '../lib/dates.js'
 import { sparkPaths } from '../lib/metrics.js'
 import { decimalOnly, toNumber } from '../lib/numbers.js'
+import { creditCardEstimate } from '../lib/transfers.js'
 
 function HoldingRow ({ item, color, share, onSave, onRemove }) {
   const { format } = useAppData()
@@ -35,18 +36,14 @@ function HoldingRow ({ item, color, share, onSave, onRemove }) {
 }
 
 export default function NetWorth () {
-  const { transactions, cards, format, privacy, showError } = useAppData()
+  const { transactions, transferList, cards, format, privacy, showError } = useAppData()
   const holdings = useCollection('holdings', { onError: showError })
   const snapshots = useCollection('networth-snapshots', { onError: showError })
   const [form, setForm] = useState({ side: 'asset', name: '', value: '' })
 
   const assets = holdings.items.filter(h => h.side === 'asset')
   const liabilities = holdings.items.filter(h => h.side === 'liab')
-  const credit = new Set(cards.filter(c => c.type !== 'debit').map(c => c.name))
-  // Estimated from what was charged to credit cards in the last 30 days.
-  const cardDebt = -transactions
-    .filter(t => t.amount < 0 && credit.has(t.card) && daysAgo(t.date) >= 0 && daysAgo(t.date) < 30)
-    .reduce((a, t) => a + t.amount, 0)
+  const cardDebt = creditCardEstimate(transactions, transferList, cards)
   const totalAssets = assets.reduce((a, h) => a + h.value, 0)
   const totalDebts = liabilities.reduce((a, h) => a + h.value, 0) + cardDebt
   const net = totalAssets - totalDebts

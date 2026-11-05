@@ -6,8 +6,10 @@ import { useAppData } from '../data/AppData.jsx'
 import { downloadTransactionsCsv } from '../lib/csv.js'
 import { CATEGORY_ICON, EXPENSE, INCOME, RANGE_LABEL, SECTIONS } from '../lib/constants.js'
 import { sparkPaths } from '../lib/metrics.js'
+import { byNewest, transfersInRange } from '../lib/transfers.js'
 
 const PAGE = 25
+const TRANSFERS = '__transfers'
 
 function Balance ({ onHide }) {
   const { metrics, format, range } = useAppData()
@@ -179,7 +181,7 @@ function Categories ({ onHide, chartsPath, onPick }) {
 }
 
 function Transactions ({ onHide, category, setCategory }) {
-  const { metrics, showToast, cards, cardFilter, setCardFilter } = useAppData()
+  const { metrics, range, transferList, guest, showToast, cards, cardFilter, setCardFilter } = useAppData()
   const location = useLocation()
   const [search, setSearch] = useState(location.state?.search || '')
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -200,12 +202,18 @@ function Transactions ({ onHide, category, setCategory }) {
 
   const list = useMemo(() => {
     const query = search.trim().toLowerCase()
-    return metrics.inRange.filter(t =>
+    const moved = transfersInRange(transferList, range).filter(t =>
+      (!query || `transfer ${t.from} ${t.to} ${t.note}`.toLowerCase().includes(query)) &&
+      (!category || category === TRANSFERS) &&
+      (!cardFilter || t.from === cardFilter || t.to === cardFilter)
+    )
+    if (category === TRANSFERS) return moved
+    return [...metrics.inRange.filter(t =>
       (!query || `${t.name} ${t.desc} ${t.category} ${t.tags.map(tag => '#' + tag).join(' ')}`.toLowerCase().includes(query)) &&
       (!category || t.category === category) &&
       (!cardFilter || (cardFilter === '__none' ? !t.card : t.card === cardFilter))
-    )
-  }, [metrics.inRange, search, category, cardFilter])
+    ), ...moved].sort(byNewest)
+  }, [metrics.inRange, transferList, range, search, category, cardFilter])
 
   const hasFilters = !!(category || cardFilter)
   const clear = () => {
@@ -252,8 +260,9 @@ function Transactions ({ onHide, category, setCategory }) {
             type='button'
             title='Export CSV'
             onClick={() => {
-              downloadTransactionsCsv(list)
-              showToast(`${list.length} transactions exported`)
+              const rows = list.filter(t => !t.transfer)
+              downloadTransactionsCsv(rows)
+              showToast(`${rows.length} transactions exported`)
             }}
             className='flex h-9 items-center gap-1.5 rounded-[10px] border border-line-2 px-3 text-[13px] text-ink-2 hover:bg-raised'
           >
@@ -268,6 +277,7 @@ function Transactions ({ onHide, category, setCategory }) {
         <div className='flex flex-wrap gap-2 rounded-xl border border-line bg-rail p-3'>
           <select aria-label='Filter by category' value={category} onChange={e => setCategory(e.target.value)} className={selectClass}>
             <option value=''>All categories</option>
+            {!guest && <option value={TRANSFERS}>Transfers</option>}
             <optgroup label='Incomes'>{INCOME.map(([c]) => <option key={c} value={c}>{c}</option>)}</optgroup>
             <optgroup label='Bills'>{EXPENSE.map(([c]) => <option key={c} value={c}>{c}</option>)}</optgroup>
           </select>
@@ -306,7 +316,7 @@ function Transactions ({ onHide, category, setCategory }) {
 }
 
 export default function Dashboard () {
-  const { loading, hidden, setHidden, guest, setCardFilter } = useAppData()
+  const { loading, hidden, setHidden, guest, setCardFilter, transferHints } = useAppData()
   const [category, setCategory] = useState('')
   const [hiding, setHiding] = useState(null)
   if (loading) return <Spinner />
@@ -329,6 +339,15 @@ export default function Dashboard () {
   return (
     <div className='grid grid-cols-[minmax(0,1fr)] items-start gap-5 dash:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)]'>
       <div className='flex min-w-0 flex-col gap-5'>
+        {transferHints.length > 0 && (
+          <Link to='/transfers' className='flex items-center gap-2.5 rounded-[14px] border border-line-3 bg-panel px-4 py-3 text-[13px] text-ink hover:bg-raised'>
+            <Icon name='swap_horiz' className='text-[#5fc9e0]' />
+            <span className='flex-1'>
+              {transferHints.length} possible {transferHints.length === 1 ? 'transfer' : 'transfers'} between your accounts to review
+            </span>
+            <Icon name='arrow_forward' size={16} className='text-accent' />
+          </Link>
+        )}
         {!hidden.balance && <Balance onHide={hide('balance')} />}
         {!hidden.tx && <Transactions onHide={hide('tx')} category={category} setCategory={setCategory} />}
       </div>

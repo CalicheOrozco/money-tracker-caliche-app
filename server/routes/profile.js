@@ -1,7 +1,7 @@
 import express from 'express'
 import authenticateToken from '../auth/authenticateToken.js'
 import Card from '../schema/card.js'
-import { PLANNING_MODELS } from '../schema/planning.js'
+import { PLANNING_MODELS, Transfer, TransferDismissal } from '../schema/planning.js'
 import PushSubscription from '../schema/pushSubscription.js'
 import Token from '../schema/token.js'
 import TransactionModel from '../schema/transaction.js'
@@ -120,9 +120,12 @@ router.post('/password', async (req, res) => {
 })
 
 router.delete('/transactions', async (req, res) => {
-  const { deletedCount } = await TransactionModel.deleteMany({
-    userID: req.account.id
-  })
+  const userID = req.account.id
+  const [{ deletedCount }] = await Promise.all([
+    TransactionModel.deleteMany({ userID }),
+    Transfer.deleteMany({ userID }),
+    TransferDismissal.deleteMany({ userID })
+  ])
   res.json({ deletedCount })
 })
 

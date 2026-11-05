@@ -7,7 +7,7 @@ import { monthKey } from '../lib/periods.js'
 import { dueDatesInMonth } from '../lib/recurring.js'
 
 export default function Calendar () {
-  const { transactions, recurring, format, loading } = useAppData()
+  const { transactions, transferList, recurring, format, loading } = useAppData()
   const today = startOfToday()
   const [view, setView] = useState({ year: today.getFullYear(), month: today.getMonth() })
   const [selected, setSelected] = useState(toISODate(today))
@@ -45,6 +45,7 @@ export default function Calendar () {
 
   const selectedDay = selected.startsWith(prefix) ? Number(selected.slice(8)) : null
   const dayTx = selectedDay ? transactions.filter(t => t.date === selected) : []
+  const dayTransfers = selectedDay ? transferList.filter(t => t.date === selected) : []
   const dayDues = selectedDay ? dues[selectedDay] || [] : []
   const shift = delta => setView(({ year: y, month: m }) => {
     const date = new Date(y, m + delta, 1)
@@ -143,7 +144,7 @@ export default function Calendar () {
                 <span className='text-muted tabular-nums'>{format.signed(dayTx.reduce((a, t) => a + t.amount, 0))}</span>
               )}
             </div>
-            {dayTx.length === 0 && dayDues.length === 0 && (
+            {dayTx.length === 0 && dayDues.length === 0 && dayTransfers.length === 0 && (
               <div className='py-6 text-center text-muted'>Nothing on this day. A no-spend day!</div>
             )}
             {dayTx.map(t => (
@@ -154,6 +155,16 @@ export default function Calendar () {
                   <span className='text-xs text-faint'>{t.category}</span>
                 </div>
                 <span className={`tabular-nums ${t.amount > 0 ? 'text-accent' : ''}`}>{format.signed(t.amount)}</span>
+              </div>
+            ))}
+            {dayTransfers.map(t => (
+              <div key={t.id} className='flex items-center gap-2.5 py-1.5'>
+                <RowIcon name='swap_horiz' className='bg-[#16262a] text-[#5fc9e0]' />
+                <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
+                  <span className='truncate font-medium'>{t.note || 'Transfer'}</span>
+                  <span className='truncate text-xs text-faint'>{t.from} to {t.to}</span>
+                </div>
+                <span className='tabular-nums text-ink-2'>{format.money(t.value)}</span>
               </div>
             ))}
             {dayDues.length > 0 && (

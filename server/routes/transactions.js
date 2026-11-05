@@ -232,7 +232,7 @@ router.post('/cards/:id', requireOwner, async (req, res) => {
     const value = icon.trim().slice(0, 100)
     update.icon = value.includes('.') ? value.toLowerCase() : value
   }
-  if (type === 'credit' || type === 'debit') update.type = type
+  if (['credit', 'debit', 'savings', 'investment'].includes(type)) update.type = type
   if (typeof tone === 'string') update.tone = tone.slice(0, 20)
   if (last4 !== undefined) {
     if (typeof last4 !== 'string' || (last4 && !/^\d{4}$/.test(last4))) {

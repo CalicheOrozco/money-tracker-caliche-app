@@ -76,6 +76,23 @@ export const RecurringPayment = model('RecurringPayment', owned({
   active: { type: Boolean, default: true }
 }))
 
+// Money moved between the user's own accounts. Kept apart from transactions because
+// it is neither income nor spending. `source` holds the transactions it replaced, so
+// a conversion can be undone.
+export const Transfer = model('Transfer', owned({
+  from: { type: String, required: true },
+  to: { type: String, required: true },
+  amount: { type: Number, required: true },
+  date: { type: String, required: true },
+  note: { type: String, default: '' },
+  source: { type: [Schema.Types.Mixed], default: [] }
+}))
+
+// Suggested transfers the user said are not transfers.
+export const TransferDismissal = model('TransferDismissal', owned({
+  key: { type: String, required: true }
+}, 'key'))
+
 // One value per day, so the net worth chart is built from real history.
 export const NetWorthSnapshot = model('NetWorthSnapshot', owned({
   date: { type: String, required: true },
@@ -83,5 +100,6 @@ export const NetWorthSnapshot = model('NetWorthSnapshot', owned({
 }, 'date'))
 
 export const PLANNING_MODELS = [
-  Budget, Goal, Debt, Holding, Rule, RecurringOverride, NetWorthSnapshot, Merchant, RecurringPayment
+  Budget, Goal, Debt, Holding, Rule, RecurringOverride, NetWorthSnapshot, Merchant, RecurringPayment,
+  Transfer, TransferDismissal
 ]

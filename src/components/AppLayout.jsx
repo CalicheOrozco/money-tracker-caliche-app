@@ -16,7 +16,7 @@ const OVERVIEW = [
 const USER_GROUPS = [
   ['Overview', OVERVIEW.map(([path, ...rest]) => [path || '/', ...rest])],
   ['Money', [
-    ['/cards', 'Cards', 'credit_card'], ['/recurring', 'Recurring', 'event_repeat'],
+    ['/cards', 'Cards', 'credit_card'], ['/transfers', 'Transfers', 'swap_horiz'], ['/recurring', 'Recurring', 'event_repeat'],
     ['/budgets', 'Budgets', 'donut_small'], ['/goals', 'Goals', 'flag'],
     ['/debts', 'Debts', 'handshake'], ['/net-worth', 'Net worth', 'account_balance']
   ]],
@@ -30,7 +30,7 @@ const GUEST_GROUPS = [['Overview', OVERVIEW.map(([path, ...rest]) => [`/guest${p
 
 const TITLES = {
   insights: 'Insights', calendar: 'Calendar', charts: 'Charts', reports: 'Monthly report',
-  cards: 'Cards', recurring: 'Recurring payments', budgets: 'Budgets', goals: 'Savings goals',
+  cards: 'Cards', transfers: 'Transfers', recurring: 'Recurring payments', budgets: 'Budgets', goals: 'Savings goals',
   debts: 'Debts & loans', 'net-worth': 'Net worth', import: 'Import statement',
   rules: 'Rules & tags', merchants: 'Merchants', profile: 'Profile & settings'
 }

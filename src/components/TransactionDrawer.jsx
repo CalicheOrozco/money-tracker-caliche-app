@@ -8,10 +8,13 @@ import { CardLogo, Field, Icon, Switch, inputClass } from './ui.jsx'
 
 const emptyForm = () => ({
   type: 'expense', amount: '', name: '', date: toISODate(new Date()), desc: '', category: '', tags: '', merchant: '',
-  useCard: false, card: '', addingCard: false, newCard: '', newIcon: 'VisaIcon'
+  useCard: false, card: '', addingCard: false, newCard: '', newIcon: 'VisaIcon', from: '', to: ''
 })
 
 function formFrom (t) {
+  if (t.transfer) {
+    return { ...emptyForm(), type: 'transfer', amount: String(t.value), date: t.date, desc: t.note, from: t.from, to: t.to }
+  }
   return {
     ...emptyForm(),
     type: t.amount >= 0 ? 'income' : 'expense',
@@ -28,16 +31,21 @@ function formFrom (t) {
 }
 
 export default function TransactionDrawer () {
-  const { drawer, closeDrawer, cards, saveTransaction, removeTransaction, showToast, showError, format, ruleFor, guest, merchants, merchantFor } = useAppData()
+  const { drawer, closeDrawer, cards, saveTransaction, removeTransaction, showToast, showError, format, ruleFor, guest, merchants, merchantFor, saveTransfer, removeTransfer, revertTransfer, convertToTransfer } = useAppData()
   const { open, editing, preset } = drawer
   const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
   const [busy, setBusy] = useState(false)
   const isIncome = form.type === 'income'
+  const isTransfer = form.type === 'transfer'
+  const editingTransfer = !!editing?.transfer
+  const converting = isTransfer && editing && !editingTransfer
+  const noun = isTransfer ? 'transfer' : 'transaction'
 
   useEffect(() => {
     if (!open) return
     if (editing) setForm(formFrom(editing))
+    else if (preset?.transfer) setForm({ ...emptyForm(), type: 'transfer' })
     else if (preset?.card) setForm({ ...emptyForm(), useCard: true, card: preset.card })
     else setForm(emptyForm())
     setErrors({})
@@ -66,9 +74,53 @@ export default function TransactionDrawer () {
     return { card: form.card, icon: existing?.icon || editing?.icon || '' }
   }
 
+  async function submitTransfer (amount) {
+    const nextErrors = {}
+    if (!(amount > 0)) nextErrors.amount = true
+    if (!form.date) nextErrors.date = true
+    if (!form.from) nextErrors.from = 'Choose an account'
+    if (!form.to) nextErrors.to = 'Choose an account'
+    if (form.from && form.from === form.to) nextErrors.to = 'Choose a different account'
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors)
+      return
+    }
+
+    const details = { from: form.from, to: form.to, date: form.date, note: form.desc.trim() }
+    setBusy(true)
+    try {
+      if (converting) {
+        await convertToTransfer([editing.id], { ...details, amount })
+      } else {
+        await saveTransfer({ ...details, value: amount }, editing?.id)
+        showToast(editing ? 'Transfer updated' : 'Transfer added')
+      }
+      closeDrawer()
+    } catch (error) {
+      showError(error)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function restoreOriginal () {
+    setBusy(true)
+    try {
+      await revertTransfer(editing.id)
+      closeDrawer()
+      showToast('Original transactions restored')
+    } catch (error) {
+      showError(error)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function submit (event) {
     event?.preventDefault()
     const amount = parseFloat(String(form.amount).replace(/,/g, ''))
+    if (isTransfer) return submitTransfer(amount)
+
     const nextErrors = {}
     if (!(amount > 0)) nextErrors.amount = true
     if (!form.name.trim()) nextErrors.name = true
@@ -113,7 +165,7 @@ export default function TransactionDrawer () {
   async function handleDelete () {
     setBusy(true)
     try {
-      await removeTransaction(editing)
+      await (editingTransfer ? removeTransfer(editing) : removeTransaction(editing))
       closeDrawer()
     } catch (error) {
       showError(error)
@@ -133,42 +185,61 @@ export default function TransactionDrawer () {
       <aside
         role='dialog'
         aria-modal='true'
-        aria-label={editing ? 'Edit transaction' : 'New transaction'}
+        aria-label={`${editing ? 'Edit' : 'New'} ${noun}`}
         inert={!open}
         className={`fixed inset-y-0 right-0 z-[41] flex w-full flex-col border-l border-line-2 bg-[#0d110f] transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)] nav:w-115 ${
           open ? 'translate-x-0' : 'translate-x-[105%]'
         }`}
       >
         <div className='flex items-center justify-between border-b border-line-4 px-5 py-4.5'>
-          <h2 className='m-0 text-[17px] font-semibold'>{editing ? 'Edit transaction' : 'New transaction'}</h2>
+          <h2 className='m-0 text-[17px] font-semibold'>{editing ? 'Edit' : 'New'} {noun}</h2>
           <button type='button' aria-label='Close' onClick={closeDrawer} className='grid h-8.5 w-8.5 place-items-center rounded-[9px] text-muted hover:bg-raised hover:text-ink'>
             <Icon name='close' />
           </button>
         </div>
 
         <form id='transaction-form' onSubmit={submit} noValidate className='flex flex-1 flex-col gap-4.5 overflow-y-auto p-5'>
-          <div className='grid grid-cols-2 rounded-xl border border-line-2 bg-field p-1'>
+          <div className={`grid rounded-xl border border-line-2 bg-field p-1 ${guest ? 'grid-cols-2' : 'grid-cols-3'}`}>
             <button
               type='button'
-              aria-pressed={!isIncome}
+              aria-pressed={form.type === 'expense'}
+              disabled={editingTransfer}
               onClick={() => patch({ type: 'expense', category: '' })}
-              className={`h-9 rounded-[9px] font-medium ${!isIncome ? 'bg-[#2a1617] text-danger-soft' : 'text-muted'}`}
+              className={`h-9 rounded-[9px] font-medium disabled:opacity-40 ${form.type === 'expense' ? 'bg-[#2a1617] text-danger-soft' : 'text-muted'}`}
             >
               Expense
             </button>
             <button
               type='button'
               aria-pressed={isIncome}
+              disabled={editingTransfer}
               onClick={() => patch({ type: 'income', category: '' })}
-              className={`h-9 rounded-[9px] font-medium ${isIncome ? 'bg-accent-soft text-accent' : 'text-muted'}`}
+              className={`h-9 rounded-[9px] font-medium disabled:opacity-40 ${isIncome ? 'bg-accent-soft text-accent' : 'text-muted'}`}
             >
               Income
             </button>
+            {!guest && (
+              <button
+                type='button'
+                aria-pressed={isTransfer}
+                onClick={() => patch({
+                  type: 'transfer',
+                  ...(editing && !editingTransfer && {
+                    from: form.from || (editing.amount < 0 ? editing.card : ''),
+                    to: form.to || (editing.amount > 0 ? editing.card : ''),
+                    desc: form.desc || editing.name
+                  })
+                })}
+                className={`h-9 rounded-[9px] font-medium ${isTransfer ? 'bg-[#16262a] text-[#5fc9e0]' : 'text-muted'}`}
+              >
+                Transfer
+              </button>
+            )}
           </div>
 
           <div className='flex flex-col items-center gap-1.5 pb-1 pt-3'>
             <div className={`flex items-center justify-center gap-1 text-[44px] font-semibold tracking-[-.03em] ${isIncome ? 'text-accent' : 'text-ink'}`}>
-              <span>{isIncome ? '+' : '−'}{format.symbol}</span>
+              <span>{isTransfer ? '' : isIncome ? '+' : '−'}{format.symbol}</span>
               <input
                 aria-label='Amount'
                 value={form.amount}
@@ -182,6 +253,54 @@ export default function TransactionDrawer () {
             {errors.amount && <span className='text-xs text-danger'>Enter an amount greater than 0</span>}
           </div>
 
+          {isTransfer && (
+            <>
+              {converting && (
+                <p className='m-0 rounded-[11px] border border-line-3 bg-field p-3 text-xs leading-relaxed text-muted'>
+                  This {editing.amount < 0 ? 'expense' : 'income'} will become a transfer and stop counting in your totals. You can restore it later.
+                </p>
+              )}
+              <div className='grid grid-cols-2 gap-2.5'>
+                {[['from', 'From'], ['to', 'To']].map(([key, label]) => (
+                  <Field key={key} label={label}>
+                    <select
+                      aria-label={`${label} account`}
+                      value={form[key]}
+                      onChange={e => patch({ [key]: e.target.value })}
+                      aria-invalid={!!errors[key]}
+                      className={`${inputClass} px-2.5 ${errors[key] ? 'border-danger' : ''}`}
+                    >
+                      <option value=''>Choose an account</option>
+                      {[...new Set([...cards.map(c => c.name), form[key]].filter(Boolean))].map(name => <option key={name} value={name}>{name}</option>)}
+                    </select>
+                    {errors[key] && <span className='text-xs text-danger'>{errors[key]}</span>}
+                  </Field>
+                ))}
+              </div>
+              {cards.length < 2 && <span className='text-xs text-muted'>Add your accounts in Cards to move money between them.</span>}
+              <Field label='Date'>
+                <input
+                  type='date'
+                  value={form.date}
+                  onChange={e => patch({ date: e.target.value })}
+                  aria-invalid={!!errors.date}
+                  className={`${inputClass} px-2.5 ${errors.date ? 'border-danger' : ''}`}
+                />
+              </Field>
+              <Field label='Note' hint='optional'>
+                <input value={form.desc} onChange={e => patch({ desc: e.target.value })} placeholder='e.g. Credit card payment' className={inputClass} />
+              </Field>
+              <span className='text-xs leading-relaxed text-faint'>A transfer doesn’t count as income or spending.</span>
+              {editingTransfer && editing.restorable && (
+                <button type='button' disabled={busy} onClick={restoreOriginal} className='self-start text-[13px] text-accent'>
+                  Restore the original transactions
+                </button>
+              )}
+            </>
+          )}
+
+          {!isTransfer && (
+          <>
           <div className='grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-2.5'>
             <Field label='Name'>
               <input
@@ -319,13 +438,15 @@ export default function TransactionDrawer () {
               </div>
             )}
           </div>
+          </>
+          )}
         </form>
 
         <div className='flex gap-2 border-t border-line-4 px-5 py-4'>
           {editing && (
             <button
               type='button'
-              aria-label='Delete transaction'
+              aria-label={`Delete ${noun}`}
               disabled={busy}
               onClick={handleDelete}
               className='grid h-11.5 place-items-center rounded-xl border border-danger/30 px-3.5 text-danger hover:bg-danger/10'
@@ -342,7 +463,7 @@ export default function TransactionDrawer () {
             disabled={busy}
             className='h-11.5 flex-1 rounded-xl bg-accent text-[15px] font-semibold text-accent-ink hover:bg-accent-hover disabled:cursor-wait disabled:opacity-60'
           >
-            {busy ? 'Saving...' : editing ? 'Save changes' : 'Add transaction'}
+            {busy ? 'Saving...' : converting ? 'Save as transfer' : editing ? 'Save changes' : `Add ${noun}`}
           </button>
         </div>
       </aside>

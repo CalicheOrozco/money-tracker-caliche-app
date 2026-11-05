@@ -22,6 +22,7 @@ const Merchants = lazy(() => import('./screens/Merchants.jsx'))
 const NetWorth = lazy(() => import('./screens/NetWorth.jsx'))
 const Profile = lazy(() => import('./screens/Profile.jsx'))
 const Recurring = lazy(() => import('./screens/Recurring.jsx'))
+const Transfers = lazy(() => import('./screens/Transfers.jsx'))
 const Reports = lazy(() => import('./screens/Reports.jsx'))
 const Rules = lazy(() => import('./screens/Rules.jsx'))
 
@@ -66,6 +67,7 @@ const router = createBrowserRouter([
           { path: 'reports', element: lazyScreen(<Reports />) },
           { path: 'cards', element: lazyScreen(<Cards />) },
           { path: 'recurring', element: lazyScreen(<Recurring />) },
+          { path: 'transfers', element: lazyScreen(<Transfers />) },
           { path: 'budgets', element: lazyScreen(<Budgets />) },
           { path: 'goals', element: lazyScreen(<Goals />) },
           { path: 'debts', element: lazyScreen(<Debts />) },
