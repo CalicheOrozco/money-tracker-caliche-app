@@ -89,7 +89,7 @@ function CardFace ({ card, spent, selected, onClick }) {
 }
 
 function CardForm ({ initial, onClose }) {
-  const { cards, saveCard, showToast, format } = useAppData()
+  const { cards, saveCard, renameCard, showToast, format } = useAppData()
   const [form, setForm] = useState(initial)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -132,11 +132,15 @@ function CardForm ({ initial, onClose }) {
   async function save () {
     const name = form.name.trim()
     if (!name) return setError('Give the card a name.')
-    if (!form.editing && cards.some(c => c.name === name)) return setError('You already have a card with that name.')
+    const renaming = form.editing && form.originalName && name !== form.originalName
+    if ((!form.editing || renaming) && cards.some(c => c.name.toLowerCase() === name.toLowerCase() && c.name !== form.originalName)) {
+      return setError('You already have a card with that name.')
+    }
     if (form.last4 && form.last4.length !== 4) return setError('Last digits must be 4 numbers.')
 
     setBusy(true)
     try {
+      if (renaming) await renameCard(form.originalName, name)
       await saveCard({
         name,
         icon: form.icon,
@@ -168,7 +172,6 @@ function CardForm ({ initial, onClose }) {
         <Field label='Card name'>
           <input
             value={form.name}
-            disabled={form.editing}
             onChange={e => patch({ name: e.target.value })}
             placeholder='e.g. Nu Crédito'
             className={`${inputClass} bg-rail disabled:text-muted`}
@@ -313,6 +316,7 @@ export default function Cards () {
     limit: card.limit ? String(card.limit) : '',
     tone: card.tone || 'graphite',
     editing: true,
+    originalName: card.name,
     balance: typeof card.balance === 'number' ? String(card.balance) : '',
     balanceDate: card.balanceDate || toISODate(new Date())
   })
