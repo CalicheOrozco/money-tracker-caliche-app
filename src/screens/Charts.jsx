@@ -9,9 +9,9 @@ import {
   PointElement,
   Tooltip
 } from 'chart.js'
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Bar, Doughnut, Line } from 'react-chartjs-2'
+import TransactionGroups from '../components/TransactionGroups.jsx'
 import { Icon, Spinner } from '../components/ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
 import { CATEGORY_ICON, RANGE_LABEL } from '../lib/constants.js'
@@ -249,18 +249,31 @@ function BalanceOverTime () {
   )
 }
 
-function SpendingByCategory () {
-  const { metrics, format, guest, hidden, setHidden, setCategoryFilter } = useAppData()
-  const navigate = useNavigate()
+const PAGE = 25
 
-  // Opens the dashboard's transactions for this category, keeping the selected range.
-  const open = name => {
-    setCategoryFilter(name)
-    if (hidden.tx) setHidden({ ...hidden, tx: false })
-    navigate(guest ? '/guest' : '/')
-  }
+function SpendingByCategory () {
+  const { metrics, format, range } = useAppData()
   const { categories, expense } = metrics
   const max = categories[0]?.amount || 1
+  const [selected, setSelected] = useState('')
+  const [limit, setLimit] = useState(PAGE)
+  const listRef = useRef(null)
+
+  // Same rule as the totals above: expenses of this category in the selected range.
+  const list = useMemo(
+    () => metrics.inRange.filter(t => t.category === selected && t.amount < 0),
+    [metrics.inRange, selected]
+  )
+  const open = list.length > 0
+
+  useEffect(() => {
+    if (selected) listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [selected])
+
+  const toggle = name => {
+    setSelected(selected === name ? '' : name)
+    setLimit(PAGE)
+  }
 
   return (
     <section className={`${panelClass} gap-3.5 wide:col-span-2`}>
@@ -275,8 +288,9 @@ function SpendingByCategory () {
             key={c.name}
             type='button'
             title={`See ${c.name} transactions`}
-            onClick={() => open(c.name)}
-            className='-mx-2 flex flex-col gap-1.75 rounded-lg px-2 py-1.5 text-left text-ink hover:bg-hover'
+            aria-pressed={selected === c.name}
+            onClick={() => toggle(c.name)}
+            className={`-mx-2 flex flex-col gap-1.75 rounded-lg px-2 py-1.5 text-left text-ink hover:bg-hover ${selected === c.name ? 'bg-hover' : ''}`}
           >
             <span className='flex w-full items-center gap-2.5'>
               <Icon name={CATEGORY_ICON[c.name] || 'category'} size={18} className='flex-none' />
@@ -289,6 +303,36 @@ function SpendingByCategory () {
           </button>
         ))}
       </div>
+
+      {open && (
+        <div ref={listRef} className='flex scroll-mt-4 flex-col border-t border-line pt-3.5'>
+          <div className='flex items-center justify-between gap-3'>
+            <div className='flex min-w-0 items-baseline gap-2'>
+              <h3 className='m-0 truncate text-[15px] font-semibold'>{selected}</h3>
+              <span className='flex-none text-xs text-faint'>{list.length} · {RANGE_LABEL[range]}</span>
+            </div>
+            <button
+              type='button'
+              aria-label={`Close ${selected} transactions`}
+              title='Close'
+              onClick={() => toggle(selected)}
+              className='grid h-7.5 w-7.5 flex-none place-items-center rounded-lg text-muted hover:bg-hover hover:text-ink'
+            >
+              <Icon name='close' size={18} />
+            </button>
+          </div>
+          <TransactionGroups items={list.slice(0, limit)} />
+          {list.length > limit && (
+            <button
+              type='button'
+              onClick={() => setLimit(limit + PAGE)}
+              className='mt-2 h-10 rounded-[11px] border border-dashed border-line-3 text-muted hover:border-accent hover:text-ink'
+            >
+              Show {Math.min(PAGE, list.length - limit)} more
+            </button>
+          )}
+        </div>
+      )}
     </section>
   )
 }

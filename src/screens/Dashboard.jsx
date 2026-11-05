@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import TxIcon from '../components/TxIcon.jsx'
+import TransactionGroups from '../components/TransactionGroups.jsx'
 import { CardLogo, HideButton, Icon, Section, Spinner } from '../components/ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
 import { downloadTransactionsCsv } from '../lib/csv.js'
 import { CATEGORY_ICON, EXPENSE, INCOME, RANGE_LABEL, SECTIONS } from '../lib/constants.js'
-import { dayLabel } from '../lib/dates.js'
 import { sparkPaths } from '../lib/metrics.js'
 
 const PAGE = 25
@@ -179,54 +178,8 @@ function Categories ({ onHide, chartsPath, onPick }) {
   )
 }
 
-function TransactionRow ({ t }) {
-  const { openEdit, removeTransaction, cards, format, showError } = useAppData()
-  const income = t.amount > 0
-  const logo = cards.find(c => c.name === t.card)?.icon || t.icon
-
-  return (
-    <div className='flex items-center gap-1 rounded-xl hover:bg-[#141a16]'>
-      <button
-        type='button'
-        onClick={() => openEdit(t)}
-        className='flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2.5 text-left'
-      >
-        <TxIcon t={t} />
-        <span className='flex min-w-0 flex-1 flex-col gap-0.75'>
-          <span className='truncate font-medium'>{t.name}</span>
-          <span className='flex min-w-0 items-center gap-1.5 text-xs text-faint'>
-            <span className='truncate'>
-              {t.desc ? `${t.category} · ${t.desc}` : t.category}
-              {t.tags.length > 0 && ` · ${t.tags.map(tag => '#' + tag).join(' ')}`}
-            </span>
-            {t.card && (
-              <span className='inline-flex flex-none items-center gap-1.25'>
-                <span>·</span>
-                <CardLogo icon={logo} className='h-3.25 w-4.5 rounded-[3px]! p-px!' />
-                <span>{t.card}</span>
-              </span>
-            )}
-          </span>
-        </span>
-        <span className={`whitespace-nowrap font-semibold tabular-nums ${income ? 'text-accent' : 'text-ink'}`}>
-          {format.signed(t.amount)}
-        </span>
-      </button>
-      <button
-        type='button'
-        title='Delete'
-        aria-label={`Delete ${t.name}`}
-        onClick={() => removeTransaction(t).catch(showError)}
-        className='mr-2 grid h-7.5 w-7.5 flex-none place-items-center rounded-lg text-[#4a524c] hover:bg-danger/10 hover:text-danger'
-      >
-        <Icon name='delete' size={18} />
-      </button>
-    </div>
-  )
-}
-
-function Transactions ({ onHide }) {
-  const { metrics, format, showToast, cards, cardFilter, setCardFilter, categoryFilter: category, setCategoryFilter: setCategory } = useAppData()
+function Transactions ({ onHide, category, setCategory }) {
+  const { metrics, showToast, cards, cardFilter, setCardFilter } = useAppData()
   const location = useLocation()
   const [search, setSearch] = useState(location.state?.search || '')
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -237,7 +190,7 @@ function Transactions ({ onHide }) {
     if (cardFilter) setFiltersOpen(true)
   }, [cardFilter])
 
-  // Picking a category elsewhere (Where it went, Charts) opens its transactions here.
+  // Picking a category in Where it went opens its transactions here.
   useEffect(() => {
     if (!category) return
     setFiltersOpen(true)
@@ -253,16 +206,6 @@ function Transactions ({ onHide }) {
       (!cardFilter || (cardFilter === '__none' ? !t.card : t.card === cardFilter))
     )
   }, [metrics.inRange, search, category, cardFilter])
-
-  const groups = useMemo(() => {
-    const result = []
-    for (const t of list.slice(0, limit)) {
-      const last = result[result.length - 1]
-      if (last?.date === t.date) last.items.push(t)
-      else result.push({ date: t.date, items: [t] })
-    }
-    return result
-  }, [list, limit])
 
   const hasFilters = !!(category || cardFilter)
   const clear = () => {
@@ -347,19 +290,7 @@ function Transactions ({ onHide }) {
         </div>
       )}
 
-      <div className='flex flex-col'>
-        {groups.map(group => (
-          <div key={group.date} className='flex flex-col'>
-            <div className='flex justify-between px-1 pb-1.5 pt-3 text-xs font-medium text-faint'>
-              <span>{dayLabel(group.date)}</span>
-              <span className='tabular-nums'>
-                {format.signed(group.items.reduce((total, t) => total + t.amount, 0))}
-              </span>
-            </div>
-            {group.items.map(t => <TransactionRow key={t.id} t={t} />)}
-          </div>
-        ))}
-      </div>
+      <TransactionGroups items={list.slice(0, limit)} />
 
       {list.length > limit && (
         <button
@@ -375,7 +306,8 @@ function Transactions ({ onHide }) {
 }
 
 export default function Dashboard () {
-  const { loading, hidden, setHidden, guest, setCardFilter, setCategoryFilter } = useAppData()
+  const { loading, hidden, setHidden, guest, setCardFilter } = useAppData()
+  const [category, setCategory] = useState('')
   if (loading) return <Spinner />
 
   const hide = key => () => setHidden({ ...hidden, [key]: true })
@@ -396,7 +328,7 @@ export default function Dashboard () {
     <div className='grid grid-cols-[minmax(0,1fr)] items-start gap-5 dash:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)]'>
       <div className='flex min-w-0 flex-col gap-5'>
         {!hidden.balance && <Balance onHide={hide('balance')} />}
-        {!hidden.tx && <Transactions onHide={hide('tx')} />}
+        {!hidden.tx && <Transactions onHide={hide('tx')} category={category} setCategory={setCategory} />}
       </div>
       <div className='flex min-w-0 flex-col gap-5'>
         {!hidden.stats && <Stats onHide={hide('stats')} />}
@@ -414,7 +346,7 @@ export default function Dashboard () {
             onHide={hide('categories')}
             chartsPath={guest ? '/guest/charts' : '/charts'}
             onPick={name => {
-              setCategoryFilter(name)
+              setCategory(name)
               if (hidden.tx) setHidden({ ...hidden, tx: false })
             }}
           />

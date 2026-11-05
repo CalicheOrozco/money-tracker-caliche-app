@@ -71,7 +71,6 @@ export function AppDataProvider ({ guest, children }) {
   const [drawer, setDrawer] = useState({ open: false, editing: null, preset: null })
   const [toast, setToast] = useState(null)
   const [cardFilter, setCardFilter] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
   const toastTimer = useRef(null)
 
   const showToast = useCallback((message, options = {}) => {
@@ -218,7 +217,7 @@ export function AppDataProvider ({ guest, children }) {
     () => ({
       guest, userID, settings, transactions, cards, loading, range, setRange, privacy, setPrivacy,
       hidden, setHidden, drawer, toast, setToast, showToast, showError, format, metrics,
-      recurring, manualRecurring, rules, overrides, ruleFor, merchants, merchantOf, merchantFor, cardFilter, setCardFilter, categoryFilter, setCategoryFilter, openNew, openEdit,
+      recurring, manualRecurring, rules, overrides, ruleFor, merchants, merchantOf, merchantFor, cardFilter, setCardFilter, openNew, openEdit,
       closeDrawer, reload, saveTransaction, removeTransaction, saveCard, removeCard, importRows,
       deleteAllTransactions
     }),
@@ -226,7 +225,7 @@ export function AppDataProvider ({ guest, children }) {
       guest, userID, settings, transactions, cards, loading, range, privacy, hidden, setHidden,
       drawer, toast, showToast, showError, format, metrics, recurring, rules, overrides, ruleFor,
       merchants, merchantOf, merchantFor, manualRecurring,
-      cardFilter, categoryFilter, openNew, openEdit, closeDrawer, reload, saveTransaction, removeTransaction,
+      cardFilter, openNew, openEdit, closeDrawer, reload, saveTransaction, removeTransaction,
       saveCard, removeCard, importRows, deleteAllTransactions
     ]
   )
