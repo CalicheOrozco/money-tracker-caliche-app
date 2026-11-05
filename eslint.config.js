@@ -35,7 +35,7 @@ export default [
     languageOptions: { globals: globals.serviceworker }
   },
   {
-    files: ['server/**/*.js', 'api/**/*.js', '*.config.js'],
+    files: ['server/**/*.js', 'api/**/*.js', 'scripts/**/*.mjs', 'test/**/*.js', '*.config.js'],
     languageOptions: { globals: globals.node }
   }
 ]

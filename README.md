@@ -14,6 +14,15 @@ npm run dev
 
 `npm run dev` starts the app on http://localhost:5173 and the API on port 5001. Vite proxies `/api` to the API.
 
+| Command | What it does |
+| --- | --- |
+| `npm test` | Unit tests for money, dates, recurring payments, transfers and balances (`test/`) |
+| `npm run lint` | ESLint. It should report nothing |
+| `npm run sync:mcp` | Copies the shared helpers to the MCP project next to this one. Add `-- --check` to only compare |
+| `npm run seed:guest` | Refreshes the sample data of the guest demo |
+
+GitHub Actions runs lint, tests and the build on every push (`.github/workflows/ci.yml`).
+
 ## Environment variables
 
 | Name | Purpose |
@@ -27,8 +36,18 @@ npm run dev
 | `CRON_SECRET` | Protects the daily notification job. Vercel sends it to the job automatically |
 | `BRANDFETCH_CLIENT_ID` | Logo search and logos, from developers.brandfetch.com. The server hands it to the browser at runtime |
 | `BRANDFETCH_API_KEY` | Brand colors for cards (secret, server only, optional) |
+| `TIMEZONE` | Zone for the daily reminder and weekly summary (optional, default `America/Moncton`) |
+| `API_PORT` | Local API port (optional, default 5001) |
 
-Set the same values in the Vercel project. Never prefix them with `VITE_`, because that exposes them to the browser.
+Set the same values in the Vercel project. Never prefix them with `VITE_`, because that exposes them to the browser. Without `MONGODB_URI` or the two token secrets the API answers 503 and logs which ones are missing.
+
+## Security
+
+- Sign-in and sign-up are rate limited per address and per account, with counters in MongoDB so every serverless instance shares them.
+- Refresh tokens are stored as hashes. Changing the password ends every other session, including connected assistants.
+- Deleting all data or the account asks for the password again.
+- The guest demo is read only on the server. Guests edit a copy that lives in their browser tab.
+- `vercel.json` sets a Content Security Policy and blocks framing. A new external script, style, font, image or API needs to be added there.
 
 ## Notifications
 
@@ -44,4 +63,4 @@ Notifications are web push only, sent to devices where the user turned them on. 
 
 - UI primitives live in `src/components/ui.jsx`, screens in `src/screens`, and shared data and formatting in `src/data/AppData.jsx`.
 - The theme (colors, fonts, breakpoints) is in `src/index.css`.
-- `xlsx` is installed from the SheetJS CDN because the npm release is outdated and has known vulnerabilities.
+- Icons come from Material Symbols, but `index.html` only asks for the ones the app uses (about 13 KB instead of 3 MB). A new icon has to be added to that list or it shows as text.
