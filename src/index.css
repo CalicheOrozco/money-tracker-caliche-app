@@ -1,3 +1,118 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: Geist, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+
+  --breakpoint-nav: 860px;
+  --breakpoint-wide: 1100px;
+  --breakpoint-dash: 1180px;
+
+  --color-canvas: #090b0a;
+  --color-rail: #0b0e0c;
+  --color-panel: #0f1411;
+  --color-field: #101412;
+  --color-raised: #151a17;
+  --color-hover: #1a201c;
+  --color-line: #1a211d;
+  --color-line-2: #1f2622;
+  --color-line-3: #232b26;
+  --color-line-4: #161c18;
+  --color-ink: #e9efea;
+  --color-ink-2: #c9d1cb;
+  --color-muted: #8b958e;
+  --color-faint: #5d6660;
+  --color-accent: #34d27b;
+  --color-accent-hover: #4fe08f;
+  --color-accent-ink: #06110a;
+  --color-accent-soft: #16301f;
+  --color-danger: #f26d6d;
+  --color-danger-soft: #f59a9a;
+}
+
+@layer base {
+  html,
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--color-accent);
+  }
+
+  button:not(:disabled),
+  label[for],
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+
+  input::placeholder {
+    color: var(--color-faint);
+  }
+
+  input[type='date'] {
+    color-scheme: dark;
+  }
+
+  select {
+    color-scheme: dark;
+  }
+
+  select option,
+  select optgroup {
+    background: var(--color-raised);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line-2);
+    border-radius: 10px;
+  }
+}
+
+@keyframes toast-up {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.icon {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  user-select: none;
+}
+
+@media print {
+  html,
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

@@ -1,0 +1,293 @@
+import {
+  ArcElement,
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  LineElement,
+  LinearScale,
+  PointElement,
+  Tooltip
+} from 'chart.js'
+import { useMemo, useState } from 'react'
+import { Bar, Doughnut, Line } from 'react-chartjs-2'
+import { Icon, Spinner } from '../components/ui.jsx'
+import { useAppData } from '../data/AppData.jsx'
+import { CATEGORY_ICON, RANGE_LABEL } from '../lib/constants.js'
+import { monthlyCashflow } from '../lib/metrics.js'
+
+ChartJS.register(
+  ArcElement, BarElement, CategoryScale, Filler, LineElement, LinearScale, PointElement, Tooltip
+)
+
+const GREEN = '#34d27b'
+const RED = '#f26d6d'
+const MONO = { family: "'Geist Mono', monospace", size: 11 }
+
+const panelClass =
+  'flex min-w-0 flex-col gap-4 rounded-[20px] border border-line bg-panel p-5'
+
+function tooltip (label) {
+  return {
+    backgroundColor: '#121714',
+    borderColor: '#232b26',
+    borderWidth: 1,
+    titleColor: '#8b958e',
+    bodyColor: '#e9efea',
+    padding: 10,
+    cornerRadius: 10,
+    displayColors: false,
+    callbacks: { label }
+  }
+}
+
+function IncomeVsExpenses () {
+  const { metrics, format } = useAppData()
+  const [type, setType] = useState('donut')
+  const { income, expense, net } = metrics
+  const hasData = income + expense > 0
+  const label = ctx => `${ctx.label}: ${format.money(ctx.raw)}`
+
+  const data = {
+    labels: ['Income', 'Expenses'],
+    datasets: [{
+      data: hasData ? [income, expense] : [1, 0],
+      backgroundColor: hasData ? [GREEN, RED] : ['#1a211d', '#1a211d'],
+      borderWidth: 0
+    }]
+  }
+
+  return (
+    <section className={panelClass}>
+      <div className='flex flex-wrap items-center justify-between gap-2.5'>
+        <h2 className='m-0 text-[15px] font-semibold'>Income vs expenses</h2>
+        <div className='flex rounded-[9px] border border-line bg-rail p-0.5'>
+          {[['donut', 'Donut', 'donut_large'], ['bars', 'Bars', 'bar_chart']].map(([key, name, icon]) => (
+            <button
+              key={key}
+              type='button'
+              title={name}
+              aria-label={name}
+              aria-pressed={type === key}
+              onClick={() => setType(key)}
+              className={`grid h-7 w-8 place-items-center rounded-[7px] ${
+                type === key ? 'bg-[#1f2a23] text-accent' : 'text-muted'
+              }`}
+            >
+              <Icon name={icon} size={18} />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {type === 'donut' ? (
+        <div className='relative mx-auto my-1 h-[200px] w-[200px]'>
+          <Doughnut
+            data={data}
+            options={{
+              cutout: '78%',
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false }, tooltip: hasData ? tooltip(label) : { enabled: false } }
+            }}
+          />
+          <div className='pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 px-5 text-center'>
+            <div className='text-xs text-muted'>Net</div>
+            <div className={`text-lg font-semibold tabular-nums ${net >= 0 ? 'text-accent' : 'text-danger'}`}>
+              {format.signed(net)}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className='h-[208px]'>
+          <Bar
+            data={{
+              labels: data.labels,
+              datasets: [{
+                data: [income, expense],
+                backgroundColor: [GREEN, RED],
+                borderRadius: { topLeft: 10, topRight: 10, bottomLeft: 4, bottomRight: 4 },
+                borderSkipped: false,
+                maxBarThickness: 64
+              }]
+            }}
+            options={{
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false }, tooltip: tooltip(label) },
+              scales: {
+                x: { grid: { display: false }, border: { display: false }, ticks: { color: '#8b958e' } },
+                y: { display: false, beginAtZero: true }
+              }
+            }}
+          />
+        </div>
+      )}
+
+      <div className='grid grid-cols-2 gap-2.5'>
+        {[['Income', GREEN, income], ['Expenses', RED, expense]].map(([name, color, value]) => (
+          <div key={name} className='flex min-w-0 flex-col gap-1'>
+            <span className='flex items-center gap-1.5 text-xs text-muted'>
+              <span className='h-2 w-2 rounded-[3px]' style={{ background: color }} />
+              {name}
+            </span>
+            <span className='truncate font-semibold tabular-nums'>{format.money(value)}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function MonthlyCashflow () {
+  const { transactions, format } = useAppData()
+  const months = useMemo(() => monthlyCashflow(transactions), [transactions])
+
+  return (
+    <section className={panelClass}>
+      <div className='flex items-center justify-between'>
+        <h2 className='m-0 text-[15px] font-semibold'>Monthly cashflow</h2>
+        <span className='font-mono text-[11px] text-faint'>LAST 6 MONTHS</span>
+      </div>
+      <div className='h-[220px]'>
+        <Bar
+          data={{
+            labels: months.map(m => m.label),
+            datasets: [
+              { label: 'Income', data: months.map(m => m.income), backgroundColor: GREEN, borderRadius: 5, maxBarThickness: 22 },
+              { label: 'Expenses', data: months.map(m => m.expense), backgroundColor: 'rgba(242,109,109,.85)', borderRadius: 5, maxBarThickness: 22 }
+            ]
+          }}
+          options={{
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { display: false },
+              tooltip: tooltip(ctx => `${ctx.dataset.label}: ${format.money(ctx.raw)}`)
+            },
+            scales: {
+              x: { grid: { display: false }, border: { display: false }, ticks: { color: '#8b958e', font: MONO } },
+              y: { display: false, beginAtZero: true }
+            }
+          }}
+        />
+      </div>
+      <div className='grid grid-cols-6 gap-2.5 text-center text-[11px] tabular-nums'>
+        {months.map(m => {
+          const net = m.income - m.expense
+          return (
+            <span key={m.label} className={net >= 0 ? 'text-accent' : 'text-danger'}>
+              {format.short(net)}
+            </span>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function BalanceOverTime () {
+  const { metrics, format, privacy, range } = useAppData()
+  const { series } = metrics
+
+  return (
+    <section className={`${panelClass} wide:col-span-2`}>
+      <div className='flex flex-wrap items-baseline justify-between gap-2'>
+        <h2 className='m-0 text-[15px] font-semibold'>Balance over time</h2>
+        <span className='text-xs text-faint'>{RANGE_LABEL[range]}</span>
+      </div>
+      <div className='h-[240px]'>
+        <Line
+          data={{
+            labels: series.map(p => p.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+            datasets: [{
+              data: series.map(p => p.value),
+              borderColor: GREEN,
+              borderWidth: 2.5,
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              pointHoverBackgroundColor: GREEN,
+              cubicInterpolationMode: 'monotone',
+              fill: true,
+              backgroundColor: ({ chart }) => {
+                const { ctx, chartArea } = chart
+                if (!chartArea) return 'rgba(52,210,123,.1)'
+                const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
+                gradient.addColorStop(0, 'rgba(52,210,123,.28)')
+                gradient.addColorStop(1, 'rgba(52,210,123,0)')
+                return gradient
+              }
+            }]
+          }}
+          options={{
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { display: false },
+              tooltip: tooltip(ctx => (ctx.raw < 0 ? '−' : '') + format.money(ctx.raw))
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                border: { color: '#1f2622' },
+                ticks: { color: '#5d6660', font: MONO, maxTicksLimit: 7, maxRotation: 0 }
+              },
+              y: {
+                grid: { color: '#161c18' },
+                border: { display: false },
+                ticks: {
+                  color: '#5d6660',
+                  font: MONO,
+                  maxTicksLimit: 5,
+                  callback: value => (privacy ? '•••' : (value < 0 ? '−' : '') + format.plain(value))
+                }
+              }
+            }
+          }}
+        />
+      </div>
+    </section>
+  )
+}
+
+function SpendingByCategory () {
+  const { metrics, format } = useAppData()
+  const { categories, expense } = metrics
+  const max = categories[0]?.amount || 1
+
+  return (
+    <section className={`${panelClass} gap-3.5 wide:col-span-2`}>
+      <div className='flex items-baseline justify-between'>
+        <h2 className='m-0 text-[15px] font-semibold'>Spending by category</h2>
+        <span className='text-xs text-faint'>{format.money(expense)} total</span>
+      </div>
+      {categories.length === 0 && <p className='m-0 text-[13px] text-muted'>No expenses in this period.</p>}
+      <div className='grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-x-7 gap-y-2.5'>
+        {categories.map(c => (
+          <div key={c.name} className='flex flex-col gap-[7px] py-1.5'>
+            <div className='flex items-center gap-2.5'>
+              <Icon name={CATEGORY_ICON[c.name] || 'category'} size={18} className='flex-none' />
+              <span className='min-w-0 flex-1 truncate'>{c.name}</span>
+              <span className='tabular-nums'>{format.money(c.amount)}</span>
+            </div>
+            <div className='h-[5px] overflow-hidden rounded-full bg-line'>
+              <div className='h-full rounded-full' style={{ width: `${Math.round((c.amount / max) * 100)}%`, background: c.color }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+export default function Charts () {
+  const { loading } = useAppData()
+  if (loading) return <Spinner />
+
+  return (
+    <div className='grid grid-cols-[minmax(0,1fr)] gap-5 wide:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]'>
+      <IncomeVsExpenses />
+      <MonthlyCashflow />
+      <BalanceOverTime />
+      <SpendingByCategory />
+    </div>
+  )
+}

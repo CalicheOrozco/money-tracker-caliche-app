@@ -1,63 +1,95 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
+import { StrictMode, Suspense, lazy } from 'react'
+import { createRoot } from 'react-dom/client'
+import { Navigate, Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom'
+import { AuthProvider, useAuth } from './auth/AuthProvider.jsx'
+import AppLayout from './components/AppLayout.jsx'
+import { Spinner } from './components/ui.jsx'
 import './index.css'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import Login from './Routes/Login.jsx'
-import Signup from './Routes/Signup.jsx'
-import Guest from './Routes/Guest.jsx'
-import ProtectedRoute from './Routes/ProtectedRoute.jsx'
-import UserCharts from './Routes/UserCharts.jsx'
-import { AuthProvider } from './auth/AuthProvider.jsx'
-import GuestCharts from './Routes/GuestCharts.jsx'
-import Files from './Routes/Files.jsx'
-import BBVA from './Routes/BBVA.jsx'
+import { loadLogoConfig } from './lib/brandfetch.js'
+import { registerServiceWorker } from './lib/push.js'
+import Auth from './screens/Auth.jsx'
+import Dashboard from './screens/Dashboard.jsx'
+
+const Budgets = lazy(() => import('./screens/Budgets.jsx'))
+const Calendar = lazy(() => import('./screens/Calendar.jsx'))
+const Cards = lazy(() => import('./screens/Cards.jsx'))
+const Charts = lazy(() => import('./screens/Charts.jsx'))
+const Debts = lazy(() => import('./screens/Debts.jsx'))
+const Goals = lazy(() => import('./screens/Goals.jsx'))
+const Import = lazy(() => import('./screens/Import.jsx'))
+const Insights = lazy(() => import('./screens/Insights.jsx'))
+const Merchants = lazy(() => import('./screens/Merchants.jsx'))
+const NetWorth = lazy(() => import('./screens/NetWorth.jsx'))
+const Profile = lazy(() => import('./screens/Profile.jsx'))
+const Recurring = lazy(() => import('./screens/Recurring.jsx'))
+const Reports = lazy(() => import('./screens/Reports.jsx'))
+const Rules = lazy(() => import('./screens/Rules.jsx'))
+
+function Gate () {
+  const { ready } = useAuth()
+  return ready ? <Outlet /> : <Spinner />
+}
+
+function RequireUser () {
+  const { user } = useAuth()
+  return user ? <AppLayout /> : <Navigate to='/login' replace />
+}
+
+const lazyScreen = element => <Suspense fallback={<Spinner />}>{element}</Suspense>
 
 const router = createBrowserRouter([
   {
-    path: '/login',
-    element: <Login />
-  },
-  {
-    path: '/signup',
-    element: <Signup />
-  },
-  {
-    path: '/guest',
-    element: <Guest />
-  },
-  {
-    path: '/guest-charts',
-    element: <GuestCharts />
-  },
-  {
-    path: '/',
-    element: <ProtectedRoute />,
+    element: <Gate />,
     children: [
+      { path: '/login', element: <Auth mode='login' /> },
+      { path: '/signup', element: <Auth mode='signup' /> },
+      {
+        path: '/guest',
+        element: <AppLayout guest />,
+        children: [
+          { index: true, element: <Dashboard /> },
+          { path: 'insights', element: lazyScreen(<Insights />) },
+          { path: 'calendar', element: lazyScreen(<Calendar />) },
+          { path: 'charts', element: lazyScreen(<Charts />) },
+          { path: 'reports', element: lazyScreen(<Reports />) }
+        ]
+      },
+      { path: '/guest-charts', element: <Navigate to='/guest/charts' replace /> },
       {
         path: '/',
-        element: <App />
+        element: <RequireUser />,
+        children: [
+          { index: true, element: <Dashboard /> },
+          { path: 'insights', element: lazyScreen(<Insights />) },
+          { path: 'calendar', element: lazyScreen(<Calendar />) },
+          { path: 'charts', element: lazyScreen(<Charts />) },
+          { path: 'reports', element: lazyScreen(<Reports />) },
+          { path: 'cards', element: lazyScreen(<Cards />) },
+          { path: 'recurring', element: lazyScreen(<Recurring />) },
+          { path: 'budgets', element: lazyScreen(<Budgets />) },
+          { path: 'goals', element: lazyScreen(<Goals />) },
+          { path: 'debts', element: lazyScreen(<Debts />) },
+          { path: 'net-worth', element: lazyScreen(<NetWorth />) },
+          { path: 'rules', element: lazyScreen(<Rules />) },
+          { path: 'merchants', element: lazyScreen(<Merchants />) },
+          { path: 'import', element: lazyScreen(<Import />) },
+          { path: 'profile', element: lazyScreen(<Profile />) },
+          { path: 'files', element: <Navigate to='/import' replace /> }
+        ]
       },
-      {
-        path: '/charts',
-        element: <UserCharts />
-      },
-      {
-        path: '/files',
-        element: <Files />
-      },
-      {
-        path: '/BBVA',
-        element: <BBVA />
-      }
+      { path: '*', element: <Navigate to='/' replace /> }
     ]
   }
 ])
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
-  </React.StrictMode>
-)
+registerServiceWorker()
+
+loadLogoConfig().finally(() => {
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </StrictMode>
+  )
+})
