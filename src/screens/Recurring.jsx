@@ -112,7 +112,7 @@ function RecurringRow ({ r, open, onToggle, onEdit }) {
   const amount = privacy
     ? '••••'
     : varies
-      ? `${format.symbol}${Math.round(r.min).toLocaleString('en-US')}–${Math.round(r.max).toLocaleString('en-US')}`
+      ? `${format.money(r.min)} to ${format.money(r.max)}`
       : format.money(r.avg)
 
   const status = r.cancelled ? 'Cancelled' : r.inactive ? 'Inactive' : due <= 0 ? 'Due today' : `Next ${shortDate(r.next)}`
@@ -307,7 +307,7 @@ export default function Recurring () {
               <div className='flex min-w-40 flex-1 flex-col gap-0.5'>
                 <span className='font-medium'>{r.name}</span>
                 <span className='text-xs text-muted'>
-                  Monthly · around day {Number(r.last.date.slice(8))} · {format.symbol}{Math.round(r.min).toLocaleString('en-US')}–{Math.round(r.max).toLocaleString('en-US')}
+                  Monthly · around day {Number(r.last.date.slice(8))} · {format.money(r.min)} to {format.money(r.max)}
                 </span>
               </div>
               <div className='flex gap-1.5'>

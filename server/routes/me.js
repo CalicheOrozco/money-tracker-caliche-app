@@ -17,6 +17,8 @@ import {
 } from '../schema/planning.js'
 import Card from '../schema/card.js'
 import TransactionModel from '../schema/transaction.js'
+import { priceValue } from '../lib/price.js'
+import { validateTransactionBody } from '../lib/validateTransaction.js'
 
 const router = express.Router()
 
@@ -160,23 +162,36 @@ router.post('/rules/:id/apply', requireValidId, async (req, res) => {
 
 const ensureCards = (userID, names, icons = {}) => Promise.all([...new Set(names)].map(name => Card.updateOne(
   { userID, name },
-  { $setOnInsert: { icon: icons[name] || '' } },
+  { $setOnInsert: { icon: icons[name] || '' }, $set: { hidden: false } },
   { upsert: true }
 )))
 
-// Transfers from an imported file. Either all of them are saved or none.
-router.post('/transfers/bulk', async (req, res) => {
-  if (!Array.isArray(req.body)) throw badRequest('Send a list of transfers.')
-  const rows = req.body.map(body => {
-    const data = clean(COLLECTIONS.transfers.fields, body, false)
-    checkTransfer(data)
-    return { ...data, userID: req.user.id }
-  })
-  await ensureCards(req.user.id, rows.flatMap(row => [row.from, row.to]))
-  res.json(await Transfer.insertMany(rows))
-})
 
-const priceValue = t => parseFloat(String(t.price).replace(/[,\s+]/g, '')) || 0
+const TRANSACTION_FIELDS = ['name', 'price', 'description', 'datetime', 'category', 'card', 'icon', 'tags', 'merchant']
+
+// Transactions kept inside a converted transfer, cleaned up before going back into the
+// database: only known fields, always owned by the caller.
+function sanitizeSource (source, userID) {
+  if (!Array.isArray(source) || source.length > 2) throw badRequest('The transfer is not valid.')
+  return source.map(item => {
+    if (!item || !mongoose.isValidObjectId(item._id)) throw badRequest('The transfer is not valid.')
+    const clean = { _id: new mongoose.Types.ObjectId(String(item._id)), userID }
+    for (const field of TRANSACTION_FIELDS) if (item[field] !== undefined) clean[field] = item[field]
+    if (validateTransactionBody(clean)) throw badRequest('The transfer is not valid.')
+    clean.datetime = new Date(clean.datetime)
+    return clean
+  })
+}
+
+// Puts back a transfer exactly as it was deleted, for Undo.
+router.post('/transfers/restore', async (req, res) => {
+  const { _id, source } = req.body
+  if (!mongoose.isValidObjectId(_id)) throw badRequest('The transfer is not valid.')
+  const data = clean(COLLECTIONS.transfers.fields, req.body, false)
+  checkTransfer(data)
+  const transfer = await Transfer.create({ ...data, _id, userID: req.user.id, source: sanitizeSource(source || [], req.user.id) })
+  res.json(transfer)
+})
 
 // Replaces one transaction, or both sides of a transfer, with a single transfer.
 router.post('/transfers/convert', async (req, res) => {
@@ -188,7 +203,7 @@ router.post('/transfers/convert', async (req, res) => {
 
   const found = await TransactionModel.find({ _id: { $in: ids }, userID })
   if (found.length !== ids.length) return res.status(404).json({ error: 'Transaction not found.' })
-  const values = found.map(priceValue)
+  const values = found.map(t => priceValue(t.price))
   if (found.length === 2 && (values[0] * values[1] >= 0 || Math.abs(values[0] + values[1]) > 0.005)) {
     throw badRequest('The two sides must be an expense and an income with the same amount.')
   }
@@ -206,9 +221,25 @@ router.post('/transfers/convert', async (req, res) => {
   // A card can exist only through its transactions, so it is saved before they go.
   const icons = Object.fromEntries(found.filter(t => t.card).map(t => [t.card, t.icon || '']))
   await ensureCards(userID, [data.from, data.to], icons)
-  const transfer = await Transfer.create({ ...data, userID, source: found.map(t => t.toObject()) })
-  await TransactionModel.deleteMany({ _id: { $in: ids }, userID })
-  res.json(transfer)
+  // The originals are claimed one by one, so two conversions of the same transaction
+  // can't both succeed. If anything fails, what was claimed is put back.
+  const claimed = []
+  try {
+    for (const id of ids) {
+      const taken = await TransactionModel.findOneAndDelete({ _id: id, userID })
+      if (!taken) {
+        const error = new Error('This transaction was already changed. Reload and try again.')
+        error.status = 409
+        throw error
+      }
+      claimed.push(taken.toObject())
+    }
+    const transfer = await Transfer.create({ ...data, userID, source: claimed })
+    res.json(transfer)
+  } catch (error) {
+    if (claimed.length) await TransactionModel.insertMany(claimed, { ordered: false }).catch(() => {})
+    throw error
+  }
 })
 
 // Puts back the transactions a conversion replaced.
@@ -216,9 +247,13 @@ router.post('/transfers/:id/revert', requireValidId, async (req, res) => {
   const transfer = await Transfer.findOne({ _id: req.params.id, userID: req.user.id })
   if (!transfer) return res.status(404).json({ error: 'Not found.' })
   if (!transfer.source.length) throw badRequest('This transfer was not converted from transactions.')
-  const restored = await TransactionModel.insertMany(transfer.source)
+  // Retrying after a partial failure must not fail on the ones already back.
+  const source = sanitizeSource(transfer.source, req.user.id)
+  await TransactionModel.insertMany(source, { ordered: false }).catch(error => {
+    if (error.code !== 11000 && !error.writeErrors?.every(e => e.code === 11000)) throw error
+  })
   await transfer.deleteOne()
-  res.json(restored)
+  res.json(source)
 })
 
 router.get('/:collection', async (req, res) => {

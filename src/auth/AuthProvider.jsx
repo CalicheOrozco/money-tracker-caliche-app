@@ -24,7 +24,10 @@ export function AuthProvider ({ children }) {
     refreshAccessToken()
       .then(() => api('/profile'))
       .then(setUser)
-      .catch(clearSession)
+      .catch(error => {
+        // Offline or a slow server keeps the session for the next try.
+        if (error.status === 401 || error.status === 403) clearSession()
+      })
       .finally(() => setReady(true))
   }, [])
 

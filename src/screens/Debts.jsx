@@ -9,6 +9,7 @@ export default function Debts () {
   const { format, saveTransaction, showToast, showError } = useAppData()
   const debts = useCollection('debts', { onError: showError })
   const [form, setForm] = useState({ person: '', dir: 'owed', amount: '', note: '' })
+  const [settling, setSettling] = useState('')
 
   if (debts.loading) return <Spinner />
 
@@ -33,6 +34,8 @@ export default function Debts () {
 
   // Settling records the money as a real transaction so the balance stays right.
   async function settle (debt) {
+    if (settling) return
+    setSettling(debt._id)
     try {
       await saveTransaction({
         name: debt.person,
@@ -48,6 +51,8 @@ export default function Debts () {
       showToast(`Settled with ${debt.person} · added to transactions`)
     } catch (error) {
       showError(error)
+    } finally {
+      setSettling('')
     }
   }
 
@@ -85,6 +90,7 @@ export default function Debts () {
           )}
           <button
             type='button'
+            disabled={!!settling}
             onClick={() => settle(debt)}
             className={`h-8 whitespace-nowrap rounded-[9px] px-2.5 text-[13px] font-medium ${owed ? 'bg-accent-soft text-accent' : 'border border-line-3 text-ink'}`}
           >

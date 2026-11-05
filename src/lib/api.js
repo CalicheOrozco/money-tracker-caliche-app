@@ -20,7 +20,7 @@ export function clearSession () {
   localStorage.removeItem(STORAGE_KEY)
 }
 
-export class ApiError extends Error {
+class ApiError extends Error {
   constructor (message, status) {
     super(message)
     this.status = status
@@ -75,7 +75,8 @@ export async function api (path, options = {}) {
   let token
   try {
     token = await refreshAccessToken()
-  } catch {
+  } catch (error) {
+    if (error.status === 0) throw error
     throw new ApiError('Your session expired. Please log in again.', 401)
   }
   return request(path, { ...options, token })

@@ -25,6 +25,7 @@ export default function Goals () {
   const { format, showToast, showError } = useAppData()
   const goals = useCollection('goals', { onError: showError })
   const [form, setForm] = useState(null)
+  const [adding, setAdding] = useState('')
 
   if (goals.loading) return <Spinner />
 
@@ -33,11 +34,15 @@ export default function Goals () {
   const needed = goals.items.reduce((a, g) => a + Math.max(0, g.target - g.saved) / monthsUntil(g.due), 0)
 
   async function addTo (goal, amount) {
+    if (adding) return
+    setAdding(goal._id)
     try {
       await goals.update(goal._id, { saved: goal.saved + amount })
       showToast(`${format.plain(amount)} added to ${goal.name}`)
     } catch (error) {
       showError(error)
+    } finally {
+      setAdding('')
     }
   }
 
@@ -101,7 +106,7 @@ export default function Goals () {
               )}
               <div className='flex flex-wrap gap-1.5'>
                 {[500, 1000, 5000].map(amount => (
-                  <button key={amount} type='button' onClick={() => addTo(goal, amount)} className={quick}>
+                  <button key={amount} type='button' disabled={adding === goal._id} onClick={() => addTo(goal, amount)} className={`${quick} disabled:opacity-50`}>
                     +{amount.toLocaleString('en-US')}
                   </button>
                 ))}

@@ -1,4 +1,5 @@
 import express from 'express'
+import { priceValue } from '../lib/price.js'
 import { sendToUser } from '../lib/push.js'
 import PushSubscription from '../schema/pushSubscription.js'
 import TransactionModel from '../schema/transaction.js'
@@ -7,19 +8,23 @@ import User from '../schema/user.js'
 const router = express.Router()
 
 const DAY = 24 * 60 * 60 * 1000
+// Transactions are stored at midnight UTC of their calendar day, so days are compared
+// as dates in the zone the reminders are meant for.
+const TIMEZONE = process.env.TIMEZONE || 'America/Moncton'
 
-function isExpense (transaction) {
-  return String(transaction.price).startsWith('-')
+function localDay (now) {
+  const key = new Intl.DateTimeFormat('en-CA', { timeZone: TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now)
+  return new Date(`${key}T00:00:00Z`)
 }
 
-function amountOf (transaction) {
-  return Math.abs(parseFloat(String(transaction.price).replace(/[,+]/g, ''))) || 0
-}
+const isExpense = transaction => priceValue(transaction.price) < 0
+const amountOf = transaction => Math.abs(priceValue(transaction.price))
 
 async function weeklyPayload (userID, now) {
+  const today = localDay(now)
   const transactions = await TransactionModel.find({
     userID,
-    datetime: { $gte: new Date(now - 7 * DAY), $lte: now }
+    datetime: { $gte: new Date(today.getTime() - 6 * DAY), $lt: new Date(today.getTime() + DAY) }
   })
 
   let income = 0
@@ -46,10 +51,11 @@ async function weeklyPayload (userID, now) {
   }
 }
 
-function loggedRecently (userID, now) {
+function loggedToday (userID, now) {
+  const today = localDay(now)
   return TransactionModel.exists({
     userID,
-    datetime: { $gte: new Date(now - DAY), $lte: now }
+    datetime: { $gte: today, $lt: new Date(today.getTime() + DAY) }
   })
 }
 
@@ -57,7 +63,7 @@ async function notifyUser (user, now, isWeeklyRun) {
   const { notifications } = user.settings
   let sent = 0
 
-  if (notifications.daily && !(await loggedRecently(user.id, now))) {
+  if (notifications.daily && !(await loggedToday(user.id, now))) {
     await sendToUser(user.id, {
       title: 'Log today’s spending',
       body: 'You haven’t added anything today. It only takes a minute.',
@@ -75,8 +81,8 @@ async function notifyUser (user, now, isWeeklyRun) {
 }
 
 // Vercel Cron calls this once a day (see vercel.json) and sends CRON_SECRET as a
-// bearer token. The schedule is in UTC: the Monday run lands on Sunday evening
-// in the Americas, which is when the weekly summary is useful.
+// bearer token. The schedule is in UTC, 01:00, which is the evening before in the
+// Americas, so "today" is that local day and the weekly summary goes out on Sunday.
 router.get('/notifications', async (req, res) => {
   const secret = process.env.CRON_SECRET
   if (!secret || req.headers.authorization !== `Bearer ${secret}`) {
@@ -87,7 +93,7 @@ router.get('/notifications', async (req, res) => {
   const userIDs = await PushSubscription.distinct('userID')
   const users = await User.find({ _id: { $in: userIDs } })
   const results = await Promise.all(
-    users.map(user => notifyUser(user, now, now.getUTCDay() === 1))
+    users.map(user => notifyUser(user, now, localDay(now).getUTCDay() === 0))
   )
 
   res.json({ sent: results.reduce((total, count) => total + count, 0) })
