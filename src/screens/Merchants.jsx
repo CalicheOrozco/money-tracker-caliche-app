@@ -3,7 +3,7 @@ import { MerchantLogo } from '../components/TxIcon.jsx'
 import { Field, Icon, Spinner, inputClass, panelClass } from '../components/ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
 import { useBrandSearch } from '../data/useBrandSearch.js'
-import { logoSearchEnabled } from '../lib/brandfetch.js'
+import { logoSearchEnabled, useLogoConfig } from '../lib/brandfetch.js'
 import { EXPENSE, INCOME } from '../lib/constants.js'
 import { parseDay } from '../lib/dates.js'
 import { matchesPatterns, merchantKey, titleCase } from '../lib/merchants.js'
@@ -219,6 +219,7 @@ function MerchantForm ({ initial, onClose }) {
 }
 
 export default function Merchants () {
+  useLogoConfig()
   const { transactions, merchants, merchantOf, format, loading } = useAppData()
   const [form, setForm] = useState(null)
   const [filter, setFilter] = useState('')

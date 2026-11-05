@@ -12,7 +12,11 @@ const TransactionSchema = new Schema({
   tags: { type: [String], default: [] },
   // Empty follows the merchant patterns, "none" opts out, anything else is a merchant id.
   merchant: { type: String, default: '' }
-})
+}, { timestamps: true })
+
+// Every read is per user, sorted by date or grouped by card.
+TransactionSchema.index({ userID: 1, datetime: -1 })
+TransactionSchema.index({ userID: 1, card: 1 })
 
 const TransactionModel = model('Transaction', TransactionSchema)
 

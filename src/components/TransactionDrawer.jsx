@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useAppData } from '../data/AppData.jsx'
+import { useAppData, useAppUI } from '../data/AppData.jsx'
 import { EXPENSE, INCOME } from '../lib/constants.js'
 import { toISODate } from '../lib/dates.js'
+import { toNumber } from '../lib/numbers.js'
 import { parseTags } from '../lib/tags.js'
 import BrandPicker from './BrandPicker.jsx'
 import { CardLogo, Field, Icon, Switch, inputClass } from './ui.jsx'
@@ -31,7 +32,8 @@ function formFrom (t) {
 }
 
 export default function TransactionDrawer () {
-  const { drawer, closeDrawer, cards, saveTransaction, removeTransaction, showToast, showError, format, ruleFor, guest, merchants, merchantFor, saveTransfer, removeTransfer, revertTransfer, convertToTransfer } = useAppData()
+  const { closeDrawer, cards, saveTransaction, removeTransaction, showToast, showError, format, ruleFor, guest, merchants, merchantFor, saveTransfer, removeTransfer, revertTransfer, convertToTransfer } = useAppData()
+  const { drawer } = useAppUI()
   const { open, editing, preset } = drawer
   const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
@@ -118,7 +120,7 @@ export default function TransactionDrawer () {
 
   async function submit (event) {
     event?.preventDefault()
-    const amount = parseFloat(String(form.amount).replace(/,/g, ''))
+    const amount = toNumber(form.amount)
     if (isTransfer) return submitTransfer(amount)
 
     const nextErrors = {}

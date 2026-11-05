@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { logoUrl } from '../lib/brandfetch.js'
+import { logoUrl, useLogoConfig } from '../lib/brandfetch.js'
 
 export function Icon ({ name, size = 20, fill = 0, weight = 400, className = '' }) {
   return (
@@ -47,8 +47,9 @@ export function Switch ({ on }) {
 // logo is loaded live from the logo service.
 export function CardLogo ({ icon, className = 'h-6 w-8.5' }) {
   const [failed, setFailed] = useState('')
+  useLogoConfig()
   const isBrand = icon?.includes('.')
-  const src = isBrand ? logoUrl(icon, 96) : icon ? `/${icon}.png` : ''
+  const src = isBrand ? logoUrl(icon, 96) : /^[A-Za-z]{2,40}Icon$/.test(icon || '') ? `/${icon}.png` : ''
   const showImage = src && failed !== icon
 
   // Searched brand icons are square and carry their own background, so they are

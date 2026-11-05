@@ -188,6 +188,53 @@ function MonthlyCashflow () {
 function BalanceOverTime () {
   const { metrics, format, privacy, range } = useAppData()
   const { series } = metrics
+  // Same objects between renders, so the chart only redraws when its data changes.
+  const data = useMemo(() => ({
+    labels: series.map(p => p.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+    datasets: [{
+      data: series.map(p => p.value),
+      borderColor: GREEN,
+      borderWidth: 2.5,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      pointHoverBackgroundColor: GREEN,
+      cubicInterpolationMode: 'monotone',
+      fill: true,
+      backgroundColor: ({ chart }) => {
+        const { ctx, chartArea } = chart
+        if (!chartArea) return 'rgba(52,210,123,.1)'
+        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
+        gradient.addColorStop(0, 'rgba(52,210,123,.28)')
+        gradient.addColorStop(1, 'rgba(52,210,123,0)')
+        return gradient
+      }
+    }]
+  }), [series])
+  const options = useMemo(() => ({
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: tooltip(ctx => (ctx.raw < 0 ? '−' : '') + format.money(ctx.raw))
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        border: { color: '#1f2622' },
+        ticks: { color: '#5d6660', font: MONO, maxTicksLimit: 7, maxRotation: 0 }
+      },
+      y: {
+        grid: { color: '#161c18' },
+        border: { display: false },
+        ticks: {
+          color: '#5d6660',
+          font: MONO,
+          maxTicksLimit: 5,
+          callback: value => (privacy ? '•••' : (value < 0 ? '−' : '') + format.plain(value))
+        }
+      }
+    }
+  }), [format, privacy])
 
   return (
     <section className={`${panelClass} wide:col-span-2`}>
@@ -196,54 +243,7 @@ function BalanceOverTime () {
         <span className='text-xs text-faint'>{RANGE_LABEL[range]}</span>
       </div>
       <div className='h-60'>
-        <Line
-          data={{
-            labels: series.map(p => p.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-            datasets: [{
-              data: series.map(p => p.value),
-              borderColor: GREEN,
-              borderWidth: 2.5,
-              pointRadius: 0,
-              pointHoverRadius: 4,
-              pointHoverBackgroundColor: GREEN,
-              cubicInterpolationMode: 'monotone',
-              fill: true,
-              backgroundColor: ({ chart }) => {
-                const { ctx, chartArea } = chart
-                if (!chartArea) return 'rgba(52,210,123,.1)'
-                const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
-                gradient.addColorStop(0, 'rgba(52,210,123,.28)')
-                gradient.addColorStop(1, 'rgba(52,210,123,0)')
-                return gradient
-              }
-            }]
-          }}
-          options={{
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-              legend: { display: false },
-              tooltip: tooltip(ctx => (ctx.raw < 0 ? '−' : '') + format.money(ctx.raw))
-            },
-            scales: {
-              x: {
-                grid: { display: false },
-                border: { color: '#1f2622' },
-                ticks: { color: '#5d6660', font: MONO, maxTicksLimit: 7, maxRotation: 0 }
-              },
-              y: {
-                grid: { color: '#161c18' },
-                border: { display: false },
-                ticks: {
-                  color: '#5d6660',
-                  font: MONO,
-                  maxTicksLimit: 5,
-                  callback: value => (privacy ? '•••' : (value < 0 ? '−' : '') + format.plain(value))
-                }
-              }
-            }
-          }}
-        />
+        <Line data={data} options={options} />
       </div>
     </section>
   )

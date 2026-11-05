@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Icon, Spinner, panelClass } from '../components/ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
 import { useCollection } from '../data/useCollection.js'
@@ -128,6 +129,10 @@ function buildInsights ({ transactions, format, recurring, budgets }) {
 export default function Insights () {
   const { transactions, loading, format, recurring, guest, showError } = useAppData()
   const budgets = useCollection('budgets', { enabled: !guest, onError: showError })
+  const insights = useMemo(
+    () => (loading || budgets.loading ? [] : buildInsights({ transactions, format, recurring, budgets: guest ? null : budgets.items })),
+    [loading, budgets.loading, budgets.items, transactions, format, recurring, guest]
+  )
 
   if (loading || budgets.loading) return <Spinner />
 
@@ -140,7 +145,7 @@ export default function Insights () {
     )
   }
 
-  const [hero, ...rest] = buildInsights({ transactions, format, recurring, budgets: guest ? null : budgets.items })
+  const [hero, ...rest] = insights
 
   return (
     <div className='flex flex-col gap-4'>

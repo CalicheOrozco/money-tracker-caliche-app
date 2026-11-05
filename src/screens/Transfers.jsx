@@ -78,6 +78,7 @@ function Suggestion ({ suggestion, onDone }) {
 export default function Transfers () {
   const { loading, transferList, transferHints, transfers, cards, format, openNew } = useAppData()
   const [limit, setLimit] = useState(PAGE)
+  const [historyLimit, setHistoryLimit] = useState(25)
 
   if (loading || transfers.loading) return <Spinner />
 
@@ -125,7 +126,12 @@ export default function Transfers () {
         </div>
         {transferList.length === 0
           ? <p className='m-0 py-6 text-center text-[13px] text-muted'>No transfers yet.</p>
-          : <TransactionGroups items={transferList} />}
+          : <TransactionGroups items={transferList.slice(0, historyLimit)} />}
+        {transferList.length > historyLimit && (
+          <button type='button' onClick={() => setHistoryLimit(historyLimit + 25)} className='h-10 rounded-[11px] border border-dashed border-line-3 text-muted hover:border-accent hover:text-ink'>
+            Show {Math.min(25, transferList.length - historyLimit)} more
+          </button>
+        )}
       </section>
     </div>
   )

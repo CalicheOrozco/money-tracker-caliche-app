@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider.jsx'
-import { AppDataProvider, useAppData } from '../data/AppData.jsx'
+import { AppDataProvider, useAppData, useAppUI } from '../data/AppData.jsx'
 import { RANGES, SECTIONS } from '../lib/constants.js'
 import { currentMonth } from '../lib/metrics.js'
 import TransactionDrawer from './TransactionDrawer.jsx'
@@ -268,7 +268,7 @@ function Header ({ title, screen }) {
 }
 
 function Toast () {
-  const { toast, setToast } = useAppData()
+  const { toast, setToast } = useAppUI()
   if (!toast) return null
 
   return (

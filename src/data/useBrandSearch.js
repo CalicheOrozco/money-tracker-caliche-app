@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { logoSearchEnabled, searchBrands } from '../lib/brandfetch.js'
+import { logoSearchEnabled, searchBrands, useLogoConfig } from '../lib/brandfetch.js'
 
 // Results are only kept while the search is on screen, as the logo service asks.
 export function useBrandSearch (query) {
   const [state, setState] = useState({ results: [], loading: false, error: '' })
+  const clientId = useLogoConfig()
 
   useEffect(() => {
     const text = query.trim()
@@ -27,7 +28,7 @@ export function useBrandSearch (query) {
       clearTimeout(timer)
       controller.abort()
     }
-  }, [query])
+  }, [query, clientId])
 
   return state
 }

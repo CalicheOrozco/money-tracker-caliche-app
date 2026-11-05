@@ -2,9 +2,21 @@
 // from the browser. Search results are only used live for autocomplete and logos
 // are always hotlinked, as its terms ask; only the chosen domain is stored.
 // The id comes from the server at startup instead of being built into the app.
+import { useSyncExternalStore } from 'react'
+
 let CLIENT_ID = ''
+const listeners = new Set()
 
 export let logoSearchEnabled = false
+
+// Components showing logos re-render once the id arrives, so the app can start first.
+export const useLogoConfig = () => useSyncExternalStore(
+  listener => {
+    listeners.add(listener)
+    return () => listeners.delete(listener)
+  },
+  () => CLIENT_ID
+)
 
 export async function loadLogoConfig () {
   try {
@@ -19,6 +31,7 @@ export async function loadLogoConfig () {
     CLIENT_ID = ''
   }
   logoSearchEnabled = Boolean(CLIENT_ID)
+  listeners.forEach(listener => listener())
 }
 
 export function logoUrl (domain, size = 64) {

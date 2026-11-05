@@ -17,6 +17,8 @@ import { byNewest, fromApiTransfer, transferSuggestions } from '../lib/transfers
 import { useCollection } from './useCollection.js'
 
 const AppDataContext = createContext(null)
+// Toast and drawer change often, so they live apart and only re-render what shows them.
+const AppUIContext = createContext(null)
 
 const HIDDEN_KEY = 'mt-hidden-sections'
 
@@ -108,6 +110,16 @@ export function AppDataProvider ({ guest, children }) {
     setCards(cardList)
   }, [userID])
 
+  const reloadCards = useCallback(async () => {
+    setCards(await api(`/cards${userID ? `/${userID}` : ''}`))
+  }, [userID])
+
+  // Saves change one row, so the list is updated in place instead of downloading it all.
+  const putTransaction = useCallback(saved => {
+    const item = fromApi(saved)
+    setTransactions(list => [...list.filter(t => t.id !== item.id), item].sort((a, b) => b.date.localeCompare(a.date)))
+  }, [])
+
   useEffect(() => {
     reload()
       .catch(showError)
@@ -123,31 +135,50 @@ export function AppDataProvider ({ guest, children }) {
     }
   }, [])
 
-  const saveTransaction = useCallback(async (record, editingId) => {
-    if (editingId) {
-      await api(`/transaction/update/${editingId}`, {
-        method: 'PUT',
-        body: toApi(record)
-      })
-    } else {
-      await api(userID ? `/transaction/${userID}` : '/transaction', {
-        method: 'POST',
-        body: toApi(record)
-      })
+  // Guests change a copy that only lives in this browser tab; the shared demo stays as is.
+  const saveGuestTransaction = useCallback((record, editingId) => {
+    const item = {
+      ...record,
+      id: editingId || `local-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+      desc: record.desc || '',
+      category: record.category || 'Other',
+      card: record.card || '',
+      icon: record.icon || '',
+      tags: record.tags || [],
+      merchant: record.merchant || ''
     }
-    await reload()
-  }, [userID, reload])
+    setTransactions(list => [...list.filter(t => t.id !== item.id), item].sort((a, b) => b.date.localeCompare(a.date)))
+    if (item.card) {
+      setCards(list => (list.some(c => c.name === item.card) ? list : [...list, { name: item.card, icon: item.icon, type: 'credit', last4: '', limit: 0, tone: '', balance: null }]))
+    }
+  }, [])
+
+  const saveTransaction = useCallback(async (record, editingId) => {
+    if (guest) return saveGuestTransaction(record, editingId)
+    const saved = editingId
+      ? await api(`/transaction/update/${editingId}`, { method: 'PUT', body: toApi(record) })
+      : await api(`/transaction/${userID}`, { method: 'POST', body: toApi(record) })
+    putTransaction(saved)
+    // A new or removed card only shows up in the card list after asking for it again.
+    if (record.card && !cards.some(c => c.name === record.card)) await reloadCards()
+  }, [guest, saveGuestTransaction, userID, putTransaction, cards, reloadCards])
 
   const removeTransaction = useCallback(async transaction => {
-    await api(`/transaction/delete/${transaction.id}`, { method: 'DELETE' })
-    await reload()
+    if (!guest) await api(`/transaction/delete/${transaction.id}`, { method: 'DELETE' })
+    setTransactions(list => list.filter(t => t.id !== transaction.id))
     showToast('Transaction deleted', {
       undo: async () => {
         setToast(null)
-        await saveTransaction(transaction).catch(showError)
+        // Restored with the same id, so balances treat it as the original, and with
+        // the card's current logo, which may have changed since.
+        const icon = cards.find(c => c.name === transaction.card)?.icon ?? transaction.icon
+        await (guest
+          ? saveTransaction(transaction)
+          : api(`/transaction/${userID}`, { method: 'POST', body: { ...toApi({ ...transaction, icon }), restoreId: transaction.id } }).then(putTransaction)
+        ).catch(showError)
       }
     })
-  }, [reload, saveTransaction, showError, showToast])
+  }, [guest, userID, cards, putTransaction, saveTransaction, showError, showToast])
 
   const saveTransfer = useCallback(async (record, editingId) => {
     await api(editingId ? `/me/transfers/${editingId}` : '/me/transfers', {
@@ -162,16 +193,17 @@ export function AppDataProvider ({ guest, children }) {
     await Promise.all([reload(), reloadTransfers()])
   }, [reload, reloadTransfers])
 
+  // Undo puts back the exact transfer, including the transactions a conversion replaced.
   const removeTransfer = useCallback(async transfer => {
-    await api(`/me/transfers/${transfer.id}`, { method: 'DELETE' })
+    const deleted = await api(`/me/transfers/${transfer.id}`, { method: 'DELETE' })
     await reloadTransfers()
     showToast('Transfer deleted', {
       undo: async () => {
         setToast(null)
-        await saveTransfer(transfer).catch(showError)
+        await api('/me/transfers/restore', { method: 'POST', body: deleted }).then(reloadTransfers).catch(showError)
       }
     })
-  }, [reloadTransfers, saveTransfer, showError, showToast])
+  }, [reloadTransfers, showError, showToast])
 
   // Replaces transactions with a transfer. Undo brings the originals back.
   const convertToTransfer = useCallback(async (transactionIds, details) => {
@@ -187,23 +219,21 @@ export function AppDataProvider ({ guest, children }) {
 
   const saveCard = useCallback(async card => {
     await api(`/cards/${userID}`, { method: 'POST', body: card })
-    await reload()
-  }, [userID, reload])
+    await reloadCards()
+  }, [userID, reloadCards])
+
+  const renameCard = useCallback(async (from, to) => {
+    await api(`/cards/${userID}/rename`, { method: 'POST', body: { from, to } })
+    await Promise.all([reload(), reloadTransfers(), manualRecurring.reload()])
+  }, [userID, reload, reloadTransfers, manualRecurring])
 
   const removeCard = useCallback(async name => {
     await api(`/cards/${userID}/${encodeURIComponent(name)}`, { method: 'DELETE' })
-    await reload()
-  }, [userID, reload])
+    await reloadCards()
+  }, [userID, reloadCards])
 
-  // Transfers go first because they are validated as a whole before anything is saved.
-  const importRows = useCallback(async (rows, transferRows = []) => {
-    if (transferRows.length) await api('/me/transfers/bulk', { method: 'POST', body: transferRows })
-    if (rows.length) await api(`/transactions/multi/${userID}`, { method: 'POST', body: rows })
-    await Promise.all([reload(), reloadTransfers()])
-  }, [userID, reload, reloadTransfers])
-
-  const deleteAllTransactions = useCallback(async () => {
-    await api('/profile/transactions', { method: 'DELETE' })
+  const deleteAllTransactions = useCallback(async password => {
+    await api('/profile/transactions', { method: 'DELETE', body: { password } })
     await Promise.all([reload(), reloadTransfers()])
   }, [reload, reloadTransfers])
 
@@ -266,23 +296,30 @@ export function AppDataProvider ({ guest, children }) {
   const value = useMemo(
     () => ({
       guest, userID, settings, transactions, cards, loading, range, setRange, privacy, setPrivacy,
-      hidden, setHidden, drawer, toast, setToast, showToast, showError, format, metrics,
+      hidden, setHidden, setToast, showToast, showError, format, metrics,
       recurring, manualRecurring, rules, overrides, ruleFor, merchants, merchantOf, merchantFor, cardFilter, setCardFilter, openNew, openEdit,
-      closeDrawer, reload, saveTransaction, removeTransaction, saveCard, removeCard, importRows,
+      closeDrawer, reload, saveTransaction, removeTransaction, saveCard, renameCard, removeCard,
       deleteAllTransactions, transfers, transferDismissals, transferList, transferHints, saveTransfer, removeTransfer,
       revertTransfer, convertToTransfer
     }),
     [
       guest, userID, settings, transactions, cards, loading, range, privacy, hidden, setHidden,
-      drawer, toast, showToast, showError, format, metrics, recurring, rules, overrides, ruleFor,
+      showToast, showError, format, metrics, recurring, rules, overrides, ruleFor,
       merchants, merchantOf, merchantFor, manualRecurring,
       cardFilter, openNew, openEdit, closeDrawer, reload, saveTransaction, removeTransaction,
-      saveCard, removeCard, importRows, deleteAllTransactions, transfers, transferDismissals, transferList, transferHints,
+      saveCard, renameCard, removeCard, deleteAllTransactions, transfers, transferDismissals, transferList, transferHints,
       saveTransfer, removeTransfer, revertTransfer, convertToTransfer
     ]
   )
 
-  return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>
+  const ui = useMemo(() => ({ drawer, toast, setToast }), [drawer, toast])
+
+  return (
+    <AppDataContext.Provider value={value}>
+      <AppUIContext.Provider value={ui}>{children}</AppUIContext.Provider>
+    </AppDataContext.Provider>
+  )
 }
 
 export const useAppData = () => useContext(AppDataContext)
+export const useAppUI = () => useContext(AppUIContext)

@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useAppData } from '../data/AppData.jsx'
-import { logoUrl } from '../lib/brandfetch.js'
+import { logoUrl, useLogoConfig } from '../lib/brandfetch.js'
 import { CATEGORY_ICON } from '../lib/constants.js'
 import { Icon } from './ui.jsx'
 
 export function MerchantLogo ({ domain, size = 38, fallback = 'storefront', className = '' }) {
   const [failed, setFailed] = useState('')
+  useLogoConfig()
   const url = logoUrl(domain, size * 2)
 
   if (!url || failed === domain) {

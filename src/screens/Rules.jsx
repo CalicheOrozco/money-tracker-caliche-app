@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icon, Spinner, panelClass } from '../components/ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
@@ -13,14 +13,21 @@ export default function Rules () {
   const navigate = useNavigate()
   const [form, setForm] = useState({ match: '', category: '', tag: '' })
   const [busy, setBusy] = useState(false)
+  // Lowercased once per change instead of on every keystroke and for every rule.
+  const searchTexts = useMemo(() => transactions.map(t => `${t.name} ${t.desc}`.toLowerCase()), [transactions])
+  const fixCount = useMemo(() => rules.items.reduce((total, rule) => total + transactions.filter((t, i) =>
+    searchTexts[i].includes(rule.match) && (t.category !== rule.category || (rule.tag && !t.tags.includes(rule.tag)))
+  ).length, 0), [rules.items, transactions, searchTexts])
 
   if (loading || rules.loading) return <Spinner />
 
-  const matches = rule => transactions.filter(t => `${t.name} ${t.desc}`.toLowerCase().includes(rule.match))
+  const texts = searchTexts
+  const matches = rule => transactions.filter((t, i) => texts[i].includes(rule.match))
   const toFix = rule => matches(rule).filter(t => t.category !== rule.category || (rule.tag && !t.tags.includes(rule.tag)))
-  const totalToFix = rules.items.reduce((a, r) => a + toFix(r).length, 0)
-  const preview = form.match.trim()
-    ? `${transactions.filter(t => `${t.name} ${t.desc}`.toLowerCase().includes(form.match.trim().toLowerCase())).length} existing transactions match`
+  const totalToFix = fixCount
+  const typed = form.match.trim().toLowerCase()
+  const preview = typed
+    ? `${texts.filter(text => text.includes(typed)).length} existing transactions match`
     : 'Type a word that appears in the name'
 
   async function apply (list) {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useBrandSearch } from '../data/useBrandSearch.js'
-import { logoSearchEnabled } from '../lib/brandfetch.js'
+import { logoSearchEnabled, useLogoConfig } from '../lib/brandfetch.js'
 import { BANKS } from '../lib/constants.js'
 import { MerchantLogo } from './TxIcon.jsx'
 import { Icon } from './ui.jsx'
@@ -10,6 +10,7 @@ const isDomain = value => /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(value)
 // Picks a card logo: either one of the bundled bank logos (stored by key) or
 // any brand found through the logo search (stored by its domain).
 export default function BrandPicker ({ value, onChange }) {
+  useLogoConfig()
   const [query, setQuery] = useState('')
   const [website, setWebsite] = useState(value?.includes('.') ? value : '')
   const search = useBrandSearch(query)
