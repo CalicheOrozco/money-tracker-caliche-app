@@ -2,14 +2,16 @@ import express from 'express'
 import mongoose from 'mongoose'
 import authenticateToken from '../auth/authenticateToken.js'
 import requireOwner from '../auth/requireOwner.js'
+import { priceValue } from '../lib/price.js'
 import { sendToUser } from '../lib/push.js'
 import { normalizeTags } from '../lib/tags.js'
 import Card from '../schema/card.js'
+import { RecurringPayment, Transfer } from '../schema/planning.js'
 import TransactionModel from '../schema/transaction.js'
 import User from '../schema/user.js'
 import {
   normalizePrice,
-  validatePrice,
+  validIcon,
   validateTransactionBody
 } from '../lib/validateTransaction.js'
 
@@ -46,15 +48,16 @@ const cardView = (card, fallbackIcon = '') => ({
 })
 
 async function getCards (userID) {
-  const [transactions, saved] = await Promise.all([
-    TransactionModel.find({ userID }).select('card icon'),
+  const [used, saved] = await Promise.all([
+    TransactionModel.aggregate([
+      { $match: { userID, card: { $nin: ['', null] } } },
+      { $group: { _id: '$card', icon: { $first: '$icon' }, first: { $min: '$_id' } } },
+      { $sort: { first: 1 } }
+    ]),
     userID ? Card.find({ userID }) : []
   ])
 
-  const derived = new Map()
-  for (const { card, icon } of transactions) {
-    if (card && !derived.has(card)) derived.set(card, icon || '')
-  }
+  const derived = new Map(used.map(({ _id, icon }) => [_id, icon || '']))
 
   const cards = new Map()
   for (const card of saved) {
@@ -73,7 +76,7 @@ const merchantChoice = value =>
   typeof value === 'string' && /^(none|[a-f0-9]{24})?$/.test(value) ? value : ''
 
 async function notifyLargeExpense (userID, price, name) {
-  const amount = parseFloat(String(price).replace(/[,+]/g, ''))
+  const amount = priceValue(price)
   if (!(amount < 0)) return
 
   const user = await User.findById(userID).select('settings')
@@ -94,16 +97,23 @@ async function createTransaction (req, res, userID) {
   if (error) return res.status(400).json({ error })
 
   // A card name can only ever be paired with one icon.
-  if (card && icon) {
-    const existing = (await getCards(userID)).find(c => c.name === card)
-    if (existing?.icon && existing.icon !== icon) {
+  if (card && icon && !req.body.restoreId) {
+    const saved = userID ? await Card.findOne({ userID, name: card }) : null
+    const existingIcon = saved?.icon || (await TransactionModel.findOne({ userID, card }).select('icon').lean())?.icon
+    if (existingIcon && existingIcon !== icon) {
       return res
         .status(400)
         .json({ error: 'The card already exists, please use other name.' })
     }
   }
 
+  // Undo sends the deleted transaction's id back so it keeps its place in balances.
+  const restoreId = req.body.restoreId
+  const reuseId = userID && typeof restoreId === 'string' && mongoose.isValidObjectId(restoreId) &&
+    !(await TransactionModel.exists({ _id: restoreId }))
+
   const transaction = await TransactionModel.create({
+    ...(reuseId && { _id: restoreId }),
     name,
     price: normalizePrice(price),
     datetime,
@@ -117,6 +127,8 @@ async function createTransaction (req, res, userID) {
   })
 
   if (userID) {
+    // Using a card that was removed brings it back.
+    if (card) await Card.updateOne({ userID, name: card, hidden: true }, { hidden: false })
     await notifyLargeExpense(userID, transaction.price, name)
   }
   res.json(transaction)
@@ -138,7 +150,7 @@ async function requireTransactionAccess (req, res, next) {
   }
 
   req.transaction = transaction
-  if (!transaction.userID) return next()
+  if (!transaction.userID) return guestReadOnly(res)
 
   authenticateToken(req, res, () => {
     if (req.user.id !== transaction.userID) {
@@ -148,68 +160,28 @@ async function requireTransactionAccess (req, res, next) {
   })
 }
 
+// Plain objects without internal fields: smaller responses and much less work per row.
+const listTransactions = filter =>
+  TransactionModel.find(filter).select('-__v -userID').sort({ datetime: -1 }).lean()
+
 router.get('/transactions', async (req, res) => {
-  res.json(await TransactionModel.find(buildFilter(null, req.query)))
+  res.json(await listTransactions(buildFilter(null, req.query)))
 })
 
 router.get('/transactions/:id', requireOwner, async (req, res) => {
-  res.json(await TransactionModel.find(buildFilter(req.params.id, req.query)))
+  res.json(await listTransactions(buildFilter(req.params.id, req.query)))
 })
 
-router.post('/transactions/multi/:id', requireOwner, async (req, res) => {
-  const transactions = req.body
-
-  if (!Array.isArray(transactions)) {
-    return res
-      .status(400)
-      .json({ error: 'The request body must be an array of transactions.' })
-  }
-
-  const validTransactions = []
-  for (const transaction of transactions) {
-    if (!Array.isArray(transaction)) {
-      return res.status(400).json({ error: 'Each transaction must be a list.' })
-    }
-
-    const [date, name, description, price, card, category, icon] = transaction
-
-    const datetime = new Date(date)
-    if (isNaN(datetime)) {
-      return res
-        .status(400)
-        .json({ error: `Invalid date for transaction: ${transaction}` })
-    }
-
-    if (!name) {
-      return res
-        .status(400)
-        .json({ error: `The name is required for transaction: ${transaction}` })
-    }
-
-    const priceTrim = normalizePrice(price)
-    const priceError = validatePrice(priceTrim)
-    if (priceError) {
-      return res
-        .status(400)
-        .json({ error: `${priceError} Transaction: ${transaction}` })
-    }
-
-    validTransactions.push({
-      userID: req.params.id,
-      datetime,
-      name,
-      description: description || '',
-      price: priceTrim,
-      card: card || '',
-      category: category || '',
-      icon: icon || ''
-    })
-  }
-
-  res.json(await TransactionModel.insertMany(validTransactions))
+// A single transaction, for clients that change one without loading everything.
+router.get('/transaction/item/:id', requireValidId, requireTransactionAccess, (req, res) => {
+  res.json(req.transaction)
 })
 
-router.post('/transaction', (req, res) => createTransaction(req, res, null))
+// The guest demo is shared, so it can be read but not changed. Guests edit a copy
+// that lives only in their browser.
+const guestReadOnly = res => res.status(403).json({ error: 'The guest demo can’t be changed.' })
+
+router.post('/transaction', (req, res) => guestReadOnly(res))
 
 router.post('/transaction/:id', requireOwner, (req, res) =>
   createTransaction(req, res, req.params.id)
@@ -225,14 +197,17 @@ router.get('/cards/:id', requireOwner, async (req, res) => {
 
 router.post('/cards/:id', requireOwner, async (req, res) => {
   const { name, icon, type, last4, limit, tone } = req.body
-  if (typeof name !== 'string' || !name.trim()) {
-    return res.status(400).json({ error: 'The card name must not be empty.' })
+  if (typeof name !== 'string' || !name.trim() || name.trim().length > 60) {
+    return res.status(400).json({ error: 'The card name must have between 1 and 60 characters.' })
   }
 
   const update = { hidden: false }
   // Bundled logos are file names (case matters); anything with a dot is a domain.
   if (typeof icon === 'string') {
-    const value = icon.trim().slice(0, 100)
+    if (!validIcon(icon.trim().toLowerCase().includes('.') ? icon.trim().toLowerCase() : icon.trim())) {
+      return res.status(400).json({ error: 'The logo is not valid.' })
+    }
+    const value = icon.trim()
     update.icon = value.includes('.') ? value.toLowerCase() : value
   }
   if (['credit', 'debit', 'savings', 'investment'].includes(type)) update.type = type
@@ -272,6 +247,33 @@ router.post('/cards/:id', requireOwner, async (req, res) => {
     { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
   )
   res.json(cardView(card))
+})
+
+// Cards are linked by name, so a rename updates every place that uses it.
+router.post('/cards/:id/rename', requireOwner, async (req, res) => {
+  const userID = req.params.id
+  const from = typeof req.body.from === 'string' ? req.body.from.trim() : ''
+  const to = typeof req.body.to === 'string' ? req.body.to.trim() : ''
+  if (!from || !to || to.length > 60) {
+    return res.status(400).json({ error: 'The card name must have between 1 and 60 characters.' })
+  }
+  if (from === to) return res.json({ name: to })
+
+  const taken = (await getCards(userID)).some(c => c.name.toLowerCase() === to.toLowerCase() && c.name !== from)
+  if (taken || await Card.exists({ userID, name: to })) {
+    return res.status(409).json({ error: 'You already have a card with that name.' })
+  }
+
+  const icon = (await TransactionModel.findOne({ userID, card: from }).select('icon').lean())?.icon || ''
+  await Card.updateOne({ userID, name: from }, { $set: { name: to }, $setOnInsert: { icon } }, { upsert: true })
+  await Promise.all([
+    TransactionModel.updateMany({ userID, card: from }, { card: to }),
+    Transfer.updateMany({ userID, from }, { from: to }),
+    Transfer.updateMany({ userID, to: from }, { to }),
+    Transfer.updateMany({ userID, 'source.card': from }, { $set: { 'source.$[item].card': to } }, { arrayFilters: [{ 'item.card': from }] }),
+    RecurringPayment.updateMany({ userID, card: from }, { card: to })
+  ])
+  res.json({ name: to })
 })
 
 // Transactions keep the card's name, so the card is hidden rather than erased.

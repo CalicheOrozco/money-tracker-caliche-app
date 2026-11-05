@@ -23,7 +23,8 @@ export async function sendToUser (userID, payload) {
       try {
         await webpush.sendNotification(
           { endpoint, keys: { p256dh: keys.p256dh, auth: keys.auth } },
-          JSON.stringify(payload)
+          JSON.stringify(payload),
+          { timeout: 5000 }
         )
       } catch (error) {
         if (error.statusCode === 404 || error.statusCode === 410) {

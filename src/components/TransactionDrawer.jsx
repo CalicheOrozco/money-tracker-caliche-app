@@ -442,7 +442,12 @@ export default function TransactionDrawer () {
           )}
         </form>
 
-        <div className='flex gap-2 border-t border-line-4 px-5 py-4'>
+        {guest && (
+          <p className='m-0 border-t border-line-4 px-5 pt-3 text-xs text-faint'>
+            Guest demo: your changes stay in this tab and disappear when you reload.
+          </p>
+        )}
+        <div className={`flex gap-2 px-5 py-4 ${guest ? '' : 'border-t border-line-4'}`}>
           {editing && (
             <button
               type='button'

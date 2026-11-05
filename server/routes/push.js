@@ -5,6 +5,19 @@ import PushSubscription from '../schema/pushSubscription.js'
 
 const router = express.Router()
 
+// Only real browser push services, so the server never posts to an address a user picked.
+const PUSH_HOSTS = [/^fcm\.googleapis\.com$/, /^updates\.push\.services\.mozilla\.com$/, /\.push\.apple\.com$/, /\.notify\.windows\.com$/]
+const MAX_DEVICES = 10
+
+function validEndpoint (endpoint) {
+  try {
+    const url = new URL(endpoint)
+    return url.protocol === 'https:' && !url.port && PUSH_HOSTS.some(host => host.test(url.hostname))
+  } catch {
+    return false
+  }
+}
+
 router.get('/key', (req, res) => {
   if (!pushConfigured()) {
     return res.status(503).json({ error: 'Notifications are not set up yet.' })
@@ -18,9 +31,16 @@ router.post('/subscribe', authenticateToken, async (req, res) => {
   if (
     typeof endpoint !== 'string' ||
     typeof keys?.p256dh !== 'string' ||
-    typeof keys?.auth !== 'string'
+    typeof keys?.auth !== 'string' ||
+    endpoint.length > 1000 || keys.p256dh.length > 200 || keys.auth.length > 100 ||
+    !validEndpoint(endpoint)
   ) {
     return res.status(400).json({ error: 'Invalid subscription.' })
+  }
+
+  const known = await PushSubscription.exists({ endpoint, userID: req.user.id })
+  if (!known && (await PushSubscription.countDocuments({ userID: req.user.id })) >= MAX_DEVICES) {
+    return res.status(400).json({ error: `Notifications can be on in up to ${MAX_DEVICES} devices.` })
   }
 
   await PushSubscription.findOneAndUpdate(

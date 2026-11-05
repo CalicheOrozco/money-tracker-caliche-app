@@ -1,14 +1,24 @@
 import express from 'express'
+import mongoose from 'mongoose'
 import authenticateToken from '../auth/authenticateToken.js'
+import { limit } from '../lib/rateLimit.js'
 
 const router = express.Router()
 
-const DAY = 24 * 60 * 60 * 1000
-const cache = new Map()
+// Kept in the database so every server instance shares it, and dropped after a day.
+const BrandColors = mongoose.models.BrandColors || mongoose.model('BrandColors', new mongoose.Schema({
+  domain: { type: String, required: true, unique: true },
+  colors: { type: [{ hex: String, type: { type: String } }], default: [] },
+  at: { type: Date, default: Date.now, expires: 24 * 60 * 60 }
+}))
+const cache = {
+  get: async domain => BrandColors.findOne({ domain }).lean(),
+  set: (domain, colors) => BrandColors.updateOne({ domain }, { $set: { colors: colors.map(({ hex, type }) => ({ hex, type })), at: new Date() } }, { upsert: true })
+}
 
 // The free Brand API allowance is small, so each domain is asked once a day at
-// most per server instance. Only colors are returned to the app.
-router.get('/brand-colors/:domain', authenticateToken, async (req, res) => {
+// most. Only colors are returned to the app.
+router.get('/brand-colors/:domain', authenticateToken, limit('brand-colors', 60, 60 * 60 * 1000, req => req.user.id), async (req, res) => {
   const key = process.env.BRANDFETCH_API_KEY
   // Without a key the feature is simply off: no colors, no error.
   if (!key) return res.json({ colors: [], enabled: false })
@@ -18,8 +28,8 @@ router.get('/brand-colors/:domain', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'The domain is not valid.' })
   }
 
-  const cached = cache.get(domain)
-  if (cached && Date.now() - cached.at < DAY) return res.json({ colors: cached.colors })
+  const cached = await cache.get(domain)
+  if (cached) return res.json({ colors: cached.colors.map(({ hex, type }) => ({ hex, type })) })
 
   const response = await fetch(`https://api.brandfetch.io/v2/brands/domain/${domain}`, {
     headers: { Authorization: `Bearer ${key}` }
@@ -29,7 +39,7 @@ router.get('/brand-colors/:domain', authenticateToken, async (req, res) => {
     return res.status(429).json({ error: 'Brand colors are used up for now. Pick one of the colors below.' })
   }
   if (response.status === 404) {
-    cache.set(domain, { at: Date.now(), colors: [] })
+    await cache.set(domain, [])
     return res.json({ colors: [] })
   }
   if (!response.ok) {
@@ -45,7 +55,7 @@ router.get('/brand-colors/:domain', authenticateToken, async (req, res) => {
     .filter(c => !seen.has(c.hex) && seen.add(c.hex))
     .slice(0, 8)
 
-  cache.set(domain, { at: Date.now(), colors })
+  await cache.set(domain, colors)
   res.json({ colors })
 })
 
