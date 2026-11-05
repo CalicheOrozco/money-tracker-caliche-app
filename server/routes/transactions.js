@@ -39,7 +39,10 @@ const cardView = (card, fallbackIcon = '') => ({
   type: card.type || 'credit',
   last4: card.last4 || '',
   limit: card.limit || 0,
-  tone: card.tone || ''
+  tone: card.tone || '',
+  balance: card.balance ?? null,
+  balanceDate: card.balanceDate || '',
+  balanceSetAt: card.balanceSetAt || null
 })
 
 async function getCards (userID) {
@@ -246,6 +249,21 @@ router.post('/cards/:id', requireOwner, async (req, res) => {
       return res.status(400).json({ error: 'The credit limit is not valid.' })
     }
     update.limit = number
+  }
+
+  const { balance, balanceDate } = req.body
+  if (balance === '' || balance === null) {
+    Object.assign(update, { balance: null, balanceDate: '', balanceSetAt: null })
+  } else if (balance !== undefined) {
+    const number = Number(balance)
+    if (!Number.isFinite(number)) return res.status(400).json({ error: 'The balance is not valid.' })
+    if (typeof balanceDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(balanceDate)) {
+      return res.status(400).json({ error: 'The balance needs a date.' })
+    }
+    const current = await Card.findOne({ userID: req.params.id, name: name.trim() })
+    if (current?.balance !== number || current?.balanceDate !== balanceDate) {
+      Object.assign(update, { balance: number, balanceDate, balanceSetAt: new Date() })
+    }
   }
 
   const card = await Card.findOneAndUpdate(

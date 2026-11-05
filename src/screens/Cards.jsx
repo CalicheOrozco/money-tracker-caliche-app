@@ -7,15 +7,53 @@ import { useAppData } from '../data/AppData.jsx'
 import { api } from '../lib/api.js'
 import { cardBackground, isLightTone } from '../lib/cardTone.js'
 import { RANGE_LABEL, TONES } from '../lib/constants.js'
-import { parseDay } from '../lib/dates.js'
+import { parseDay, toISODate } from '../lib/dates.js'
 import { decimalOnly, toNumber } from '../lib/numbers.js'
 import { currentMonthKey, expensesOf, inMonth, monthLabel } from '../lib/periods.js'
-import { byNewest, isCreditAccount, transfersInRange } from '../lib/transfers.js'
+import { accountBalance, byNewest, isCreditAccount, transfersInRange } from '../lib/transfers.js'
 
 const NO_COLORS = []
 const ACCOUNT_LABEL = { credit: 'Credit', debit: 'Debit', savings: 'Savings', investment: 'Investment' }
 
-const emptyCard = () => ({ name: '', icon: 'VisaIcon', type: 'credit', last4: '', limit: '', tone: 'emerald', editing: false })
+const emptyCard = () => ({ name: '', icon: 'VisaIcon', type: 'credit', last4: '', limit: '', tone: 'emerald', editing: false, balance: '', balanceDate: toISODate(new Date()) })
+
+// Balances the user tracks across accounts, with the option to start tracking the rest.
+function Balances ({ onSet }) {
+  const { cards, transactions, transferList, format, privacy } = useAppData()
+  if (cards.length === 0) return null
+
+  const rows = cards.map(card => ({ card, value: accountBalance(card, transactions, transferList) }))
+  const total = (list, keep) => list.filter(r => r.value !== null && keep(r.card)).reduce((sum, r) => sum + r.value, 0)
+  const available = total(rows, c => !isCreditAccount(c))
+  const owed = total(rows, isCreditAccount)
+  const signed = value => (value < 0 && !privacy ? '−' : '') + format.money(value)
+
+  return (
+    <section className={`flex flex-col gap-3.5 p-5 ${panelClass}`}>
+      <div className='flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1'>
+        <h2 className='m-0 text-[15px] font-semibold'>Balances</h2>
+        <div className='flex flex-wrap gap-4 text-[13px] text-muted'>
+          <span>In your accounts <span className='font-semibold text-ink tabular-nums'>{signed(available)}</span></span>
+          <span>Owed on credit <span className='font-semibold text-danger-soft tabular-nums'>{signed(owed)}</span></span>
+        </div>
+      </div>
+      <div className='grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2.5'>
+        {rows.map(({ card, value }) => (
+          <div key={card.name} className='flex min-w-0 items-center gap-2.5 rounded-[12px] border border-line bg-rail p-3'>
+            <CardLogo icon={card.icon} className='h-6.5 w-9.5 flex-none rounded-md' />
+            <span className='flex min-w-0 flex-1 flex-col gap-0.5'>
+              <span className='truncate font-medium'>{card.name}</span>
+              <span className='text-xs text-faint'>{isCreditAccount(card) ? 'Owed' : ACCOUNT_LABEL[card.type]}</span>
+            </span>
+            {value === null
+              ? <button type='button' onClick={() => onSet(card)} className='flex-none text-[13px] text-accent'>Set balance</button>
+              : <span className={`flex-none font-semibold tabular-nums ${isCreditAccount(card) && value > 0 ? 'text-danger-soft' : ''}`}>{signed(value)}</span>}
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
 
 function CardFace ({ card, spent, selected, onClick }) {
   const Tag = onClick ? 'button' : 'div'
@@ -105,7 +143,9 @@ function CardForm ({ initial, onClose }) {
         type: form.type,
         last4: form.last4,
         limit: form.type === 'credit' ? toNumber(form.limit) : 0,
-        tone: form.tone
+        tone: form.tone,
+        balance: String(form.balance).trim() === '' ? '' : toNumber(form.balance),
+        balanceDate: form.balanceDate || toISODate(new Date())
       })
       showToast(form.editing ? `${name} updated` : `${name} added`)
       onClose(name)
@@ -170,6 +210,26 @@ function CardForm ({ initial, onClose }) {
             />
           </Field>
         )}
+        <div className='flex flex-col gap-1.75'>
+          <div className='grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-2.5'>
+            <Field label={form.type === 'credit' ? 'Amount owed' : 'Current balance'} hint='optional'>
+              <MoneyInput
+                symbol={format.symbol}
+                aria-label={form.type === 'credit' ? 'Amount owed' : 'Current balance'}
+                value={form.balance}
+                onChange={e => patch({ balance: String(e.target.value).replace(/[^0-9.,-]/g, '') })}
+                placeholder='0.00'
+                className='h-11 rounded-[11px]'
+              />
+            </Field>
+            <Field label='As of'>
+              <input type='date' aria-label='Balance date' value={form.balanceDate} onChange={e => patch({ balanceDate: e.target.value })} className={`${inputClass} bg-rail px-2.5`} />
+            </Field>
+          </div>
+          <span className='text-xs leading-relaxed text-faint'>
+            Use what your bank shows on that date. Anything you add after it updates the balance. Leave it empty to not track it.
+          </span>
+        </div>
         <div className='flex flex-col gap-1.75'>
           <span className='text-xs font-medium text-muted'>Color</span>
           {brandColors.length > 0 && (
@@ -242,12 +302,15 @@ export default function Cards () {
   const usedThisMonth = selected ? spentOn(inMonth(transactions, currentMonthKey()), selected.name) : 0
   const limit = selected?.limit || 0
   const usedPct = limit ? Math.min(100, Math.round((usedThisMonth / limit) * 100)) : 0
+  const selectedBalance = selected ? accountBalance(selected, transactions, transferList) : null
   const editCard = card => setForm({
     ...emptyCard(),
     ...card,
     limit: card.limit ? String(card.limit) : '',
     tone: card.tone || 'graphite',
-    editing: true
+    editing: true,
+    balance: typeof card.balance === 'number' ? String(card.balance) : '',
+    balanceDate: card.balanceDate || toISODate(new Date())
   })
   const tile = 'flex min-w-0 flex-col gap-1.5 rounded-[14px] border border-line bg-rail p-3.5'
 
@@ -279,6 +342,8 @@ export default function Cards () {
           </button>
         )}
       </div>
+
+      {!form && <Balances onSet={editCard} />}
 
       {form && (
         <CardForm
@@ -353,6 +418,12 @@ export default function Cards () {
           </div>
 
           <div className='grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2.5'>
+            <div className={tile}>
+              <span className='text-xs text-muted'>{isCreditAccount(selected) ? 'Amount owed' : 'Balance'}</span>
+              {selectedBalance === null
+                ? <button type='button' onClick={() => editCard(selected)} className='self-start text-[15px] font-semibold text-accent'>Set balance</button>
+                : <span className='truncate text-[19px] font-semibold tabular-nums'>{selectedBalance < 0 ? '−' : ''}{format.money(selectedBalance)}</span>}
+            </div>
             <div className={tile}><span className='text-xs text-muted'>Spent · {RANGE_LABEL[range]}</span><span className='truncate text-[19px] font-semibold tabular-nums'>{format.money(spent)}</span></div>
             <div className={tile}><span className='text-xs text-muted'>Transactions</span><span className='text-[19px] font-semibold tabular-nums'>{cardTx.length}</span></div>
             <div className={tile}><span className='text-xs text-muted'>Avg. per purchase</span><span className='truncate text-[19px] font-semibold tabular-nums'>{format.money(purchases.length ? spent / purchases.length : 0)}</span></div>

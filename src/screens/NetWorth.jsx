@@ -151,7 +151,7 @@ export default function NetWorth () {
             <Icon name='credit_card' size={18} className='text-muted' />
             <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
               <span className='font-medium'>Credit card balances</span>
-              <span className='text-xs text-faint'>Estimated from your cards · last 30 days</span>
+              <span className='text-xs text-faint'>From your card balances, or estimated from the last 30 days</span>
             </div>
             <span className='tabular-nums'>{format.money(cardDebt)}</span>
           </div>

@@ -10,6 +10,11 @@ const cardSchema = new mongoose.Schema({
   type: { type: String, enum: ['credit', 'debit', 'savings', 'investment'], default: 'credit' },
   last4: { type: String, default: '' },
   limit: { type: Number, default: 0 },
+  // What the bank showed on balanceDate, and what is owed on a credit card. Null means
+  // the balance isn't tracked. balanceSetAt tells apart same-day movements added later.
+  balance: { type: Number, default: null },
+  balanceDate: { type: String, default: '' },
+  balanceSetAt: { type: Date, default: null },
   tone: { type: String, default: '' },
   hidden: { type: Boolean, default: false }
 })
