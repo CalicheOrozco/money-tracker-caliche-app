@@ -462,7 +462,7 @@ function YourData () {
       <div className='flex items-center justify-between gap-3'>
         <span className='flex flex-col gap-0.75'>
           <span className='font-medium'>Export everything</span>
-          <span className='text-xs text-faint'>{movements} as CSV, ready to re-import</span>
+          <span className='text-xs text-faint'>{movements} as CSV</span>
         </span>
         <button
           type='button'

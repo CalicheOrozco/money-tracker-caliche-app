@@ -21,7 +21,7 @@ const USER_GROUPS = [
     ['/debts', 'Debts', 'handshake'], ['/net-worth', 'Net worth', 'account_balance']
   ]],
   ['Tools', [
-    ['/import', 'Import', 'upload_file'], ['/rules', 'Rules & tags', 'rule'],
+    ['/rules', 'Rules & tags', 'rule'],
     ['/merchants', 'Merchants', 'storefront']
   ]]
 ]
@@ -31,7 +31,7 @@ const GUEST_GROUPS = [['Overview', OVERVIEW.map(([path, ...rest]) => [`/guest${p
 const TITLES = {
   insights: 'Insights', calendar: 'Calendar', charts: 'Charts', reports: 'Monthly report',
   cards: 'Cards', transfers: 'Transfers', recurring: 'Recurring payments', budgets: 'Budgets', goals: 'Savings goals',
-  debts: 'Debts & loans', 'net-worth': 'Net worth', import: 'Import statement',
+  debts: 'Debts & loans', 'net-worth': 'Net worth',
   rules: 'Rules & tags', merchants: 'Merchants', profile: 'Profile & settings'
 }
 

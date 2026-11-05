@@ -130,7 +130,7 @@ export function transferSuggestions (transactions, dismissedKeys, cards) {
         found.push({ key: `single:${t.id}`, kind: 'single', ids: [t.id], items: [t], amount: -t.amount, date: t.date, from: t.card, to: guessDestination(t, cards) })
       }
     } else if (card && isCreditAccount(card) && RECEIVED_PAYMENT_NAME.test(t.name)) {
-      // A payment received by a credit card, as it appears on an imported statement.
+      // A payment received by a credit card, as banks usually name it.
       found.push({ key: `single:${t.id}`, kind: 'single', ids: [t.id], items: [t], amount: t.amount, date: t.date, from: '', to: t.card })
     }
   }

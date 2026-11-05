@@ -69,7 +69,7 @@ export default function Auth ({ mode }) {
             Every peso, accounted for.
           </h1>
           <p className='m-0 text-base leading-[1.55] text-muted text-pretty'>
-            Log income and expenses, track every card, import bank statements and see exactly where your money goes.
+            Log income and expenses, track every card, move money between accounts and see exactly where your money goes.
           </p>
         </div>
         <div className='relative flex gap-7 font-mono text-xs text-faint'>
