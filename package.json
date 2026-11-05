@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "dev:web": "vite",
-    "dev:api": "node --env-file-if-exists=.env --watch server/dev.js"
+    "dev:api": "node --env-file-if-exists=.env --watch server/dev.js",
+    "seed:guest": "node --env-file-if-exists=.env server/scripts/seed-guest.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
