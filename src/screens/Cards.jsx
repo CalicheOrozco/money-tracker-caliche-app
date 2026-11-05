@@ -299,10 +299,14 @@ export default function Cards () {
   const purchases = cardTx.filter(t => t.amount < 0)
   const cardTransfers = selected ? transfersInRange(transferList, range).filter(t => t.from === selected.name || t.to === selected.name) : []
   const activity = [...cardTx, ...cardTransfers].sort(byNewest)
+  const selectedBalance = selected ? accountBalance(selected, transactions, transferList) : null
   const usedThisMonth = selected ? spentOn(inMonth(transactions, currentMonthKey()), selected.name) : 0
   const limit = selected?.limit || 0
-  const usedPct = limit ? Math.min(100, Math.round((usedThisMonth / limit) * 100)) : 0
-  const selectedBalance = selected ? accountBalance(selected, transactions, transferList) : null
+  // What is owed is the real use of the limit. Without a balance, this month's purchases
+  // are the only figure available, and they ignore old debt and payments.
+  const owesTracked = selectedBalance !== null
+  const creditUsed = owesTracked ? Math.max(0, selectedBalance) : usedThisMonth
+  const usedPct = limit ? Math.min(100, Math.round((creditUsed / limit) * 100)) : 0
   const editCard = card => setForm({
     ...emptyCard(),
     ...card,
@@ -432,9 +436,9 @@ export default function Cards () {
           {isCreditAccount(selected) && (
             <div className='flex flex-col gap-2'>
               <div className='flex flex-wrap justify-between gap-1.5 text-[13px]'>
-                <span className='text-muted'>Credit used in {monthLabel(currentMonthKey())}</span>
+                <span className='text-muted'>{owesTracked ? 'Credit used' : `Purchases in ${monthLabel(currentMonthKey())}`}</span>
                 <span className='tabular-nums'>
-                  {format.money(usedThisMonth)}
+                  {format.money(creditUsed)}
                   {limit > 0 && <span className='text-faint'> / {format.money(limit)}</span>}
                 </span>
               </div>
@@ -446,7 +450,17 @@ export default function Cards () {
                       style={{ width: `${usedPct}%` }}
                     />
                   </div>
-                  <div className='text-xs text-faint'>{format.money(Math.max(0, limit - usedThisMonth))} available</div>
+                  <div className='flex flex-wrap justify-between gap-1.5 text-xs text-faint'>
+                    {owesTracked
+                      ? creditUsed > limit
+                        ? <span className='text-danger-soft'>{format.money(creditUsed - limit)} over your limit</span>
+                        : <span>{format.money(limit - creditUsed)} available</span>
+                      : (
+                        <button type='button' onClick={() => editCard(selected)} className='text-left text-accent'>
+                          Set what you owe to see your real available credit
+                        </button>
+                      )}
+                  </div>
                 </>
               ) : (
                 <div className='text-xs text-faint'>Edit the card and add its credit limit to track how much is left.</div>
