@@ -23,3 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 *.env
+
+# Secrets
+.env
+.vercel
+
+# Design handoff, reference only
+Money Tracker*/
