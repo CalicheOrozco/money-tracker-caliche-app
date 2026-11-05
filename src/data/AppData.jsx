@@ -64,7 +64,8 @@ export function AppDataProvider ({ guest, children }) {
   const [transactions, setTransactions] = useState([])
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
-  const [range, setRange] = useState(settings.defaultRange)
+  // Guests see all the sample history; users start on their saved range (1M by default).
+  const [range, setRange] = useState(guest ? 'All' : settings.defaultRange)
   const [privacy, setPrivacy] = useState(settings.privacyOnOpen)
   const [hidden, setHiddenState] = useState(readHidden)
   const [drawer, setDrawer] = useState({ open: false, editing: null, preset: null })

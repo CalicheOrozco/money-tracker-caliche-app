@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: { type: Date, default: null },
   settings: {
     currency: { type: String, default: 'MXN' },
-    defaultRange: { type: String, default: '6M' },
+    defaultRange: { type: String, default: '1M' },
     privacyOnOpen: { type: Boolean, default: false },
     budget: { type: Number, default: 0 },
     largeAmount: { type: Number, default: 5000 },
