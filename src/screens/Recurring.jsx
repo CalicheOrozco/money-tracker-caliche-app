@@ -7,7 +7,7 @@ import { decimalOnly, toNumber } from '../lib/numbers.js'
 import { daysUntil, monthlyAmount } from '../lib/recurring.js'
 
 const shortDate = date => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-const FREQUENCY_LABEL = { weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' }
+const FREQUENCY_LABEL = { weekly: 'Weekly', biweekly: 'Biweekly', monthly: 'Monthly', yearly: 'Yearly' }
 
 const emptyPayment = () => ({
   id: '', name: '', amount: '', type: 'sub', frequency: 'monthly',

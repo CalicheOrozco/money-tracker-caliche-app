@@ -36,7 +36,7 @@ const COLLECTIONS = {
   recurring: {
     Model: RecurringPayment,
     fields: {
-      name: 'string!', amount: 'number!', type: 'enum:sub|bill', frequency: 'enum:weekly|monthly|yearly',
+      name: 'string!', amount: 'number!', type: 'enum:sub|bill', frequency: 'enum:weekly|biweekly|monthly|yearly',
       next: 'date!', category: 'string', card: 'string', match: 'string', active: 'boolean'
     }
   },

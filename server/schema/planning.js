@@ -68,7 +68,7 @@ export const RecurringPayment = model('RecurringPayment', owned({
   name: { type: String, required: true },
   amount: { type: Number, required: true },
   type: { type: String, enum: ['sub', 'bill'], default: 'sub' },
-  frequency: { type: String, enum: ['weekly', 'monthly', 'yearly'], default: 'monthly' },
+  frequency: { type: String, enum: ['weekly', 'biweekly', 'monthly', 'yearly'], default: 'monthly' },
   next: { type: String, required: true },
   category: { type: String, default: '' },
   card: { type: String, default: '' },
