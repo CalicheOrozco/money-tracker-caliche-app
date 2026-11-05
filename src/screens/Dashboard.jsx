@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import TxIcon from '../components/TxIcon.jsx'
 import { CardLogo, HideButton, Icon, Section, Spinner } from '../components/ui.jsx'
@@ -125,7 +125,7 @@ function Cards ({ onHide, onPick }) {
   )
 }
 
-function Categories ({ onHide, chartsPath }) {
+function Categories ({ onHide, chartsPath, onPick }) {
   const { metrics, format } = useAppData()
   const { categories, expense } = metrics
 
@@ -144,15 +144,31 @@ function Categories ({ onHide, chartsPath }) {
             {rows.map(c => <div key={c.name} style={{ width: pct(c.amount), background: c.color }} />)}
           </div>
           <div className='flex flex-col gap-2.5'>
-            {rows.map(c => (
-              <div key={c.name} className='flex items-center gap-2.5'>
-                <span className='h-2 w-2 flex-none rounded-[3px]' style={{ background: c.color }} />
-                <Icon name={c.icon || CATEGORY_ICON[c.name] || 'category'} size={18} className='text-muted' />
-                <span className='min-w-0 flex-1 truncate'>{c.name}</span>
-                <span className='font-mono text-xs text-faint'>{pct(c.amount)}</span>
-                <span className='w-23 text-right tabular-nums'>{format.money(c.amount)}</span>
-              </div>
-            ))}
+            {rows.map(c => {
+              const content = (
+                <>
+                  <span className='h-2 w-2 flex-none rounded-[3px]' style={{ background: c.color }} />
+                  <Icon name={c.icon || CATEGORY_ICON[c.name] || 'category'} size={18} className='text-muted' />
+                  <span className='min-w-0 flex-1 truncate'>{c.name}</span>
+                  <span className='font-mono text-xs text-faint'>{pct(c.amount)}</span>
+                  <span className='w-23 text-right tabular-nums'>{format.money(c.amount)}</span>
+                </>
+              )
+              // "Everything else" groups several categories, so it has nothing single to open.
+              return c.icon === 'more_horiz' ? (
+                <div key={c.name} className='flex items-center gap-2.5 px-1.5'>{content}</div>
+              ) : (
+                <button
+                  key={c.name}
+                  type='button'
+                  title={`See ${c.name} transactions`}
+                  onClick={() => onPick(c.name)}
+                  className='-my-1 flex items-center gap-2.5 rounded-lg px-1.5 py-1 text-left text-ink hover:bg-hover'
+                >
+                  {content}
+                </button>
+              )
+            })}
           </div>
         </>
       )}
@@ -210,16 +226,24 @@ function TransactionRow ({ t }) {
 }
 
 function Transactions ({ onHide }) {
-  const { metrics, format, showToast, cards, cardFilter, setCardFilter } = useAppData()
+  const { metrics, format, showToast, cards, cardFilter, setCardFilter, categoryFilter: category, setCategoryFilter: setCategory } = useAppData()
   const location = useLocation()
   const [search, setSearch] = useState(location.state?.search || '')
-  const [category, setCategory] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [limit, setLimit] = useState(PAGE)
+  const sectionRef = useRef(null)
 
   useEffect(() => {
     if (cardFilter) setFiltersOpen(true)
   }, [cardFilter])
+
+  // Picking a category elsewhere (Where it went, Charts) opens its transactions here.
+  useEffect(() => {
+    if (!category) return
+    setFiltersOpen(true)
+    setLimit(PAGE)
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [category])
 
   const list = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -249,7 +273,7 @@ function Transactions ({ onHide }) {
   const selectClass = 'h-9 min-w-40 flex-1 rounded-[9px] border border-line-3 bg-raised px-2.5 text-ink'
 
   return (
-    <section className='flex flex-col gap-3.5 rounded-[20px] border border-line bg-panel px-5 pb-2 pt-5'>
+    <section ref={sectionRef} className='flex scroll-mt-4 flex-col gap-3.5 rounded-[20px] border border-line bg-panel px-5 pb-2 pt-5'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div className='flex items-baseline gap-2.5'>
           <h2 className='m-0 text-[17px] font-semibold tracking-[-.01em]'>Transactions</h2>
@@ -351,7 +375,7 @@ function Transactions ({ onHide }) {
 }
 
 export default function Dashboard () {
-  const { loading, hidden, setHidden, guest, setCardFilter } = useAppData()
+  const { loading, hidden, setHidden, guest, setCardFilter, setCategoryFilter } = useAppData()
   if (loading) return <Spinner />
 
   const hide = key => () => setHidden({ ...hidden, [key]: true })
@@ -385,7 +409,16 @@ export default function Dashboard () {
             }}
           />
         )}
-        {!hidden.categories && <Categories onHide={hide('categories')} chartsPath={guest ? '/guest/charts' : '/charts'} />}
+        {!hidden.categories && (
+          <Categories
+            onHide={hide('categories')}
+            chartsPath={guest ? '/guest/charts' : '/charts'}
+            onPick={name => {
+              setCategoryFilter(name)
+              if (hidden.tx) setHidden({ ...hidden, tx: false })
+            }}
+          />
+        )}
       </div>
     </div>
   )

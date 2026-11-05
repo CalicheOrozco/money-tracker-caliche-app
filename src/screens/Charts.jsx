@@ -10,6 +10,7 @@ import {
   Tooltip
 } from 'chart.js'
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Bar, Doughnut, Line } from 'react-chartjs-2'
 import { Icon, Spinner } from '../components/ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
@@ -249,7 +250,15 @@ function BalanceOverTime () {
 }
 
 function SpendingByCategory () {
-  const { metrics, format } = useAppData()
+  const { metrics, format, guest, hidden, setHidden, setCategoryFilter } = useAppData()
+  const navigate = useNavigate()
+
+  // Opens the dashboard's transactions for this category, keeping the selected range.
+  const open = name => {
+    setCategoryFilter(name)
+    if (hidden.tx) setHidden({ ...hidden, tx: false })
+    navigate(guest ? '/guest' : '/')
+  }
   const { categories, expense } = metrics
   const max = categories[0]?.amount || 1
 
@@ -262,16 +271,22 @@ function SpendingByCategory () {
       {categories.length === 0 && <p className='m-0 text-[13px] text-muted'>No expenses in this period.</p>}
       <div className='grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-x-7 gap-y-2.5'>
         {categories.map(c => (
-          <div key={c.name} className='flex flex-col gap-1.75 py-1.5'>
-            <div className='flex items-center gap-2.5'>
+          <button
+            key={c.name}
+            type='button'
+            title={`See ${c.name} transactions`}
+            onClick={() => open(c.name)}
+            className='-mx-2 flex flex-col gap-1.75 rounded-lg px-2 py-1.5 text-left text-ink hover:bg-hover'
+          >
+            <span className='flex w-full items-center gap-2.5'>
               <Icon name={CATEGORY_ICON[c.name] || 'category'} size={18} className='flex-none' />
               <span className='min-w-0 flex-1 truncate'>{c.name}</span>
               <span className='tabular-nums'>{format.money(c.amount)}</span>
-            </div>
-            <div className='h-1.25 overflow-hidden rounded-full bg-line'>
-              <div className='h-full rounded-full' style={{ width: `${Math.round((c.amount / max) * 100)}%`, background: c.color }} />
-            </div>
-          </div>
+            </span>
+            <span className='block h-1.25 w-full overflow-hidden rounded-full bg-line'>
+              <span className='block h-full rounded-full' style={{ width: `${Math.round((c.amount / max) * 100)}%`, background: c.color }} />
+            </span>
+          </button>
         ))}
       </div>
     </section>
