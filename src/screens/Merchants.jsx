@@ -588,7 +588,7 @@ export default function Merchants () {
               return (
                 <div key={group.key} className='flex flex-col gap-2.5 border-t border-line-4 py-3'>
                   <div className='flex min-w-0 items-center gap-2.5'>
-                    <span className='grid h-8 w-8 flex-none place-items-center rounded-[9px] bg-line-4 text-[#aab3ac]'><Icon name={CATEGORY_ICON[mostCommon(group.cats)] || 'storefront'} size={17} /></span>
+                    <span className='grid h-8 w-8 flex-none place-items-center rounded-[9px] border border-dashed border-line-3 text-[#aab3ac]'><Icon name={CATEGORY_ICON[mostCommon(group.cats)] || 'storefront'} size={17} /></span>
                     <span className='flex min-w-0 flex-col gap-0.5'>
                       <span className='truncate font-mono text-[13px] uppercase'>{mostCommon(group.raws)}</span>
                       <span className='text-xs text-faint'>
@@ -596,24 +596,27 @@ export default function Merchants () {
                       </span>
                     </span>
                   </div>
-                  <div className='flex flex-wrap gap-1.5'>
-                    <button type='button' onClick={() => openFrom(group)} className='flex h-8 items-center gap-1 rounded-[9px] border border-[#2c5a3d] bg-accent-soft px-2.5 text-[13px] font-medium text-accent'>
+                  {/* Lined up with the name; on phones Create merchant gets its own row. */}
+                  <div className='flex flex-col items-start gap-2 pl-10.5 nav:flex-row nav:flex-wrap nav:items-center nav:gap-1.5'>
+                    <button type='button' onClick={() => openFrom(group)} className='flex h-8 items-center gap-1 rounded-[9px] bg-accent px-2.5 text-[13px] font-semibold text-accent-ink hover:bg-accent-hover'>
                       <Icon name='add_business' size={16} />Create merchant
                     </button>
-                    {!empty && (
-                      <select
-                        aria-label={`Add ${mostCommon(group.raws)} to a merchant`}
-                        value=''
-                        onChange={e => e.target.value && addTo(e.target.value, group)}
-                        className='h-8 max-w-40 rounded-[9px] border border-line-3 bg-raised px-2 text-[13px] text-ink'
-                      >
-                        <option value=''>Add to…</option>
-                        {[...merchants.items].sort((a, b) => a.name.localeCompare(b.name)).map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
-                      </select>
-                    )}
-                    <button type='button' title='Hide from this list' onClick={() => merchantIgnores.create({ key: group.key }).catch(showError)} className='flex h-8 items-center gap-1 rounded-[9px] px-2 text-[13px] text-muted hover:text-ink'>
-                      <Icon name='visibility_off' size={16} />Ignore
-                    </button>
+                    <div className='flex items-center gap-1.5'>
+                      {!empty && (
+                        <select
+                          aria-label={`Add ${mostCommon(group.raws)} to a merchant`}
+                          value=''
+                          onChange={e => e.target.value && addTo(e.target.value, group)}
+                          className='h-8 max-w-40 rounded-[9px] border border-line-3 bg-raised px-2 text-[13px] text-ink'
+                        >
+                          <option value=''>Add to…</option>
+                          {[...merchants.items].sort((a, b) => a.name.localeCompare(b.name)).map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
+                        </select>
+                      )}
+                      <button type='button' title='Hide from this list' onClick={() => merchantIgnores.create({ key: group.key }).catch(showError)} className='flex h-8 items-center gap-1 rounded-[9px] px-2 text-[13px] text-muted hover:text-ink'>
+                        <Icon name='visibility_off' size={16} />Ignore
+                      </button>
+                    </div>
                   </div>
                 </div>
               )

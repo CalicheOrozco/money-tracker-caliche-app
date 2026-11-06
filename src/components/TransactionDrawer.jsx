@@ -447,6 +447,8 @@ export default function TransactionDrawer () {
 
           {!isTransfer && (
           <>
+          {!guest && <MerchantPicker form={form} patch={patch} />}
+
           <div className='grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-2.5'>
             <Field label='Name'>
               <input
@@ -471,8 +473,6 @@ export default function TransactionDrawer () {
           <Field label='Description' hint='optional'>
             <input value={form.desc} onChange={e => patch({ desc: e.target.value })} placeholder='Add a note' className={inputClass} />
           </Field>
-
-          {!guest && <MerchantPicker form={form} patch={patch} />}
 
           <Field label='Tags' hint='comma separated'>
             <input value={form.tags} onChange={e => patch({ tags: e.target.value })} placeholder='viaje-cancún, regalo' className={inputClass} />

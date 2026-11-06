@@ -5,7 +5,7 @@ import { Field, Icon, Logo, PasswordInput, inputClass } from '../components/ui.j
 
 const tabClass = active =>
   `flex items-center justify-center rounded-[9px] p-2.25 font-medium ${
-    active ? 'bg-accent-soft text-accent' : 'text-muted hover:text-ink'
+    active ? 'bg-raised text-ink' : 'text-muted hover:text-ink'
   }`
 
 export default function Auth ({ mode }) {

@@ -81,13 +81,17 @@ function PersonalInfo () {
       </Field>
       <div className='grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2.5'>
         <Field label='Username'>
-          <input
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            onBlur={() => commit('username', username, setUsername)}
-            autoCapitalize='none'
-            className={darkInput}
-          />
+          <span className='relative flex'>
+            <span className='pointer-events-none absolute inset-y-0 left-3 flex items-center text-faint'>@</span>
+            <input
+              aria-label='Username'
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              onBlur={() => commit('username', username, setUsername)}
+              autoCapitalize='none'
+              className={`${darkInput} w-full pl-7`}
+            />
+          </span>
         </Field>
         <Field label='Email'>
           <input type='email' value={email} onChange={e => setEmail(e.target.value)} onBlur={() => commit('email', email, setEmail)} className={darkInput} />

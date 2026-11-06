@@ -221,7 +221,7 @@ function Header ({ title, screen }) {
   const showRange = WITH_RANGE.includes(screen)
 
   return (
-    <header className='flex flex-wrap items-center justify-between gap-4'>
+    <header className='flex flex-col items-start gap-4 nav:flex-row nav:flex-wrap nav:items-center nav:justify-between'>
       <div className='flex flex-col gap-1'>
         <div className='text-[13px] text-faint'>{today}</div>
         <h1 className='m-0 text-[26px] font-semibold tracking-tight'>{title}</h1>

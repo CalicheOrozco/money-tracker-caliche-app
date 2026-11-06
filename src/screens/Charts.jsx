@@ -186,8 +186,22 @@ function MonthlyCashflow () {
   )
 }
 
+// Phones get a simpler axis: dates would overlap, so only a few amounts are shown.
+const NARROW = '(max-width: 859.98px)'
+function useNarrow () {
+  const [narrow, setNarrow] = useState(() => window.matchMedia(NARROW).matches)
+  useEffect(() => {
+    const query = window.matchMedia(NARROW)
+    const update = () => setNarrow(query.matches)
+    query.addEventListener('change', update)
+    return () => query.removeEventListener('change', update)
+  }, [])
+  return narrow
+}
+
 function BalanceOverTime () {
   const { metrics, format, privacy, range } = useAppData()
+  const narrow = useNarrow()
   const { series } = metrics
   // Same objects between renders, so the chart only redraws when its data changes.
   const data = useMemo(() => ({
@@ -222,7 +236,7 @@ function BalanceOverTime () {
       x: {
         grid: { display: false },
         border: { color: '#1f2622' },
-        ticks: { color: '#5d6660', font: MONO, maxTicksLimit: 7, maxRotation: 0 }
+        ticks: { display: !narrow, color: '#5d6660', font: MONO, maxTicksLimit: 7, maxRotation: 0 }
       },
       y: {
         grid: { color: '#161c18' },
@@ -230,12 +244,12 @@ function BalanceOverTime () {
         ticks: {
           color: '#5d6660',
           font: MONO,
-          maxTicksLimit: 5,
+          maxTicksLimit: narrow ? 3 : 5,
           callback: value => (privacy ? '•••' : (value < 0 ? '−' : '') + format.plain(value))
         }
       }
     }
-  }), [format, privacy])
+  }), [format, privacy, narrow])
 
   return (
     <section className={`${panelClass} wide:col-span-2`}>
