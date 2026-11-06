@@ -41,3 +41,17 @@ test('a short or paused manual payment does not hide a detected one', () => {
   assert.ok(detectedNetflix(recurringState(charges, [], [manual({ name: 'Net', active: true })])))
   assert.ok(!detectedNetflix(recurringState(charges, [], [manual({ name: 'Netflix' })])))
 })
+
+test('manual recurring income counts as income, not as a charge', () => {
+  const deposits = [0, 1, 2].map(n => ({ id: `s${n}`, name: 'Nomina Acme', desc: '', amount: 2000, date: inDays(-n * 14 - 2), category: 'Salary', card: 'Debit', tags: [] }))
+  const salary = manual({ name: 'Salary', match: 'nomina', amount: 2000, type: 'income', frequency: 'biweekly', category: 'Salary' })
+  const state = recurringState(deposits, [], [salary])
+  assert.equal(state.lists.income.length, 1)
+  assert.equal(state.lists.income[0].list.length, 3)
+  assert.equal(Math.round(state.income * 100) / 100, 4333.33)
+  assert.equal(state.lists.subs.length + state.lists.bills.length, 0)
+  assert.ok(!state.upcoming.some(r => r.type === 'income'))
+  const paused = recurringState(deposits, [], [{ ...salary, active: false }])
+  assert.equal(paused.income, 0)
+  assert.ok(paused.lists.inactive.some(r => r.type === 'income'))
+})

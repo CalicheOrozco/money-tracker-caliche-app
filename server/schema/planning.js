@@ -67,7 +67,7 @@ export const Merchant = model('Merchant', owned({
 export const RecurringPayment = model('RecurringPayment', owned({
   name: { type: String, required: true },
   amount: { type: Number, required: true },
-  type: { type: String, enum: ['sub', 'bill'], default: 'sub' },
+  type: { type: String, enum: ['sub', 'bill', 'income'], default: 'sub' },
   frequency: { type: String, enum: ['weekly', 'biweekly', 'monthly', 'yearly'], default: 'monthly' },
   next: { type: String, required: true },
   category: { type: String, default: '' },
