@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppData, useAppUI } from '../data/AppData.jsx'
 import { EXPENSE, INCOME } from '../lib/constants.js'
 import { toISODate } from '../lib/dates.js'
 import { toNumber } from '../lib/numbers.js'
 import { parseTags } from '../lib/tags.js'
 import BrandPicker from './BrandPicker.jsx'
+import { MerchantTile } from './TxIcon.jsx'
 import { CardLogo, Field, Icon, Switch, inputClass } from './ui.jsx'
 
 const emptyForm = () => ({
@@ -29,6 +31,81 @@ function formFrom (t) {
     useCard: !!t.card,
     card: t.card
   }
+}
+
+// Shows the transaction's merchant and why it has it, and lets the user pick another.
+function MerchantPicker ({ form, patch }) {
+  const { merchants, autoMatch, closeDrawer } = useAppData()
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const auto = autoMatch(`${form.name} ${form.desc}`)
+  const chosen = form.merchant && form.merchant !== 'none' ? merchants.items.find(m => m._id === form.merchant) : null
+  const current = form.merchant === 'none' ? null : chosen || auto?.merchant || null
+  const sub = form.merchant === 'none'
+    ? 'Shows the category icon'
+    : chosen ? 'Chosen manually' : auto ? `Matched automatically by “${auto.pattern}”` : 'No pattern matches this name yet'
+  const pick = merchant => {
+    patch({ merchant })
+    setOpen(false)
+  }
+  const go = state => {
+    closeDrawer()
+    navigate('/merchants', state ? { state } : undefined)
+  }
+  const options = merchants.items.filter(m => !query.trim() || m.name.toLowerCase().includes(query.trim().toLowerCase()))
+  const row = 'flex w-full items-center gap-2.5 rounded-[10px] px-2 py-1.5 text-left text-ink hover:bg-[#141a16]'
+
+  return (
+    <div className='flex flex-col gap-2 rounded-[14px] border border-line bg-field p-3'>
+      <button type='button' aria-expanded={open} onClick={() => { setOpen(!open); setQuery('') }} className='flex items-center gap-3 text-left text-ink'>
+        <MerchantTile merchant={current} category={form.category} size={38} />
+        <span className='flex min-w-0 flex-1 flex-col'>
+          <span className='text-xs font-medium text-muted'>Merchant</span>
+          <span className='truncate font-medium'>{current ? current.name : 'No merchant'}</span>
+          <span className='truncate text-xs text-faint'>{sub}</span>
+        </span>
+        <span className='flex flex-none items-center gap-0.5 text-[13px] text-accent'>Change<Icon name={open ? 'expand_less' : 'expand_more'} size={18} /></span>
+      </button>
+      {open && (
+        <div className='flex flex-col gap-1 border-t border-line-4 pt-2'>
+          <div className='flex h-9 items-center gap-2 rounded-[10px] border border-line-2 bg-rail px-2.5'>
+            <Icon name='search' size={17} className='text-faint' />
+            <input aria-label='Find a merchant' value={query} onChange={e => setQuery(e.target.value)} placeholder='Find a merchant' className='min-w-0 flex-1 border-0 bg-transparent text-[13px] text-ink outline-hidden' />
+          </div>
+          <button type='button' onClick={() => pick('')} className={`${row} ${!form.merchant ? 'bg-[#122219]' : ''}`}>
+            <span className='grid h-7 w-7 place-items-center rounded-lg bg-accent-soft text-accent'><Icon name='auto_awesome' size={16} /></span>
+            <span className='flex min-w-0 flex-1 flex-col'>
+              <span className='text-[13px] font-medium'>Match automatically</span>
+              <span className='truncate text-xs text-faint'>{auto ? `Currently ${auto.merchant.name}` : 'Nothing matches right now'}</span>
+            </span>
+            {!form.merchant && <Icon name='check' size={18} className='text-accent' />}
+          </button>
+          <div className='flex max-h-52 flex-col overflow-y-auto'>
+            {options.map(m => (
+              <button key={m._id} type='button' onClick={() => pick(m._id)} className={`${row} ${form.merchant === m._id ? 'bg-[#122219]' : ''}`}>
+                <MerchantTile merchant={m} size={28} />
+                <span className='min-w-0 flex-1 truncate text-[13px]'>{m.name}</span>
+                {form.merchant === m._id && <Icon name='check' size={18} className='text-accent' />}
+              </button>
+            ))}
+          </div>
+          <button type='button' onClick={() => pick('none')} className={`${row} ${form.merchant === 'none' ? 'bg-[#122219]' : ''}`}>
+            <span className='grid h-7 w-7 place-items-center rounded-lg bg-line-4 text-[#aab3ac]'><Icon name='block' size={16} /></span>
+            <span className='flex min-w-0 flex-1 flex-col'>
+              <span className='text-[13px] font-medium'>No merchant</span>
+              <span className='text-xs text-faint'>Show the category icon instead</span>
+            </span>
+            {form.merchant === 'none' && <Icon name='check' size={18} className='text-accent' />}
+          </button>
+          <div className='flex flex-wrap justify-between gap-2 px-1 pt-1 text-[13px]'>
+            {current ? <button type='button' onClick={() => go({ edit: current._id })} className='text-accent'>Edit {current.name}</button> : <span />}
+            <button type='button' onClick={() => go()} className='text-accent'>Manage merchants →</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function TransactionDrawer () {
@@ -328,20 +405,7 @@ export default function TransactionDrawer () {
             <input value={form.desc} onChange={e => patch({ desc: e.target.value })} placeholder='Add a note' className={inputClass} />
           </Field>
 
-          {!guest && (
-            <Field label='Merchant' hint='sets the logo'>
-              <select value={form.merchant} onChange={e => patch({ merchant: e.target.value })} className={`${inputClass} px-2.5`}>
-                <option value=''>
-                  Auto{(() => {
-                    const auto = merchantFor(`${form.name} ${form.desc}`)
-                    return auto ? ` · ${auto.name}` : ' · no match'
-                  })()}
-                </option>
-                {merchants.items.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
-                <option value='none'>No merchant</option>
-              </select>
-            </Field>
-          )}
+          {!guest && <MerchantPicker form={form} patch={patch} />}
 
           <Field label='Tags' hint='comma separated'>
             <input value={form.tags} onChange={e => patch({ tags: e.target.value })} placeholder='viaje-cancún, regalo' className={inputClass} />
