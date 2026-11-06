@@ -13,7 +13,7 @@ import { disablePush, enablePush } from '../lib/push.js'
 
 const NOTIFICATIONS = [
   ['daily', 'Daily reminder', 'A nudge in the evening if you haven’t logged anything today.'],
-  ['weekly', 'Weekly summary', 'Once a week: income, expenses and your top category.'],
+  ['weekly', 'Weekly summary', 'Every Sunday evening: income, expenses and your top category.'],
   ['large', 'Large expense alert', 'Get notified when a single expense goes over a limit.']
 ]
 
