@@ -1,5 +1,7 @@
 import express from 'express'
 import authenticateToken from '../auth/authenticateToken.js'
+import mongoose from 'mongoose'
+import ErrorReport from '../schema/errorReport.js'
 import Token from '../schema/token.js'
 import User from '../schema/user.js'
 import { passwordProblem } from '../lib/accountRules.js'
@@ -53,6 +55,24 @@ router.post('/reset-password', RESETS, async (req, res) => {
     }
   }
   res.json(result)
+})
+
+// Errors saved by the app, newest first.
+router.get('/errors', async (req, res) => {
+  const reports = await ErrorReport.find().sort({ lastAt: -1 }).limit(100).select('-fingerprint -__v -expiresAt').lean()
+  res.json(reports)
+})
+
+// Removing one marks it as handled. If it happens again it comes back as new.
+router.delete('/errors/:id', async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Invalid id.' })
+  await ErrorReport.deleteOne({ _id: req.params.id })
+  res.json({ deleted: true })
+})
+
+router.delete('/errors', async (req, res) => {
+  const { deletedCount } = await ErrorReport.deleteMany({})
+  res.json({ deletedCount })
 })
 
 export default router

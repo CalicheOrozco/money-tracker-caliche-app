@@ -25,6 +25,7 @@ function publicProfile (user) {
     photo: user.photo || '',
     memberSince: user._id.getTimestamp(),
     passwordChangedAt: user.passwordChangedAt,
+    ...(user.admin && { admin: true }),
     settings: user.settings
   }
 }

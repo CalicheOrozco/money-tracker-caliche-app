@@ -9,6 +9,8 @@ import meRoute from './routes/me.js'
 import logoutRoute from './routes/logout.js'
 import refreshTokenRoute from './routes/refreshToken.js'
 import cronRoute from './routes/cron.js'
+import errorsRoute from './routes/errors.js'
+import { reportErrorWithin } from './lib/reportError.js'
 import profileRoute from './routes/profile.js'
 import pushRoute from './routes/push.js'
 import transactionsRoute from './routes/transactions.js'
@@ -57,6 +59,7 @@ app.use('/api/signout', logoutRoute)
 app.use('/api/refresh-token', refreshTokenRoute)
 app.use('/api/profile', profileRoute)
 app.use('/api/admin', adminRoute)
+app.use('/api/errors', errorsRoute)
 app.use('/api/me', meRoute)
 app.use('/api/push', pushRoute)
 app.use('/api/cron', cronRoute)
@@ -69,11 +72,14 @@ app.use('/api', (req, res) => {
 
 // The frontend reads `error` on transaction routes and `body.error` on auth
 // routes, so failures carry both.
-app.use((err, req, res, next) => {
+app.use(async (err, req, res, next) => {
   if (res.headersSent) return next(err)
 
   const status = err.status || err.statusCode || 500
-  if (status >= 500) console.error(err)
+  if (status >= 500) {
+    console.error(err)
+    await reportErrorWithin(err, { source: 'server', path: `${req.method} ${req.path}`, userID: req.user?.id })
+  }
 
   const error = status >= 500 ? 'Internal server error' : err.message
   res.status(status).json({ error, ...jsonResponse(status, { error }) })

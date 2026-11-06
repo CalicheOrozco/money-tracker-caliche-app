@@ -32,9 +32,11 @@ const TITLES = {
   insights: 'Insights', calendar: 'Calendar', charts: 'Charts', reports: 'Monthly report',
   cards: 'Cards', transfers: 'Transfers', recurring: 'Recurring payments', budgets: 'Budgets', goals: 'Savings goals',
   debts: 'Debts & loans', 'net-worth': 'Net worth',
-  rules: 'Rules & tags', merchants: 'Merchants', profile: 'Profile & settings', year: 'Year in review'
+  rules: 'Rules & tags', merchants: 'Merchants', profile: 'Profile & settings', year: 'Year in review', admin: 'App errors'
 }
 
+// The admin also sees the errors the app has reported.
+const ADMIN_GROUPS = USER_GROUPS.map(([title, items]) => [title, title === 'Tools' ? [...items, ['/admin/errors', 'App errors', 'error']] : items])
 
 const WITH_RANGE = ['dashboard', 'charts', 'cards']
 
@@ -299,7 +301,7 @@ function Shell () {
   const { pathname } = useLocation()
   const { user } = useAuth()
   const { guest } = useAppData()
-  const groups = guest ? GUEST_GROUPS : USER_GROUPS
+  const groups = guest ? GUEST_GROUPS : user?.admin ? ADMIN_GROUPS : USER_GROUPS
   const mobileNav = [
     ...groups.flatMap(([, items]) => items),
     guest ? ['/signup', 'Sign up', 'person_add'] : ['/profile', 'Profile', 'person']

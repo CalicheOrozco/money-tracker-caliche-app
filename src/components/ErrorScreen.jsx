@@ -1,12 +1,19 @@
 import { useRouteError } from 'react-router-dom'
+import { useEffect } from 'react'
+import { reportError } from '../lib/reportError.js'
 import { Icon } from './ui.jsx'
 
 // Shown when a screen crashes, or when a new deploy removed the files an open tab
 // still asks for. Reloading picks up the current version.
 export default function ErrorScreen () {
   const error = useRouteError()
-  console.error(error)
   const outdated = /dynamically imported module|Failed to fetch|Importing a module script failed/i.test(String(error?.message || error))
+
+  // An old tab after a deploy isn't a bug, so only real crashes are reported.
+  useEffect(() => {
+    console.error(error)
+    if (!outdated) reportError(error)
+  }, [error, outdated])
 
   return (
     <div className='grid min-h-screen place-items-center bg-canvas px-4 text-center text-ink'>

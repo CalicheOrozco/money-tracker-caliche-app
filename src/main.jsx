@@ -8,6 +8,7 @@ import { Spinner } from './components/ui.jsx'
 import './index.css'
 import { loadLogoConfig } from './lib/brandfetch.js'
 import { registerServiceWorker } from './lib/push.js'
+import { watchErrors } from './lib/reportError.js'
 import Auth from './screens/Auth.jsx'
 import Dashboard from './screens/Dashboard.jsx'
 
@@ -25,6 +26,7 @@ const Recurring = lazy(() => import('./screens/Recurring.jsx'))
 const Transfers = lazy(() => import('./screens/Transfers.jsx'))
 const Reports = lazy(() => import('./screens/Reports.jsx'))
 const Rules = lazy(() => import('./screens/Rules.jsx'))
+const AdminErrors = lazy(() => import('./screens/AdminErrors.jsx'))
 const YearInReview = lazy(() => import('./screens/YearInReview.jsx'))
 
 function Gate () {
@@ -79,6 +81,7 @@ const router = createBrowserRouter([
           { path: 'rules', element: lazyScreen(<Rules />) },
           { path: 'merchants', element: lazyScreen(<Merchants />) },
           { path: 'profile', element: lazyScreen(<Profile />) },
+          { path: 'admin/errors', element: lazyScreen(<AdminErrors />) },
           { path: 'files', element: <Navigate to='/' replace /> }
         ]
       },
@@ -88,6 +91,7 @@ const router = createBrowserRouter([
 ])
 
 registerServiceWorker()
+watchErrors()
 
 loadLogoConfig()
 

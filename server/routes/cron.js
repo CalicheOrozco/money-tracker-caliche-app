@@ -1,6 +1,7 @@
 import express from 'express'
 import { cardDues } from '../../src/lib/cardCycle.js'
 import { byCategoryEntries } from '../../src/lib/splits.js'
+import { reportError } from '../lib/reportError.js'
 import { priceValue } from '../lib/price.js'
 import { sendToUser } from '../lib/push.js'
 import Card from '../schema/card.js'
@@ -131,8 +132,12 @@ router.get('/notifications', async (req, res) => {
   const now = new Date()
   const userIDs = await PushSubscription.distinct('userID')
   const users = await User.find({ _id: { $in: userIDs } })
+  // One user's failure must not stop everyone else's reminders.
   const results = await Promise.all(
-    users.map(user => notifyUser(user, now, localDay(now).getUTCDay() === 0))
+    users.map(user => notifyUser(user, now, localDay(now).getUTCDay() === 0).catch(error => {
+      reportError(error, { source: 'cron', path: '/api/cron/notifications' })
+      return 0
+    }))
   )
 
   res.json({ sent: results.reduce((total, count) => total + count, 0) })
