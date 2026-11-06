@@ -12,6 +12,8 @@
     "dev:api": "node --env-file-if-exists=.env --watch server/dev.js",
     "seed:guest": "node --env-file-if-exists=.env server/scripts/seed-guest.js",
     "make-admin": "node --env-file-if-exists=.env server/scripts/make-admin.js",
+    "backup": "node --env-file-if-exists=.env server/scripts/backup.js",
+    "restore": "node --env-file-if-exists=.env server/scripts/restore.js",
     "test": "node --test",
     "sync:mcp": "node scripts/sync-mcp-shared.mjs"
   },

@@ -1,0 +1,50 @@
+name: Weekly backup
+
+# Every Sunday, an encrypted copy of the database is kept as a workflow artifact for
+# 90 days. The repository is public, so the file is encrypted with BACKUP_PASSPHRASE
+# before it leaves the runner, and the logs only show counts.
+#
+# Needs these repository secrets: MONGODB_URI, MONGODB_DB (optional), BACKUP_PASSPHRASE.
+# Restore with: npm run restore -- <downloaded file>
+
+on:
+  schedule:
+    - cron: '0 8 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --omit=dev --ignore-scripts
+      - name: Back up and encrypt the database
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_DB: ${{ secrets.MONGODB_DB }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$MONGODB_URI" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "Set the MONGODB_URI and BACKUP_PASSPHRASE repository secrets." >&2
+            exit 1
+          fi
+          echo "NAME=money-tracker-$(date -u +%F)" >> "$GITHUB_ENV"
+          node server/scripts/backup.js backup.enc
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NAME }}
+          path: backup.enc
+          retention-days: 90
+          if-no-files-found: error

@@ -98,6 +98,36 @@ router.patch('/', async (req, res) => {
   res.json(publicProfile(user))
 })
 
+// Everything the account has, as one JSON file the user keeps. Sessions, push
+// subscriptions and the password are left out.
+const EXPORTS = limit('data-export', 10, 60 * 60 * 1000, req => req.user.id)
+
+router.get('/export', EXPORTS, async (req, res) => {
+  const userID = req.account.id
+  const strip = doc => {
+    const copy = { ...doc }
+    delete copy.userID
+    delete copy.__v
+    return copy
+  }
+  const [transactions, cards, ...planning] = await Promise.all([
+    TransactionModel.find({ userID }).sort({ datetime: 1 }).lean(),
+    Card.find({ userID }).lean(),
+    ...PLANNING_MODELS.map(Model => Model.find({ userID }).lean())
+  ])
+  const collections = Object.fromEntries(PLANNING_MODELS.map((Model, i) => [Model.collection.collectionName, planning[i].map(strip)]))
+  res.set('Cache-Control', 'no-store')
+  res.json({
+    app: 'Money Tracker',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    profile: publicProfile(req.account),
+    transactions: transactions.map(strip),
+    cards: cards.map(strip),
+    ...collections
+  })
+})
+
 // Destructive actions ask for the password again, so a stolen session or a
 // connected assistant cannot run them alone.
 const PASSWORD_CHECKS = limit('password-check', 10, 15 * 60 * 1000, req => req.user.id)

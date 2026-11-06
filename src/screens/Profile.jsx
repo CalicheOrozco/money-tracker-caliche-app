@@ -7,7 +7,7 @@ import { useAppData } from '../data/AppData.jsx'
 import { api, setSession } from '../lib/api.js'
 import { downloadTransactionsCsv } from '../lib/csv.js'
 import { CURRENCIES, RANGES } from '../lib/constants.js'
-import { relativeTime } from '../lib/dates.js'
+import { relativeTime, toISODate } from '../lib/dates.js'
 import { currentMonth } from '../lib/metrics.js'
 import { disablePush, enablePush } from '../lib/push.js'
 
@@ -449,6 +449,24 @@ function YourData () {
   const confirmButton = 'h-8.5 rounded-[9px] bg-danger px-3 font-semibold text-[#1a0808] disabled:opacity-60'
   const keepButton = 'h-8.5 rounded-[9px] border border-line-3 px-3 text-ink'
 
+  async function downloadEverything () {
+    setBusy(true)
+    try {
+      const data = await api('/profile/export')
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `money-tracker-${toISODate(new Date())}.json`
+      link.click()
+      URL.revokeObjectURL(url)
+      showToast('All your data downloaded')
+    } catch (error) {
+      showError(error)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function deleteTransactions () {
     setBusy(true)
     try {
@@ -479,7 +497,22 @@ function YourData () {
       <Heading icon='database'>Your data</Heading>
       <div className='flex items-center justify-between gap-3'>
         <span className='flex flex-col gap-0.75'>
-          <span className='font-medium'>Export everything</span>
+          <span className='font-medium'>Download all my data</span>
+          <span className='text-xs text-faint'>Every transaction, card, budget, goal, rule and setting as one JSON file</span>
+        </span>
+        <button
+          type='button'
+          disabled={busy}
+          onClick={downloadEverything}
+          className='flex h-9 flex-none items-center gap-1.5 rounded-[10px] border border-line-3 px-3.5 text-ink disabled:opacity-60'
+        >
+          <Icon name='download' size={18} />
+          JSON
+        </button>
+      </div>
+      <div className='flex items-center justify-between gap-3'>
+        <span className='flex flex-col gap-0.75'>
+          <span className='font-medium'>Export transactions</span>
           <span className='text-xs text-faint'>{movements} as CSV</span>
         </span>
         <button
