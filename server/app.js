@@ -1,4 +1,5 @@
 import express from 'express'
+import adminRoute from './routes/admin.js'
 import brandRoute from './routes/brand.js'
 import connectDB from './lib/connectDB.js'
 import { jsonResponse } from './lib/jsonResponse.js'
@@ -55,6 +56,7 @@ app.use('/api/login', loginRoute)
 app.use('/api/signout', logoutRoute)
 app.use('/api/refresh-token', refreshTokenRoute)
 app.use('/api/profile', profileRoute)
+app.use('/api/admin', adminRoute)
 app.use('/api/me', meRoute)
 app.use('/api/push', pushRoute)
 app.use('/api/cron', cronRoute)

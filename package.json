@@ -11,6 +11,7 @@
     "dev:web": "vite",
     "dev:api": "node --env-file-if-exists=.env --watch server/dev.js",
     "seed:guest": "node --env-file-if-exists=.env server/scripts/seed-guest.js",
+    "make-admin": "node --env-file-if-exists=.env server/scripts/make-admin.js",
     "test": "node --test",
     "sync:mcp": "node scripts/sync-mcp-shared.mjs"
   },

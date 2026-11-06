@@ -12,6 +12,8 @@ const userSchema = new mongoose.Schema({
   email: { type: String, default: '' },
   photo: { type: String, default: '' },
   passwordChangedAt: { type: Date, default: null },
+  // Set only with `npm run make-admin`. Admins can reset other users' passwords.
+  admin: { type: Boolean, default: false },
   settings: {
     currency: { type: String, default: 'MXN' },
     defaultRange: { type: String, default: '1M' },

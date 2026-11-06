@@ -145,6 +145,7 @@ export default function Auth ({ mode }) {
               className='h-11.5 text-[15px]'
             />
           </Field>
+          {isLogin && <p className='-mt-2 text-xs text-faint'>Forgot your password? Ask the app admin to reset it.</p>}
 
           <button
             type='submit'
