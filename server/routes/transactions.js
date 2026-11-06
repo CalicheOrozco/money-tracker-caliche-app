@@ -10,6 +10,7 @@ import { RecurringPayment, Transfer } from '../schema/planning.js'
 import TransactionModel from '../schema/transaction.js'
 import User from '../schema/user.js'
 import {
+  cleanSplits,
   normalizePrice,
   validIcon,
   validateTransactionBody
@@ -123,7 +124,8 @@ async function createTransaction (req, res, userID) {
     card,
     icon,
     tags: normalizeTags(req.body.tags),
-    merchant: merchantChoice(req.body.merchant)
+    merchant: merchantChoice(req.body.merchant),
+    splits: cleanSplits(req.body.splits)
   })
 
   if (userID) {
@@ -306,6 +308,7 @@ router.put(
     const error = validateTransactionBody(req.body)
     if (error) return res.status(400).json({ error })
 
+    const priceBefore = req.transaction.price
     Object.assign(req.transaction, {
       name,
       price: normalizePrice(price),
@@ -317,6 +320,9 @@ router.put(
     })
     if (req.body.tags !== undefined) req.transaction.tags = normalizeTags(req.body.tags)
     if (req.body.merchant !== undefined) req.transaction.merchant = merchantChoice(req.body.merchant)
+    // A new amount without new parts would no longer add up, so the split is removed.
+    if (req.body.splits !== undefined) req.transaction.splits = cleanSplits(req.body.splits)
+    else if (normalizePrice(price) !== priceBefore) req.transaction.splits = []
     await req.transaction.save()
     res.json(req.transaction)
   }

@@ -1,4 +1,5 @@
 import express from 'express'
+import { byCategoryEntries } from '../../src/lib/splits.js'
 import { priceValue } from '../lib/price.js'
 import { sendToUser } from '../lib/push.js'
 import PushSubscription from '../schema/pushSubscription.js'
@@ -31,14 +32,13 @@ async function weeklyPayload (userID, now) {
   let expenses = 0
   const categories = {}
   for (const transaction of transactions) {
-    const amount = amountOf(transaction)
-    if (isExpense(transaction)) {
-      expenses += amount
-      const category = transaction.category || 'Other'
-      categories[category] = (categories[category] || 0) + amount
-    } else {
-      income += amount
-    }
+    if (isExpense(transaction)) expenses += amountOf(transaction)
+    else income += amountOf(transaction)
+  }
+  // Split purchases count in each of their categories.
+  const parts = byCategoryEntries(transactions.map(t => ({ amount: priceValue(t.price), category: t.category || 'Other', splits: t.splits })))
+  for (const part of parts) {
+    if (part.amount < 0) categories[part.category] = (categories[part.category] || 0) - part.amount
   }
 
   const [top] = Object.entries(categories).sort((a, b) => b[1] - a[1])

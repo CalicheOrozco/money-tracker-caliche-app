@@ -6,6 +6,7 @@ import { useAppData } from '../data/AppData.jsx'
 import { downloadTransactionsCsv } from '../lib/csv.js'
 import { CATEGORY_ICON, EXPENSE, INCOME, RANGE_LABEL, SECTIONS } from '../lib/constants.js'
 import { sparkPaths } from '../lib/metrics.js'
+import { categoryLabel, inCategory } from '../lib/splits.js'
 import { transfersInRange } from '../lib/transfers.js'
 
 const PAGE = 25
@@ -221,8 +222,8 @@ function Transactions ({ onHide, category, setCategory }) {
     )
     if (category === TRANSFERS) return [...moved].sort(SORTS[sort][1])
     return [...metrics.inRange.filter(t =>
-      (!query || `${t.name} ${t.desc} ${t.category} ${t.tags.map(tag => '#' + tag).join(' ')}`.toLowerCase().includes(query)) &&
-      (!category || t.category === category) &&
+      (!query || `${t.name} ${t.desc} ${categoryLabel(t)} ${t.tags.map(tag => '#' + tag).join(' ')}`.toLowerCase().includes(query)) &&
+      (!category || inCategory(t, category)) &&
       (!cardFilter || (cardFilter === '__none' ? !t.card || cashNames.has(t.card) : t.card === cardFilter || (!t.card && cashNames.has(cardFilter))))
     ), ...moved].sort(SORTS[sort][1])
   }, [metrics.inRange, transferList, range, search, category, cardFilter, sort, cashNames])

@@ -6,6 +6,7 @@ import { CATEGORY_ICON } from '../lib/constants.js'
 import { daysAgo, parseDay } from '../lib/dates.js'
 import {
   currentMonthKey,
+  expenseCategories,
   expensesOf,
   inMonth,
   incomeOf,
@@ -25,7 +26,7 @@ function buildInsights ({ transactions, format, recurring, budgets }) {
   const change = percentChange(spent, before)
   const date = value => parseDay(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
-  const categories = [...new Set([...last30, ...prev30].filter(t => t.amount < 0).map(t => t.category))]
+  const categories = expenseCategories([...last30, ...prev30])
   const diffs = categories
     .map(c => [c, expensesOf(last30, c) - expensesOf(prev30, c)])
     .sort((a, b) => b[1] - a[1])

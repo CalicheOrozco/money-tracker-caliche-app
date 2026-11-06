@@ -11,7 +11,9 @@ const TransactionSchema = new Schema({
   icon: { type: String, required: false },
   tags: { type: [String], default: [] },
   // Empty follows the merchant patterns, "none" opts out, anything else is a merchant id.
-  merchant: { type: String, default: '' }
+  merchant: { type: String, default: '' },
+  // Parts of one purchase in different categories. Their amounts add up to the price.
+  splits: { type: [{ _id: false, category: String, amount: Number }], default: [] }
 }, { timestamps: true })
 
 // Every read is per user, sorted by date or grouped by card.

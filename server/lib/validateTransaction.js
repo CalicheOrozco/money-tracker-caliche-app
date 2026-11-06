@@ -1,4 +1,5 @@
-import { normalizePrice, priceProblem } from './price.js'
+import { splitProblem } from '../../src/lib/splits.js'
+import { normalizePrice, priceProblem, priceValue } from './price.js'
 
 export { normalizePrice }
 
@@ -26,5 +27,11 @@ export function validateTransactionBody (body) {
   if (!datetime) return 'The date must not be empty.'
   if (isNaN(new Date(datetime))) return 'The date must be a valid date.'
 
+  if (body.splits !== undefined) return splitProblem(body.splits, priceValue(normalizePrice(price)))
+
   return null
 }
+
+// Only the fields a part keeps, with clean text.
+export const cleanSplits = splits =>
+  Array.isArray(splits) ? splits.map(part => ({ category: part.category.trim(), amount: part.amount })) : []

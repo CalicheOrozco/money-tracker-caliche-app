@@ -41,7 +41,8 @@ function fromApi (t) {
     card: t.card || '',
     icon: t.icon || '',
     tags: Array.isArray(t.tags) ? t.tags : [],
-    merchant: t.merchant || ''
+    merchant: t.merchant || '',
+    splits: Array.isArray(t.splits) ? t.splits : []
   }
 }
 
@@ -55,7 +56,8 @@ function toApi (t) {
     card: t.card,
     icon: t.icon,
     tags: t.tags || [],
-    merchant: t.merchant || ''
+    merchant: t.merchant || '',
+    splits: t.splits || []
   }
 }
 
@@ -146,7 +148,8 @@ export function AppDataProvider ({ guest, children }) {
       card: record.card || '',
       icon: record.icon || '',
       tags: record.tags || [],
-      merchant: record.merchant || ''
+      merchant: record.merchant || '',
+      splits: record.splits || []
     }
     setTransactions(list => [...list.filter(t => t.id !== item.id), item].sort((a, b) => b.date.localeCompare(a.date)))
     if (item.card) {
@@ -164,7 +167,9 @@ export function AppDataProvider ({ guest, children }) {
     if (record.card && !cards.some(c => c.name === record.card)) await reloadCards()
   }, [guest, saveGuestTransaction, userID, putTransaction, cards, reloadCards])
 
-  const removeTransaction = useCallback(async transaction => {
+  // A part of a split transaction stands for the whole one.
+  const removeTransaction = useCallback(async item => {
+    const transaction = item.parent || item
     if (!guest) await api(`/transaction/delete/${transaction.id}`, { method: 'DELETE' })
     setTransactions(list => list.filter(t => t.id !== transaction.id))
     showToast('Transaction deleted', {
@@ -296,7 +301,7 @@ export function AppDataProvider ({ guest, children }) {
   )
 
   const openNew = useCallback(preset => setDrawer({ open: true, editing: null, preset: preset || null }), [])
-  const openEdit = useCallback(transaction => setDrawer({ open: true, editing: transaction, preset: null }), [])
+  const openEdit = useCallback(transaction => setDrawer({ open: true, editing: transaction.parent || transaction, preset: null }), [])
   const closeDrawer = useCallback(() => setDrawer(d => ({ ...d, open: false })), [])
 
   const value = useMemo(

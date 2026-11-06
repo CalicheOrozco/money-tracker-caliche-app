@@ -16,6 +16,7 @@ import { Icon, Spinner } from '../components/ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
 import { CATEGORY_ICON, RANGE_LABEL } from '../lib/constants.js'
 import { monthlyCashflow } from '../lib/metrics.js'
+import { byCategoryEntries } from '../lib/splits.js'
 
 ChartJS.register(
   ArcElement, BarElement, CategoryScale, Filler, LineElement, LinearScale, PointElement, Tooltip
@@ -259,9 +260,10 @@ function SpendingByCategory () {
   const [limit, setLimit] = useState(PAGE)
   const listRef = useRef(null)
 
-  // Same rule as the totals above: expenses of this category in the selected range.
+  // Same rule as the totals above: expenses of this category in the selected range,
+  // with the matching part of a split transaction.
   const list = useMemo(
-    () => metrics.inRange.filter(t => t.category === selected && t.amount < 0),
+    () => byCategoryEntries(metrics.inRange).filter(t => t.category === selected && t.amount < 0),
     [metrics.inRange, selected]
   )
   const open = list.length > 0

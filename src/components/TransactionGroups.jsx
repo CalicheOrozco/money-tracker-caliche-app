@@ -2,6 +2,7 @@ import TxIcon from './TxIcon.jsx'
 import { CardLogo, Icon } from './ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
 import { dayLabel } from '../lib/dates.js'
+import { categoryLabel } from '../lib/splits.js'
 
 function TransactionRow ({ t }) {
   const { openEdit, removeTransaction, cards, format, showError } = useAppData()
@@ -20,7 +21,8 @@ function TransactionRow ({ t }) {
           <span className='truncate font-medium'>{t.name}</span>
           <span className='flex min-w-0 items-center gap-1.5 text-xs text-faint'>
             <span className='truncate'>
-              {t.desc ? `${t.category} · ${t.desc}` : t.category}
+              {t.parent ? `${t.category} · part of ${format.money(Math.abs(t.parent.amount))}` : categoryLabel(t)}
+              {t.desc && ` · ${t.desc}`}
               {t.tags.length > 0 && ` · ${t.tags.map(tag => '#' + tag).join(' ')}`}
             </span>
             {t.card && (

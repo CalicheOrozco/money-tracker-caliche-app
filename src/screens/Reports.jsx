@@ -7,6 +7,7 @@ import { parseDay } from '../lib/dates.js'
 import {
   currentMonthKey,
   deltaPill,
+  expenseCategories,
   expensesOf,
   inMonth,
   incomeOf,
@@ -44,7 +45,7 @@ export default function Reports () {
   const dailyMax = Math.max(1, ...daily)
   const isCurrent = selected === currentMonthKey()
 
-  const categories = [...new Set(current.filter(t => t.amount < 0).map(t => t.category))]
+  const categories = expenseCategories(current)
     .map(c => [c, expensesOf(current, c), expensesOf(before, c)])
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)

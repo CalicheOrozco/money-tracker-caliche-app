@@ -4,13 +4,14 @@ import { useAppData, useAppUI } from '../data/AppData.jsx'
 import { EXPENSE, INCOME } from '../lib/constants.js'
 import { toISODate } from '../lib/dates.js'
 import { toNumber } from '../lib/numbers.js'
+import { MAX_SPLITS } from '../lib/splits.js'
 import { parseTags } from '../lib/tags.js'
 import BrandPicker from './BrandPicker.jsx'
 import { MerchantTile } from './TxIcon.jsx'
 import { CardLogo, Field, Icon, Switch, inputClass } from './ui.jsx'
 
 const emptyForm = () => ({
-  type: 'expense', amount: '', name: '', date: toISODate(new Date()), desc: '', category: '', tags: '', merchant: '',
+  type: 'expense', amount: '', name: '', date: toISODate(new Date()), desc: '', category: '', tags: '', merchant: '', splits: [],
   useCard: false, card: '', addingCard: false, newCard: '', newIcon: 'VisaIcon', from: '', to: ''
 })
 
@@ -28,9 +29,64 @@ function formFrom (t) {
     category: t.category,
     tags: (t.tags || []).join(', '),
     merchant: t.merchant || '',
+    splits: (t.splits || []).map(part => ({ category: part.category, amount: String(part.amount) })),
     useCard: !!t.card,
     card: t.card
   }
+}
+
+const cents = value => Math.round(toNumber(value) * 100)
+
+// Divides the amount between categories. The parts must add up to the total.
+function SplitEditor ({ form, patch, total, categories, error }) {
+  const { format } = useAppData()
+  const parts = form.splits
+  const left = cents(total) - parts.reduce((sum, part) => sum + cents(part.amount), 0)
+  const change = (index, values) => patch({ splits: parts.map((part, i) => (i === index ? { ...part, ...values } : part)) })
+  const remove = index => patch({ splits: parts.length > 2 ? parts.filter((_, i) => i !== index) : [] })
+  // A new part starts with whatever is still unassigned.
+  const add = () => patch({ splits: [...parts, { category: '', amount: left > 0 ? (left / 100).toFixed(2) : '' }] })
+  const status = left === 0
+    ? ['Adds up to the total', 'text-accent']
+    : left > 0 ? [`${format.plain(left / 100)} left to assign`, 'text-[#e0c45a]'] : [`${format.plain(-left / 100)} over the total`, 'text-danger']
+
+  return (
+    <div className='flex flex-col gap-2.5 rounded-[14px] border border-line bg-field p-3.5'>
+      <div className='flex items-center justify-between'>
+        <span className='flex items-center gap-2 font-medium'><Icon name='call_split' size={19} className='text-muted' />Split across categories</span>
+        <button type='button' onClick={() => patch({ splits: [] })} className='text-[13px] text-muted hover:text-ink'>Remove split</button>
+      </div>
+      {parts.map((part, index) => (
+        <div key={index} className='grid grid-cols-[minmax(0,1fr)_7rem_2rem] items-center gap-2'>
+          <select
+            aria-label={`Part ${index + 1} category`}
+            value={part.category}
+            onChange={e => change(index, { category: e.target.value })}
+            className={`${inputClass} h-10 bg-rail px-2.5`}
+          >
+            <option value=''>Category</option>
+            {categories.map(([label]) => <option key={label} value={label}>{label}</option>)}
+          </select>
+          <input
+            aria-label={`Part ${index + 1} amount`}
+            value={part.amount}
+            onChange={e => change(index, { amount: e.target.value.replace(/[^0-9.,]/g, '') })}
+            inputMode='decimal'
+            placeholder='0.00'
+            className={`${inputClass} h-10 bg-rail text-right tabular-nums`}
+          />
+          <button type='button' aria-label={`Remove part ${index + 1}`} onClick={() => remove(index)} className='grid h-8 w-8 place-items-center rounded-lg text-faint hover:bg-raised hover:text-ink'>
+            <Icon name='close' size={18} />
+          </button>
+        </div>
+      ))}
+      <div className='flex items-center justify-between text-[13px]'>
+        {parts.length < MAX_SPLITS ? <button type='button' onClick={add} className='flex items-center gap-1 text-accent'><Icon name='add' size={17} />Add part</button> : <span />}
+        <span className={status[1]}>{status[0]}</span>
+      </div>
+      {error && <span role='alert' className='text-xs text-danger'>{error}</span>}
+    </div>
+  )
 }
 
 // Shows the transaction's merchant and why it has it, and lets the user pick another.
@@ -204,6 +260,13 @@ export default function TransactionDrawer () {
     if (!(amount > 0)) nextErrors.amount = true
     if (!form.name.trim()) nextErrors.name = true
     if (!form.date) nextErrors.date = true
+    const splitting = form.splits.length > 0
+    const splits = form.splits.map(part => ({ category: part.category, amount: cents(part.amount) / 100 }))
+    if (splitting) {
+      if (splits.some(part => !part.category)) nextErrors.split = 'Choose a category for every part.'
+      else if (splits.some(part => !(part.amount > 0))) nextErrors.split = 'Every part needs an amount.'
+      else if (splits.reduce((sum, part) => sum + cents(part.amount), 0) !== cents(amount)) nextErrors.split = 'The parts must add up to the total.'
+    }
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors)
       return
@@ -225,7 +288,11 @@ export default function TransactionDrawer () {
           desc: form.desc.trim(),
           amount: isIncome ? amount : -amount,
           date: form.date,
-          category: form.category || rule?.category || pickedMerchant?.category || 'Other',
+          // A split shows under its largest part.
+          category: splitting
+            ? [...splits].sort((a, b) => b.amount - a.amount)[0].category
+            : form.category || rule?.category || pickedMerchant?.category || 'Other',
+          splits: splitting ? splits : [],
           tags,
           merchant: form.merchant,
           ...resolveCard()
@@ -283,7 +350,7 @@ export default function TransactionDrawer () {
               type='button'
               aria-pressed={form.type === 'expense'}
               disabled={editingTransfer}
-              onClick={() => patch({ type: 'expense', category: '' })}
+              onClick={() => patch({ type: 'expense', category: '', splits: [] })}
               className={`h-9 rounded-[9px] font-medium disabled:opacity-40 ${form.type === 'expense' ? 'bg-[#2a1617] text-danger-soft' : 'text-muted'}`}
             >
               Expense
@@ -292,7 +359,7 @@ export default function TransactionDrawer () {
               type='button'
               aria-pressed={isIncome}
               disabled={editingTransfer}
-              onClick={() => patch({ type: 'income', category: '' })}
+              onClick={() => patch({ type: 'income', category: '', splits: [] })}
               className={`h-9 rounded-[9px] font-medium disabled:opacity-40 ${isIncome ? 'bg-accent-soft text-accent' : 'text-muted'}`}
             >
               Income
@@ -411,8 +478,20 @@ export default function TransactionDrawer () {
             <input value={form.tags} onChange={e => patch({ tags: e.target.value })} placeholder='viaje-cancún, regalo' className={inputClass} />
           </Field>
 
+          {form.splits.length > 0 ? (
+            <SplitEditor form={form} patch={patch} total={form.amount} categories={isIncome ? INCOME : EXPENSE} error={errors.split} />
+          ) : (
           <div className='flex flex-col gap-2.25'>
-            <span className='text-xs font-medium text-muted'>Category</span>
+            <div className='flex items-center justify-between'>
+              <span className='text-xs font-medium text-muted'>Category</span>
+              <button
+                type='button'
+                onClick={() => patch({ splits: [{ category: form.category, amount: form.amount }, { category: '', amount: '' }] })}
+                className='flex items-center gap-1 text-[13px] text-accent'
+              >
+                <Icon name='call_split' size={16} />Split
+              </button>
+            </div>
             <div className='flex flex-wrap gap-1.5'>
               {(isIncome ? INCOME : EXPENSE).map(([label, icon]) => {
                 const selected = form.category === label
@@ -435,6 +514,7 @@ export default function TransactionDrawer () {
               })}
             </div>
           </div>
+          )}
 
           <div className='flex flex-col gap-3 rounded-[14px] border border-line bg-field p-3.5'>
             <button
