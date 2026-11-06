@@ -3,7 +3,7 @@
 import { copyFileSync, existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
-const FILES = ['constants', 'dates', 'merchants', 'metrics', 'periods', 'recurring', 'tags', 'transfers']
+const FILES = ['cardCycle', 'constants', 'dates', 'forecast', 'merchants', 'metrics', 'periods', 'recurring', 'splits', 'tags', 'transfers', 'yearReview']
 const app = fileURLToPath(new URL('../src/lib/', import.meta.url))
 const mcp = fileURLToPath(new URL('../../money-tracker-caliche-mcp/src/shared/', import.meta.url))
 const check = process.argv.includes('--check')
