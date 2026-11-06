@@ -5,6 +5,8 @@ import { CardLogo, ConfirmDialog, HideButton, Icon, Section, Spinner } from '../
 import { useAppData } from '../data/AppData.jsx'
 import { downloadTransactionsCsv } from '../lib/csv.js'
 import { CATEGORY_ICON, EXPENSE, INCOME, RANGE_LABEL, SECTIONS } from '../lib/constants.js'
+import { toISODate, parseDay } from '../lib/dates.js'
+import { safeToSpend } from '../lib/forecast.js'
 import { sparkPaths } from '../lib/metrics.js'
 import { categoryLabel, inCategory } from '../lib/splits.js'
 import { transfersInRange } from '../lib/transfers.js'
@@ -102,6 +104,73 @@ function Stats ({ onHide }) {
         </div>
         <div className='text-xs text-faint'>{inRange.length} transactions · {RANGE_LABEL[range]}</div>
       </div>
+    </Section>
+  )
+}
+
+const shortDay = day => parseDay(day).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+
+// What is free to spend until the next pay, after the bills and card payments before it.
+function SafeToSpend ({ onHide }) {
+  const { cards, transactions, transferList, recurring, format } = useAppData()
+  const [all, setAll] = useState(false)
+  const result = useMemo(
+    () => safeToSpend({ cards, transactions, transfers: transferList, recurring, today: toISODate(new Date()) }),
+    [cards, transactions, transferList, recurring]
+  )
+
+  if (!result.ready) {
+    return (
+      <Section title='Safe to spend' onHide={onHide}>
+        <p className='m-0 text-[13px] leading-relaxed text-muted'>
+          See how much you can spend until your next pay. Set the balance of your debit or cash account first.
+        </p>
+        <Link to='/cards' className='flex items-center gap-1 self-start text-[13px]'>Set a balance <Icon name='arrow_forward' size={16} /></Link>
+      </Section>
+    )
+  }
+
+  const { safe, perDay, payday, until, upcoming, cash, firstNegative } = result
+  const shown = all ? upcoming : upcoming.slice(0, 4)
+  const row = 'flex items-center gap-2.5 text-[13px]'
+
+  return (
+    <Section title='Safe to spend' onHide={onHide}>
+      <div className='flex flex-col gap-1'>
+        <span className={`text-[30px] font-semibold leading-none tracking-[-.02em] tabular-nums ${safe < 0 ? 'text-danger' : ''}`}>
+          {safe < 0 ? '−' : ''}{format.money(safe)}
+        </span>
+        <span className='text-xs text-faint'>
+          {payday ? `Until ${payday.name} on ${shortDay(until)}` : `Until the end of the month, ${shortDay(until)}`}
+          {safe > 0 && ` · about ${format.money(perDay)} a day`}
+        </span>
+      </div>
+      <div className='flex flex-col gap-2 border-t border-line-4 pt-3'>
+        <div className={row}>
+          <Icon name='account_balance_wallet' size={18} className='text-muted' />
+          <span className='min-w-0 flex-1 truncate'>In debit and cash</span>
+          <span className='tabular-nums'>{format.money(cash)}</span>
+        </div>
+        {shown.map(item => (
+          <div key={`${item.kind}${item.name}${item.date}`} className={row}>
+            <Icon name={item.kind === 'card' ? 'credit_card' : 'event_repeat'} size={18} className='text-muted' />
+            <span className='min-w-0 flex-1 truncate'>{item.kind === 'card' ? `${item.name} payment` : item.name}<span className='text-faint'> · {shortDay(item.date)}</span></span>
+            <span className='tabular-nums text-ink-2'>{format.signed(item.amount)}</span>
+          </div>
+        ))}
+        {upcoming.length > 4 && (
+          <button type='button' onClick={() => setAll(!all)} className='self-start text-[13px] text-accent'>
+            {all ? 'Show less' : `${upcoming.length - 4} more before then`}
+          </button>
+        )}
+        {upcoming.length === 0 && <span className='text-xs text-faint'>No bills or card payments due before then.</span>}
+      </div>
+      {firstNegative && (
+        <div role='alert' className='flex items-start gap-2.5 rounded-[11px] border border-danger/25 bg-danger/10 px-3 py-2.5 text-[13px] text-danger-soft'>
+          <Icon name='warning' size={18} className='mt-px flex-none' />
+          <span>You’d go below zero on {shortDay(firstNegative.date)} after {firstNegative.after}, at −{format.money(firstNegative.balance)}.</span>
+        </div>
+      )}
     </Section>
   )
 }
@@ -339,7 +408,8 @@ export default function Dashboard () {
 
   // Hide buttons are easy to hit by accident, so they ask first.
   const hide = key => () => setHiding(SECTIONS.find(([section]) => section === key))
-  const allHidden = SECTIONS.every(([key]) => hidden[key])
+  // Guests have no balances, so they never see Safe to spend.
+  const allHidden = SECTIONS.every(([key]) => hidden[key] || (guest && key === 'ahead'))
 
   if (allHidden) {
     return (
@@ -368,6 +438,7 @@ export default function Dashboard () {
         {!hidden.tx && <Transactions onHide={hide('tx')} category={category} setCategory={setCategory} />}
       </div>
       <div className='flex min-w-0 flex-col gap-5'>
+        {!guest && !hidden.ahead && <SafeToSpend onHide={hide('ahead')} />}
         {!hidden.stats && <Stats onHide={hide('stats')} />}
         {!hidden.cards && (
           <Cards
