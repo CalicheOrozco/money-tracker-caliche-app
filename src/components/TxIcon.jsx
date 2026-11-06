@@ -31,6 +31,12 @@ export function MerchantLogo ({ domain, size = 38, fallback = 'storefront', clas
   )
 }
 
+// A merchant's logo, or the icon of its category when it has none.
+export function MerchantTile ({ merchant, category, size = 40 }) {
+  const fallback = CATEGORY_ICON[merchant?.category || category] || 'storefront'
+  return <MerchantLogo domain={merchant?.domain || ''} size={size} fallback={fallback} />
+}
+
 // Shows the merchant's logo when it has one, otherwise the category icon.
 export default function TxIcon ({ t, size = 38 }) {
   const { merchantOf } = useAppData()
