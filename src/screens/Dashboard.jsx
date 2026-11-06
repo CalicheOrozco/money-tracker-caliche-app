@@ -6,10 +6,20 @@ import { useAppData } from '../data/AppData.jsx'
 import { downloadTransactionsCsv } from '../lib/csv.js'
 import { CATEGORY_ICON, EXPENSE, INCOME, RANGE_LABEL, SECTIONS } from '../lib/constants.js'
 import { sparkPaths } from '../lib/metrics.js'
-import { byNewest, transfersInRange } from '../lib/transfers.js'
+import { transfersInRange } from '../lib/transfers.js'
 
 const PAGE = 25
 const TRANSFERS = '__transfers'
+
+// Sizes compare without the sign, so the biggest expense and the biggest income both
+// come first. Transfers count by the amount moved.
+const size = t => Math.abs(t.transfer ? t.value : t.amount)
+const SORTS = {
+  newest: ['Newest first', (a, b) => b.date.localeCompare(a.date)],
+  oldest: ['Oldest first', (a, b) => a.date.localeCompare(b.date)],
+  largest: ['Largest amount', (a, b) => size(b) - size(a) || b.date.localeCompare(a.date)],
+  smallest: ['Smallest amount', (a, b) => size(a) - size(b) || b.date.localeCompare(a.date)]
+}
 
 function Balance ({ onHide }) {
   const { metrics, format, range } = useAppData()
@@ -185,6 +195,7 @@ function Transactions ({ onHide, category, setCategory }) {
   const location = useLocation()
   const [search, setSearch] = useState(location.state?.search || '')
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [sort, setSort] = useState('newest')
   const [limit, setLimit] = useState(PAGE)
   const sectionRef = useRef(null)
 
@@ -200,6 +211,7 @@ function Transactions ({ onHide, category, setCategory }) {
     sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [category])
 
+  const cashNames = useMemo(() => new Set(cards.filter(c => c.type === 'cash').map(c => c.name)), [cards])
   const list = useMemo(() => {
     const query = search.trim().toLowerCase()
     const moved = transfersInRange(transferList, range).filter(t =>
@@ -207,19 +219,20 @@ function Transactions ({ onHide, category, setCategory }) {
       (!category || category === TRANSFERS) &&
       (!cardFilter || t.from === cardFilter || t.to === cardFilter)
     )
-    if (category === TRANSFERS) return moved
+    if (category === TRANSFERS) return [...moved].sort(SORTS[sort][1])
     return [...metrics.inRange.filter(t =>
       (!query || `${t.name} ${t.desc} ${t.category} ${t.tags.map(tag => '#' + tag).join(' ')}`.toLowerCase().includes(query)) &&
       (!category || t.category === category) &&
-      (!cardFilter || (cardFilter === '__none' ? !t.card : t.card === cardFilter))
-    ), ...moved].sort(byNewest)
-  }, [metrics.inRange, transferList, range, search, category, cardFilter])
+      (!cardFilter || (cardFilter === '__none' ? !t.card || cashNames.has(t.card) : t.card === cardFilter || (!t.card && cashNames.has(cardFilter))))
+    ), ...moved].sort(SORTS[sort][1])
+  }, [metrics.inRange, transferList, range, search, category, cardFilter, sort, cashNames])
 
-  const hasFilters = !!(category || cardFilter)
+  const hasFilters = !!(category || cardFilter || sort !== 'newest')
   const clear = () => {
     setSearch('')
     setCategory('')
     setCardFilter('')
+    setSort('newest')
   }
   const selectClass = 'h-9 min-w-40 flex-1 rounded-[9px] border border-line-3 bg-raised px-2.5 text-ink'
 
@@ -282,8 +295,11 @@ function Transactions ({ onHide, category, setCategory }) {
           </select>
           <select aria-label='Filter by card' value={cardFilter} onChange={e => setCardFilter(e.target.value)} className={selectClass}>
             <option value=''>All cards</option>
-            <option value='__none'>Cash / no card</option>
+            <option value='__none'>Cash</option>
             {cards.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+          </select>
+          <select aria-label='Sort transactions' value={sort} onChange={e => { setSort(e.target.value); setLimit(PAGE) }} className={selectClass}>
+            {Object.entries(SORTS).map(([key, [label]]) => <option key={key} value={key}>{label}</option>)}
           </select>
           <button type='button' onClick={clear} className='h-9 rounded-[9px] px-3.5 text-accent'>Reset</button>
         </div>
