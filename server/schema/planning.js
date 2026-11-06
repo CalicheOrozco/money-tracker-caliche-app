@@ -59,8 +59,15 @@ export const Merchant = model('Merchant', owned({
   name: { type: String, required: true },
   domain: { type: String, default: '' },
   patterns: { type: [String], default: [] },
-  category: { type: String, default: '' }
+  category: { type: String, default: '' },
+  // Wins when its patterns and another merchant's both match.
+  pinned: { type: Boolean, default: false }
 }))
+
+// Statement names the user chose to hide from "Needs a merchant".
+export const MerchantIgnore = model('MerchantIgnore', owned({
+  key: { type: String, required: true }
+}, 'key'))
 
 // Subscriptions and bills the user adds by hand, for charges the automatic
 // detection misses. `match` finds the matching transactions for history.
@@ -101,5 +108,5 @@ export const NetWorthSnapshot = model('NetWorthSnapshot', owned({
 
 export const PLANNING_MODELS = [
   Budget, Goal, Debt, Holding, Rule, RecurringOverride, NetWorthSnapshot, Merchant, RecurringPayment,
-  Transfer, TransferDismissal
+  Transfer, TransferDismissal, MerchantIgnore
 ]

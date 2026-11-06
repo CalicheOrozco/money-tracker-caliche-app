@@ -8,6 +8,7 @@ import {
   Goal,
   Holding,
   Merchant,
+  MerchantIgnore,
   RecurringPayment,
   NetWorthSnapshot,
   RecurringOverride,
@@ -37,7 +38,8 @@ const COLLECTIONS = {
     upsertBy: 'key',
     fields: { key: 'string!', type: 'enum:sub|bill', status: 'enum:confirmed|cancelled|dismissed' }
   },
-  merchants: { Model: Merchant, fields: { name: 'string!', domain: 'domain', patterns: 'patterns', category: 'string' } },
+  merchants: { Model: Merchant, fields: { name: 'string!', domain: 'domain', patterns: 'patterns', category: 'string', pinned: 'boolean' } },
+  'merchant-ignores': { Model: MerchantIgnore, upsertBy: 'key', fields: { key: 'string!' } },
   recurring: {
     Model: RecurringPayment,
     fields: {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { patternMatch, resolveMerchant } from '../src/lib/merchants.js'
+import { matchAll, merchantMatch, patternMatch, resolveMerchant, suggestPattern } from '../src/lib/merchants.js'
 import { passwordProblem, usernameProblem } from '../server/lib/accountRules.js'
 import { validIcon, validateTransactionBody } from '../server/lib/validateTransaction.js'
 
@@ -34,4 +34,23 @@ test('transactions only accept known logos and reasonable text', () => {
   assert.ok(validateTransactionBody({ ...base, name: 'x'.repeat(121) }))
   assert.ok(validateTransactionBody({ ...base, price: '+Infinity' }))
   assert.ok(validateTransactionBody({ ...base, icon: '//evil.example' }))
+})
+
+test('conflicts: a pinned merchant wins, then the longest pattern, then the oldest', () => {
+  const uber = { _id: 'a', name: 'Uber', patterns: ['uber'] }
+  const eats = { _id: 'b', name: 'Uber Eats', patterns: ['uber eats'] }
+  assert.deepEqual(matchAll([uber, eats], 'UBER EATS MX PEDIDO').map(h => h.merchant.name), ['Uber Eats', 'Uber'])
+  assert.equal(matchAll([{ ...uber, pinned: true }, eats], 'UBER EATS MX PEDIDO')[0].merchant.name, 'Uber')
+  const older = { _id: 'c', name: 'Oxxo', patterns: ['oxxo'] }
+  const newer = { _id: 'd', name: 'Oxxo Gas', patterns: ['oxxo'] }
+  assert.equal(matchAll([older, newer], 'oxxo roma')[0].merchant.name, 'Oxxo')
+})
+
+test('how a transaction got its merchant', () => {
+  const walmart = { _id: 'w', name: 'Walmart', patterns: ['walmart'] }
+  assert.deepEqual(merchantMatch([walmart], { name: 'WALMART EXPRESS', desc: '', merchant: '' }), { merchant: walmart, pattern: 'walmart' })
+  assert.equal(merchantMatch([walmart], { name: 'Tacos', desc: '', merchant: 'w' }).manual, true)
+  assert.equal(merchantMatch([walmart], { name: 'WALMART', desc: '', merchant: 'none' }), null)
+  assert.equal(suggestPattern('costco wholesale'), 'costco')
+  assert.equal(suggestPattern('la comer roma'), 'la comer')
 })

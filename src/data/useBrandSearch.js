@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { logoSearchEnabled, searchBrands, useLogoConfig } from '../lib/brandfetch.js'
 
 // Results are only kept while the search is on screen, as the logo service asks.
 export function useBrandSearch (query) {
   const [state, setState] = useState({ results: [], loading: false, error: '' })
+  const [attempt, setAttempt] = useState(0)
   const clientId = useLogoConfig()
 
   useEffect(() => {
@@ -28,7 +29,9 @@ export function useBrandSearch (query) {
       clearTimeout(timer)
       controller.abort()
     }
-  }, [query, clientId])
+  }, [query, clientId, attempt])
 
-  return state
+  // Searching again after an error, for the Try again button.
+  const retry = useCallback(() => setAttempt(n => n + 1), [])
+  return { ...state, retry }
 }

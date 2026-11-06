@@ -11,7 +11,7 @@ import { useAuth } from '../auth/AuthProvider.jsx'
 import { api } from '../lib/api.js'
 import { CURRENCIES, DEFAULT_SETTINGS } from '../lib/constants.js'
 import { computeMetrics } from '../lib/metrics.js'
-import { patternMatch, resolveMerchant } from '../lib/merchants.js'
+import { matchAll, patternMatch, resolveMerchant } from '../lib/merchants.js'
 import { recurringState } from '../lib/recurring.js'
 import { byNewest, fromApiTransfer, transferSuggestions } from '../lib/transfers.js'
 import { useCollection } from './useCollection.js'
@@ -93,6 +93,7 @@ export function AppDataProvider ({ guest, children }) {
   const rules = useCollection('rules', { enabled: !guest, onError: showError })
   const overrides = useCollection('recurring-overrides', { enabled: !guest, onError: showError })
   const merchants = useCollection('merchants', { enabled: !guest, onError: showError })
+  const merchantIgnores = useCollection('merchant-ignores', { enabled: !guest, onError: showError })
   const manualRecurring = useCollection('recurring', { enabled: !guest, onError: showError })
   const transfers = useCollection('transfers', { enabled: !guest, onError: showError })
   const transferDismissals = useCollection('transfer-dismissals', { enabled: !guest, onError: showError })
@@ -244,6 +245,11 @@ export function AppDataProvider ({ guest, children }) {
   }, [rules.items])
 
   const merchantOf = useCallback(t => resolveMerchant(merchants.items, t), [merchants.items])
+  // The merchant a name would match automatically, with the pattern that matched.
+  const autoMatch = useCallback(
+    text => matchAll(merchants.items, String(text || '').toLowerCase())[0] || null,
+    [merchants.items]
+  )
   const merchantFor = useCallback(
     text => patternMatch(merchants.items, String(text || '').toLowerCase()),
     [merchants.items]
@@ -297,7 +303,7 @@ export function AppDataProvider ({ guest, children }) {
     () => ({
       guest, userID, settings, transactions, cards, loading, range, setRange, privacy, setPrivacy,
       hidden, setHidden, setToast, showToast, showError, format, metrics,
-      recurring, manualRecurring, rules, overrides, ruleFor, merchants, merchantOf, merchantFor, cardFilter, setCardFilter, openNew, openEdit,
+      recurring, manualRecurring, rules, overrides, ruleFor, merchants, merchantIgnores, merchantOf, merchantFor, autoMatch, cardFilter, setCardFilter, openNew, openEdit,
       closeDrawer, reload, saveTransaction, removeTransaction, saveCard, renameCard, removeCard,
       deleteAllTransactions, transfers, transferDismissals, transferList, transferHints, saveTransfer, removeTransfer,
       revertTransfer, convertToTransfer
@@ -305,7 +311,7 @@ export function AppDataProvider ({ guest, children }) {
     [
       guest, userID, settings, transactions, cards, loading, range, privacy, hidden, setHidden,
       showToast, showError, format, metrics, recurring, rules, overrides, ruleFor,
-      merchants, merchantOf, merchantFor, manualRecurring,
+      merchants, merchantIgnores, merchantOf, merchantFor, autoMatch, manualRecurring,
       cardFilter, openNew, openEdit, closeDrawer, reload, saveTransaction, removeTransaction,
       saveCard, renameCard, removeCard, deleteAllTransactions, transfers, transferDismissals, transferList, transferHints,
       saveTransfer, removeTransfer, revertTransfer, convertToTransfer
