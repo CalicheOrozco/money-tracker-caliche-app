@@ -5,6 +5,7 @@ import TxIcon from '../components/TxIcon.jsx'
 import { CardLogo, Field, Icon, MoneyInput, Segmented, Spinner, inputClass, panelClass } from '../components/ui.jsx'
 import { useAppData } from '../data/AppData.jsx'
 import { api } from '../lib/api.js'
+import { cardDue } from '../lib/cardCycle.js'
 import { cardBackground, isLightTone } from '../lib/cardTone.js'
 import { RANGE_LABEL, TONES } from '../lib/constants.js'
 import { parseDay, toISODate } from '../lib/dates.js'
@@ -23,7 +24,65 @@ function AccountLogo ({ card, className }) {
   return <CardLogo icon={card.icon} className={className} />
 }
 
-const emptyCard = () => ({ name: '', icon: 'VisaIcon', type: 'credit', last4: '', limit: '', tone: 'emerald', editing: false, balance: '', balanceDate: toISODate(new Date()) })
+const emptyCard = () => ({ name: '', icon: 'VisaIcon', type: 'credit', last4: '', limit: '', tone: 'emerald', editing: false, balance: '', balanceDate: toISODate(new Date()), statementDay: '', dueDay: '' })
+
+const dayOfMonth = value => value.replace(/\D/g, '').slice(0, 2)
+const shortDay = day => parseDay(day).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+const inDays = count => (count === 0 ? 'today' : count === 1 ? 'tomorrow' : `in ${count} days`)
+
+// The next payment of a credit card, with a shortcut to record it as a transfer.
+function PaymentDue ({ card, onEdit }) {
+  const { transactions, transferList, format, openNew } = useAppData()
+  const due = cardDue(card, transactions, transferList, toISODate(new Date()))
+  const box = 'flex flex-wrap items-center justify-between gap-3 rounded-[14px] border p-3.5'
+
+  if (!due) {
+    return (
+      <div className={`${box} border-line bg-rail`}>
+        <span className='flex items-center gap-2.5 text-[13px] text-muted'><Icon name='event' size={19} />Add the payment due day to get reminders before it’s due.</span>
+        <button type='button' onClick={onEdit} className='text-[13px] text-accent'>Add due day</button>
+      </div>
+    )
+  }
+  if (!due.issued || due.paid) {
+    return (
+      <div className={`${box} border-line bg-rail`}>
+        <span className='flex min-w-0 items-center gap-2.5'>
+          <Icon name={due.paid ? 'check_circle' : 'event'} size={20} className={due.paid ? 'text-accent' : 'text-muted'} />
+          <span className='flex min-w-0 flex-col gap-0.5'>
+            <span className='font-medium'>{due.paid ? 'Statement paid' : `Statement closes ${shortDay(due.closeDate)}`}</span>
+            <span className='text-xs text-faint'>
+              {due.paid
+                ? `Nothing left to pay before ${shortDay(due.dueDate)}`
+                : `${format.money(due.amountDue)} so far · payment due ${shortDay(due.dueDate)}`}
+            </span>
+          </span>
+        </span>
+      </div>
+    )
+  }
+  const urgent = due.daysLeft <= 3
+  return (
+    <div className={`${box} ${urgent ? 'border-[#e0c45a]/35 bg-[#1d1b12]' : 'border-line bg-rail'}`}>
+      <span className='flex min-w-0 items-center gap-2.5'>
+        <Icon name='event' size={20} className={urgent ? 'text-[#e0c45a]' : 'text-muted'} />
+        <span className='flex min-w-0 flex-col gap-0.5'>
+          <span className='font-medium'>Pay {format.money(due.amountDue)} by {shortDay(due.dueDate)}</span>
+          <span className='text-xs text-faint'>
+            Due {inDays(due.daysLeft)}{due.closeDate ? ` · statement closed ${shortDay(due.closeDate)}` : ' · everything owed today'}
+          </span>
+        </span>
+      </span>
+      <button
+        type='button'
+        onClick={() => openNew({ transfer: true, to: card.name, amount: due.amountDue })}
+        className='h-9 rounded-[10px] bg-accent px-3 font-semibold text-accent-ink'
+      >
+        Record payment
+      </button>
+    </div>
+  )
+}
 
 // Shown until a cash account exists, so cash can be tracked from here.
 const CASH_PLACEHOLDER = { name: 'Cash', type: 'cash', icon: '' }
@@ -154,6 +213,8 @@ function CardForm ({ initial, onClose }) {
       return setError('You already have a cash account.')
     }
     if (form.last4 && form.last4.length !== 4) return setError('Last digits must be 4 numbers.')
+    const badDay = value => value !== '' && !(Number(value) >= 1 && Number(value) <= 31)
+    if (form.type === 'credit' && (badDay(form.statementDay) || badDay(form.dueDay))) return setError('Days must be between 1 and 31.')
 
     setBusy(true)
     try {
@@ -165,6 +226,8 @@ function CardForm ({ initial, onClose }) {
         last4: form.last4,
         limit: form.type === 'credit' ? toNumber(form.limit) : 0,
         tone: form.tone,
+        statementDay: form.type === 'credit' ? form.statementDay : '',
+        dueDay: form.type === 'credit' ? form.dueDay : '',
         balance: String(form.balance).trim() === '' ? '' : toNumber(form.balance),
         balanceDate: form.balanceDate || toISODate(new Date())
       })
@@ -240,6 +303,19 @@ function CardForm ({ initial, onClose }) {
               className='h-11 rounded-[11px]'
             />
           </Field>
+        )}
+        {form.type === 'credit' && (
+          <div className='flex flex-col gap-1.75'>
+            <div className='grid grid-cols-2 gap-2.5'>
+              <Field label='Statement closes on day' hint='optional'>
+                <input aria-label='Statement day' value={form.statementDay} onChange={e => patch({ statementDay: dayOfMonth(e.target.value) })} inputMode='numeric' placeholder='e.g. 28' className={`${inputClass} bg-rail`} />
+              </Field>
+              <Field label='Payment due on day' hint='optional'>
+                <input aria-label='Due day' value={form.dueDay} onChange={e => patch({ dueDay: dayOfMonth(e.target.value) })} inputMode='numeric' placeholder='e.g. 18' className={`${inputClass} bg-rail`} />
+              </Field>
+            </div>
+            <span className='text-xs leading-relaxed text-faint'>Both are on your statement. With them, the app tells you how much to pay and reminds you before it’s due.</span>
+          </div>
         )}
         <div className='flex flex-col gap-1.75'>
           <div className='grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-2.5'>
@@ -348,7 +424,9 @@ export default function Cards () {
     editing: true,
     originalName: card.name,
     balance: typeof card.balance === 'number' ? String(card.balance) : '',
-    balanceDate: card.balanceDate || toISODate(new Date())
+    balanceDate: card.balanceDate || toISODate(new Date()),
+    statementDay: card.statementDay ? String(card.statementDay) : '',
+    dueDay: card.dueDay ? String(card.dueDay) : ''
   })
   const tile = 'flex min-w-0 flex-col gap-1.5 rounded-[14px] border border-line bg-rail p-3.5'
 
@@ -472,6 +550,8 @@ export default function Cards () {
             <div className={tile}><span className='text-xs text-muted'>Transactions</span><span className='text-[19px] font-semibold tabular-nums'>{cardTx.length}</span></div>
             <div className={tile}><span className='text-xs text-muted'>Avg. per purchase</span><span className='truncate text-[19px] font-semibold tabular-nums'>{format.money(purchases.length ? spent / purchases.length : 0)}</span></div>
           </div>
+
+          {isCreditAccount(selected) && <PaymentDue card={selected} onEdit={() => editCard(selected)} />}
 
           {isCreditAccount(selected) && (
             <div className='flex flex-col gap-2'>

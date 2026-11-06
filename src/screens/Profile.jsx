@@ -14,6 +14,7 @@ import { disablePush, enablePush } from '../lib/push.js'
 const NOTIFICATIONS = [
   ['daily', 'Daily reminder', 'A nudge in the evening if you haven’t logged anything today.'],
   ['weekly', 'Weekly summary', 'Every Sunday evening: income, expenses and your top category.'],
+  ['cardDue', 'Card payment reminders', 'Three days before and on the day a credit card payment is due, with the amount.'],
   ['large', 'Large expense alert', 'Get notified when a single expense goes over a limit.']
 ]
 

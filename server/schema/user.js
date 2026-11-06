@@ -23,7 +23,8 @@ const userSchema = new mongoose.Schema({
     notifications: {
       daily: { type: Boolean, default: false },
       weekly: { type: Boolean, default: false },
-      large: { type: Boolean, default: false }
+      large: { type: Boolean, default: false },
+      cardDue: { type: Boolean, default: false }
     }
   }
 })

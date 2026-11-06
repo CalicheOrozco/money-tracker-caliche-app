@@ -45,7 +45,9 @@ const cardView = (card, fallbackIcon = '') => ({
   tone: card.tone || '',
   balance: card.balance ?? null,
   balanceDate: card.balanceDate || '',
-  balanceSetAt: card.balanceSetAt || null
+  balanceSetAt: card.balanceSetAt || null,
+  statementDay: card.statementDay ?? null,
+  dueDay: card.dueDay ?? null
 })
 
 async function getCards (userID) {
@@ -226,6 +228,19 @@ router.post('/cards/:id', requireOwner, async (req, res) => {
       return res.status(400).json({ error: 'The credit limit is not valid.' })
     }
     update.limit = number
+  }
+
+  // Days of the month the statement closes and the payment is due. Empty clears them.
+  for (const key of ['statementDay', 'dueDay']) {
+    const value = req.body[key]
+    if (value === undefined) continue
+    if (value === '' || value === null) {
+      update[key] = null
+    } else if (Number.isInteger(Number(value)) && Number(value) >= 1 && Number(value) <= 31) {
+      update[key] = Number(value)
+    } else {
+      return res.status(400).json({ error: 'Days must be between 1 and 31.' })
+    }
   }
 
   const { balance, balanceDate } = req.body

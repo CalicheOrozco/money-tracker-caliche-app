@@ -1,7 +1,10 @@
 import express from 'express'
+import { cardDues } from '../../src/lib/cardCycle.js'
 import { byCategoryEntries } from '../../src/lib/splits.js'
 import { priceValue } from '../lib/price.js'
 import { sendToUser } from '../lib/push.js'
+import Card from '../schema/card.js'
+import { Transfer } from '../schema/planning.js'
 import PushSubscription from '../schema/pushSubscription.js'
 import TransactionModel from '../schema/transaction.js'
 import User from '../schema/user.js'
@@ -59,6 +62,35 @@ function loggedToday (userID, now) {
   })
 }
 
+// Reminders three days before and on the day a credit card payment is due, while
+// something is still left to pay on the statement.
+const REMIND_DAYS = [3, 0]
+
+async function cardDueReminders (userID, now) {
+  const cards = (await Card.find({ userID, hidden: false, dueDay: { $ne: null } }).lean())
+    .filter(card => !card.type || card.type === 'credit')
+  if (!cards.length) return []
+  const names = cards.map(card => card.name)
+  const [transactions, transfers] = await Promise.all([
+    TransactionModel.find({ userID, card: { $in: names } }).select('price datetime card').lean(),
+    Transfer.find({ userID, to: { $in: names } }).lean()
+  ])
+  const today = localDay(now).toISOString().slice(0, 10)
+  return cardDues(
+    cards,
+    transactions.map(t => ({ id: String(t._id), amount: priceValue(t.price), date: t.datetime.toISOString().slice(0, 10), card: t.card })),
+    transfers.map(t => ({ id: String(t._id), createdId: String(t._id), transfer: true, from: t.from, to: t.to, value: t.amount, date: t.date })),
+    today
+  ).filter(due => due.issued && due.amountDue > 0 && REMIND_DAYS.includes(due.daysLeft))
+}
+
+const dueText = due => {
+  const day = new Date(`${due.dueDate}T00:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'short', day: 'numeric' })
+  return due.daysLeft === 0
+    ? { title: `${due.card} payment due today`, body: `Pay ${due.amountDue.toFixed(2)} today to avoid interest.` }
+    : { title: `${due.card} payment due ${day}`, body: `Pay ${due.amountDue.toFixed(2)} by ${day} to avoid interest.` }
+}
+
 async function notifyUser (user, now, isWeeklyRun) {
   const { notifications } = user.settings
   let sent = 0
@@ -75,6 +107,13 @@ async function notifyUser (user, now, isWeeklyRun) {
   if (notifications.weekly && isWeeklyRun) {
     await sendToUser(user.id, await weeklyPayload(user.id, now))
     sent++
+  }
+
+  if (notifications.cardDue) {
+    for (const due of await cardDueReminders(user.id, now)) {
+      await sendToUser(user.id, { ...dueText(due), url: '/cards' })
+      sent++
+    }
   }
 
   return sent

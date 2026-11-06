@@ -180,7 +180,7 @@ export default function TransactionDrawer () {
   useEffect(() => {
     if (!open) return
     if (editing) setForm(formFrom(editing))
-    else if (preset?.transfer) setForm({ ...emptyForm(), type: 'transfer' })
+    else if (preset?.transfer) setForm({ ...emptyForm(), type: 'transfer', to: preset.to || '', amount: preset.amount ? String(preset.amount) : '', desc: preset.to ? `${preset.to} payment` : '' })
     else if (preset?.card) setForm({ ...emptyForm(), useCard: true, card: preset.card })
     else setForm(emptyForm())
     setErrors({})

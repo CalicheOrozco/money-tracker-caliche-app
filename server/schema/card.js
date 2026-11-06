@@ -15,6 +15,9 @@ const cardSchema = new mongoose.Schema({
   balance: { type: Number, default: null },
   balanceDate: { type: String, default: '' },
   balanceSetAt: { type: Date, default: null },
+  // Credit cards: the days of the month the statement closes and the payment is due.
+  statementDay: { type: Number, default: null, min: 1, max: 31 },
+  dueDay: { type: Number, default: null, min: 1, max: 31 },
   tone: { type: String, default: '' },
   hidden: { type: Boolean, default: false }
 })

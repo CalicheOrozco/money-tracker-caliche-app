@@ -40,7 +40,7 @@ function applySettings (user, settings) {
   if (Number.isFinite(largeAmount) && largeAmount >= 0) {
     target.largeAmount = largeAmount
   }
-  for (const key of ['daily', 'weekly', 'large']) {
+  for (const key of ['daily', 'weekly', 'large', 'cardDue']) {
     const value = settings.notifications?.[key]
     if (typeof value === 'boolean') target.notifications[key] = value
   }
