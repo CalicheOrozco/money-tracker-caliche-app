@@ -10,7 +10,7 @@ import { Icon, Logo, Switch } from './ui.jsx'
 const OVERVIEW = [
   ['', 'Dashboard', 'space_dashboard'], ['/insights', 'Insights', 'auto_awesome'],
   ['/calendar', 'Calendar', 'calendar_month'], ['/charts', 'Charts', 'monitoring'],
-  ['/reports', 'Reports', 'summarize']
+  ['/reports', 'Reports', 'summarize'], ['/year', 'Year in review', 'celebration']
 ]
 
 const USER_GROUPS = [
@@ -32,8 +32,9 @@ const TITLES = {
   insights: 'Insights', calendar: 'Calendar', charts: 'Charts', reports: 'Monthly report',
   cards: 'Cards', transfers: 'Transfers', recurring: 'Recurring payments', budgets: 'Budgets', goals: 'Savings goals',
   debts: 'Debts & loans', 'net-worth': 'Net worth',
-  rules: 'Rules & tags', merchants: 'Merchants', profile: 'Profile & settings'
+  rules: 'Rules & tags', merchants: 'Merchants', profile: 'Profile & settings', year: 'Year in review'
 }
+
 
 const WITH_RANGE = ['dashboard', 'charts', 'cards']
 

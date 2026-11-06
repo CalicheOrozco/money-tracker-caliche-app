@@ -24,12 +24,12 @@ export function toCsv (list) {
   return rows.map(row => row.map(escape).join(',')).join('\n')
 }
 
-export function downloadTransactionsCsv (list) {
+export function downloadTransactionsCsv (list, filename = 'transactions.csv') {
   const csv = toCsv(list)
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
   const link = document.createElement('a')
   link.href = url
-  link.download = 'transactions.csv'
+  link.download = filename
   link.click()
   URL.revokeObjectURL(url)
 }

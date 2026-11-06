@@ -25,6 +25,7 @@ const Recurring = lazy(() => import('./screens/Recurring.jsx'))
 const Transfers = lazy(() => import('./screens/Transfers.jsx'))
 const Reports = lazy(() => import('./screens/Reports.jsx'))
 const Rules = lazy(() => import('./screens/Rules.jsx'))
+const YearInReview = lazy(() => import('./screens/YearInReview.jsx'))
 
 function Gate () {
   const { ready } = useAuth()
@@ -53,7 +54,8 @@ const router = createBrowserRouter([
           { path: 'insights', element: lazyScreen(<Insights />) },
           { path: 'calendar', element: lazyScreen(<Calendar />) },
           { path: 'charts', element: lazyScreen(<Charts />) },
-          { path: 'reports', element: lazyScreen(<Reports />) }
+          { path: 'reports', element: lazyScreen(<Reports />) },
+          { path: 'year', element: lazyScreen(<YearInReview />) }
         ]
       },
       { path: '/guest-charts', element: <Navigate to='/guest/charts' replace /> },
@@ -66,6 +68,7 @@ const router = createBrowserRouter([
           { path: 'calendar', element: lazyScreen(<Calendar />) },
           { path: 'charts', element: lazyScreen(<Charts />) },
           { path: 'reports', element: lazyScreen(<Reports />) },
+          { path: 'year', element: lazyScreen(<YearInReview />) },
           { path: 'cards', element: lazyScreen(<Cards />) },
           { path: 'recurring', element: lazyScreen(<Recurring />) },
           { path: 'transfers', element: lazyScreen(<Transfers />) },
