@@ -18,7 +18,7 @@ import {
 const tileClass = 'flex min-w-0 flex-col gap-2 rounded-[14px] border border-line bg-rail p-4'
 
 export default function Reports () {
-  const { transactions, format, loading } = useAppData()
+  const { transactions, format, loading, openEdit } = useAppData()
   const [selected, setSelected] = useState(currentMonthKey)
 
   if (loading) return <Spinner />
@@ -131,7 +131,13 @@ export default function Reports () {
           <h2 className='m-0 text-[15px] font-semibold'>Biggest expenses</h2>
           {top.length === 0 && <div className='py-4 text-center text-muted'>No expenses this month.</div>}
           {top.map(t => (
-            <div key={t.id} className='flex items-center gap-2.5 py-1'>
+            <button
+              key={t.id}
+              type='button'
+              title={`Open ${t.name}`}
+              onClick={() => openEdit(t)}
+              className='-mx-2 flex items-center gap-2.5 rounded-lg px-2 py-1 text-left text-ink hover:bg-hover'
+            >
               <RowIcon name={CATEGORY_ICON[t.category] || 'category'} />
               <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
                 <span className='truncate font-medium'>{t.name}</span>
@@ -140,7 +146,7 @@ export default function Reports () {
                 </span>
               </div>
               <span className='tabular-nums'>{format.money(-t.amount)}</span>
-            </div>
+            </button>
           ))}
         </section>
         <section className={`flex min-w-0 flex-col gap-3 p-5 ${panelClass}`}>

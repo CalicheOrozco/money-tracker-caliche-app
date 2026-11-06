@@ -84,7 +84,8 @@ function buildInsights ({ transactions, format, recurring, budgets }) {
       tone: 'text-[#a3e05a]',
       kicker: 'Biggest purchase',
       big: format.money(-biggest.amount),
-      text: `${biggest.name} · ${date(biggest.date)}`
+      text: `${biggest.name} · ${date(biggest.date)}`,
+      transaction: biggest
     },
     {
       icon: 'local_fire_department',
@@ -126,8 +127,23 @@ function buildInsights ({ transactions, format, recurring, budgets }) {
   return items.filter(Boolean)
 }
 
+// An insight about one transaction opens it when clicked.
+function Card ({ item, onOpen, className, children }) {
+  if (!item.transaction) return <section className={className}>{children}</section>
+  return (
+    <button
+      type='button'
+      title={`Open ${item.transaction.name}`}
+      onClick={() => onOpen(item.transaction)}
+      className={`${className} text-left text-ink hover:border-line-3 hover:bg-raised`}
+    >
+      {children}
+    </button>
+  )
+}
+
 export default function Insights () {
-  const { transactions, loading, format, recurring, guest, showError } = useAppData()
+  const { transactions, loading, format, recurring, guest, showError, openEdit } = useAppData()
   const budgets = useCollection('budgets', { enabled: !guest, onError: showError })
   const insights = useMemo(
     () => (loading || budgets.loading ? [] : buildInsights({ transactions, format, recurring, budgets: guest ? null : budgets.items })),
@@ -149,7 +165,7 @@ export default function Insights () {
 
   return (
     <div className='flex flex-col gap-4'>
-      <section className={`relative flex flex-wrap items-center gap-6 overflow-hidden p-7 ${panelClass}`}>
+      <Card item={hero} onOpen={openEdit} className={`relative flex flex-wrap items-center gap-6 overflow-hidden p-7 ${panelClass}`}>
         <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(500px_240px_at_0%_100%,rgba(52,210,123,.14),transparent_70%)]' />
         <div className={`relative grid h-16 w-16 place-items-center rounded-[18px] bg-accent-soft ${hero.tone}`}>
           <Icon name={hero.icon} size={34} />
@@ -159,17 +175,17 @@ export default function Insights () {
           <span className={`text-[clamp(28px,3.6vw,42px)] font-semibold leading-[1.05] tracking-[-.03em] ${hero.tone}`}>{hero.big}</span>
           <span className='text-[15px] text-ink-2 text-pretty'>{hero.text}</span>
         </div>
-      </section>
+      </Card>
       <div className='grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4'>
         {rest.map(item => (
-          <section key={item.kicker} className={`flex flex-col gap-2.5 p-5 ${panelClass}`}>
+          <Card key={item.kicker} item={item} onOpen={openEdit} className={`flex flex-col gap-2.5 p-5 ${panelClass}`}>
             <div className='flex items-center gap-2'>
               <Icon name={item.icon} className={item.tone} />
-              <span className='font-mono text-[11px] uppercase tracking-[.1em] text-faint'>{item.kicker}</span>
+              <span className='font-mono text-[11px] uppercase tracking-widest text-faint'>{item.kicker}</span>
             </div>
             <span className='text-[22px] font-semibold leading-[1.15] tracking-[-.02em]'>{item.big}</span>
             <span className='leading-normal text-muted text-pretty'>{item.text}</span>
-          </section>
+          </Card>
         ))}
       </div>
     </div>
