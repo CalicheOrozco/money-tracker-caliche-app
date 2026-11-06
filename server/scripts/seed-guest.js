@@ -73,7 +73,7 @@ function buildTransactions () {
       add(day(2 + Math.floor(random() * 26)), pick(['Uber Eats', 'Rappi', 'Tacos El Güero', 'Sushi Itto', 'Starbucks']), -between(120, 620), 'Food', pick(['amex', 'santander']))
     }
     for (let i = 0; i < 3; i++) {
-      add(day(4 + Math.floor(random() * 24)), 'Pemex', -between(700, 1150), 'Transportation', 'bbva', 'Gasolina')
+      add(day(4 + Math.floor(random() * 24)), 'Pemex', -between(700, 1150), 'Car & Fuel', 'bbva', 'Gasolina')
     }
     for (let i = 0; i < 5; i++) {
       add(day(1 + Math.floor(random() * 28)), pick(['Uber', 'DiDi']), -between(85, 210), 'Transportation', 'santander')
