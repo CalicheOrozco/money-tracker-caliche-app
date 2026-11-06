@@ -221,7 +221,7 @@ function Header ({ title, screen }) {
     <header className='flex flex-wrap items-center justify-between gap-4'>
       <div className='flex flex-col gap-1'>
         <div className='text-[13px] text-faint'>{today}</div>
-        <h1 className='m-0 text-[26px] font-semibold tracking-[-.025em]'>{title}</h1>
+        <h1 className='m-0 text-[26px] font-semibold tracking-tight'>{title}</h1>
       </div>
       <div className='flex flex-wrap items-center gap-2 print:hidden'>
         {showRange && (
@@ -274,7 +274,7 @@ function Toast () {
   return (
     <div
       role={toast.error ? 'alert' : 'status'}
-      className='fixed bottom-23 left-1/2 print:hidden z-[60] flex max-w-[calc(100vw-32px)] items-center gap-3.5 rounded-[14px] bg-ink py-3 pl-4 pr-3.5 font-medium text-rail shadow-[0_16px_40px_rgba(0,0,0,.45)] [animation:toast-up_.25s_ease-out] [transform:translateX(-50%)] nav:bottom-7'
+      className='fixed bottom-23 left-1/2 print:hidden z-60 flex max-w-[calc(100vw-32px)] items-center gap-3.5 rounded-[14px] bg-ink py-3 pl-4 pr-3.5 font-medium text-rail shadow-[0_16px_40px_rgba(0,0,0,.45)] animate-[toast-up_.25s_ease-out] transform-[translateX(-50%)] nav:bottom-7'
     >
       <Icon
         name={toast.error ? 'error' : 'check_circle'}

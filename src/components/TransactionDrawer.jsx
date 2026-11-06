@@ -189,7 +189,7 @@ export default function TransactionDrawer () {
         aria-modal='true'
         aria-label={`${editing ? 'Edit' : 'New'} ${noun}`}
         inert={!open}
-        className={`fixed inset-y-0 right-0 z-[41] flex w-full flex-col border-l border-line-2 bg-[#0d110f] transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)] nav:w-115 ${
+        className={`fixed inset-y-0 right-0 z-41 flex w-full flex-col border-l border-line-2 bg-[#0d110f] transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)] nav:w-115 ${
           open ? 'translate-x-0' : 'translate-x-[105%]'
         }`}
       >

@@ -63,7 +63,7 @@ function CardFace ({ card, spent, selected, onClick }) {
       aria-pressed={onClick ? selected : undefined}
       onClick={onClick}
       className={`relative flex aspect-[1.586] w-full min-w-0 flex-col justify-between overflow-hidden rounded-[18px] border p-4.5 text-left ${
-        isLightTone(card.tone) ? 'text-[#0b0e0c]' : 'text-ink'
+        isLightTone(card.tone) ? 'text-rail' : 'text-ink'
       } ${selected ? 'border-accent shadow-[0_0_0_4px_rgba(52,210,123,.15)]' : 'border-white/5'}`}
       style={{ background: cardBackground(card.tone) }}
     >
