@@ -46,3 +46,10 @@ test('credit card estimate per card, with payments and refunds', () => {
   assert.equal(creditCardEstimate([tx('buy', -1000, 'V', -3)], [fromApiTransfer({ _id: objectIdAt(now), from: 'D', to: 'W', amount: 1000, date: day(-2) })], two), 1000)
   assert.equal(creditCardEstimate([], [], [{ name: 'Visa', type: 'credit', balance: 700, balanceDate: day(0), balanceSetAt: new Date().toISOString() }]), 700)
 })
+
+test('transactions without a card count toward the cash account', () => {
+  const cash = { name: 'Cash', type: 'cash', balance: 500, balanceDate: day(-10), balanceSetAt: new Date((now - 86400 * 11) * 1000).toISOString() }
+  const list = [tx('taco', -80, '', -2), tx('tip', 30, '', -1), tx('visa buy', -200, 'Visa', -1)]
+  const atm = fromApiTransfer({ _id: objectIdAt(now), from: 'Debit', to: 'Cash', amount: 300, date: day(-3) })
+  assert.equal(accountBalance(cash, list, [atm]), 500 - 80 + 30 + 300)
+})

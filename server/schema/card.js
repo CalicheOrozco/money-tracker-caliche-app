@@ -7,7 +7,7 @@ const cardSchema = new mongoose.Schema({
   userID: { type: String, required: true, index: true },
   name: { type: String, required: true },
   icon: { type: String, default: '' },
-  type: { type: String, enum: ['credit', 'debit', 'savings', 'investment'], default: 'credit' },
+  type: { type: String, enum: ['credit', 'debit', 'savings', 'investment', 'cash'], default: 'credit' },
   last4: { type: String, default: '' },
   limit: { type: Number, default: 0 },
   // What the bank showed on balanceDate, and what is owed on a credit card. Null means

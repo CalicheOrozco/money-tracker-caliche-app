@@ -10,21 +10,33 @@ import { RANGE_LABEL, TONES } from '../lib/constants.js'
 import { parseDay, toISODate } from '../lib/dates.js'
 import { decimalOnly, toNumber } from '../lib/numbers.js'
 import { currentMonthKey, expensesOf, inMonth, monthLabel } from '../lib/periods.js'
-import { accountBalance, byNewest, isCreditAccount, transfersInRange } from '../lib/transfers.js'
+import { accountBalance, belongsTo, byNewest, isCashAccount, isCreditAccount, transfersInRange } from '../lib/transfers.js'
 
 const NO_COLORS = []
-const ACCOUNT_LABEL = { credit: 'Credit', debit: 'Debit', savings: 'Savings', investment: 'Investment' }
+const ACCOUNT_LABEL = { credit: 'Credit', debit: 'Debit', savings: 'Savings', investment: 'Investment', cash: 'Cash' }
+
+// Cash has no bank, so it shows a bills icon instead of a logo.
+function AccountLogo ({ card, className }) {
+  if (isCashAccount(card)) {
+    return <span className={`grid flex-none place-items-center rounded-md bg-[#a3e05a] text-rail ${className}`}><Icon name='payments' size={18} /></span>
+  }
+  return <CardLogo icon={card.icon} className={className} />
+}
 
 const emptyCard = () => ({ name: '', icon: 'VisaIcon', type: 'credit', last4: '', limit: '', tone: 'emerald', editing: false, balance: '', balanceDate: toISODate(new Date()) })
+
+// Shown until a cash account exists, so cash can be tracked from here.
+const CASH_PLACEHOLDER = { name: 'Cash', type: 'cash', icon: '' }
 
 // Balances the user tracks across accounts, with the option to start tracking the rest.
 function Balances ({ onSet }) {
   const { cards, transactions, transferList, format, privacy } = useAppData()
-  if (cards.length === 0) return null
 
-  const rows = cards.map(card => ({ card, value: accountBalance(card, transactions, transferList) }))
+  const accounts = cards.some(isCashAccount) ? cards : [...cards, CASH_PLACEHOLDER]
+  const rows = accounts.map(card => ({ card, value: card === CASH_PLACEHOLDER ? null : accountBalance(card, transactions, transferList) }))
   const total = (list, keep) => list.filter(r => r.value !== null && keep(r.card)).reduce((sum, r) => sum + r.value, 0)
-  const available = total(rows, c => !isCreditAccount(c))
+  const cash = total(rows, isCashAccount)
+  const available = total(rows, c => !isCreditAccount(c) && !isCashAccount(c))
   const owed = total(rows, isCreditAccount)
   const signed = value => (value < 0 && !privacy ? '−' : '') + format.money(value)
 
@@ -33,17 +45,18 @@ function Balances ({ onSet }) {
       <div className='flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1'>
         <h2 className='m-0 text-[15px] font-semibold'>Balances</h2>
         <div className='flex flex-wrap gap-4 text-[13px] text-muted'>
+          <span>Cash <span className='font-semibold text-ink tabular-nums'>{signed(cash)}</span></span>
           <span>In your accounts <span className='font-semibold text-ink tabular-nums'>{signed(available)}</span></span>
           <span>Owed on credit <span className='font-semibold text-danger-soft tabular-nums'>{signed(owed)}</span></span>
         </div>
       </div>
       <div className='grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2.5'>
         {rows.map(({ card, value }) => (
-          <div key={card.name} className='flex min-w-0 items-center gap-2.5 rounded-[12px] border border-line bg-rail p-3'>
-            <CardLogo icon={card.icon} className='h-6.5 w-9.5 flex-none rounded-md' />
+          <div key={card.name} className='flex min-w-0 items-center gap-2.5 rounded-xl border border-line bg-rail p-3'>
+            <AccountLogo card={card} className='h-6.5 w-9.5 rounded-md' />
             <span className='flex min-w-0 flex-1 flex-col gap-0.5'>
               <span className='truncate font-medium'>{card.name}</span>
-              <span className='text-xs text-faint'>{isCreditAccount(card) ? 'Owed' : ACCOUNT_LABEL[card.type]}</span>
+              <span className='text-xs text-faint'>{isCreditAccount(card) ? 'Owed' : isCashAccount(card) ? 'Cash on hand' : ACCOUNT_LABEL[card.type]}</span>
             </span>
             {value === null
               ? <button type='button' onClick={() => onSet(card)} className='flex-none text-[13px] text-accent'>Set balance</button>
@@ -69,7 +82,7 @@ function CardFace ({ card, spent, selected, onClick }) {
     >
       <span className='pointer-events-none absolute inset-0 bg-[radial-gradient(280px_160px_at_100%_0%,rgba(255,255,255,.08),transparent_70%)]' />
       <span className='relative flex items-center justify-between'>
-        <CardLogo icon={card.icon} className='h-7.5 w-11.5 rounded-[7px] p-1' />
+        <AccountLogo card={card} className='h-7.5 w-11.5 rounded-[7px] p-1' />
         <span className='font-mono text-[10px] uppercase tracking-[.12em] opacity-70'>{ACCOUNT_LABEL[card.type] || 'Credit'}</span>
       </span>
       <span className='relative flex items-end justify-between gap-2.5'>
@@ -136,6 +149,10 @@ function CardForm ({ initial, onClose }) {
     if ((!form.editing || renaming) && cards.some(c => c.name.toLowerCase() === name.toLowerCase() && c.name !== form.originalName)) {
       return setError('You already have a card with that name.')
     }
+    // Transactions without a card all go to one cash account.
+    if (form.type === 'cash' && cards.some(c => isCashAccount(c) && c.name !== form.originalName)) {
+      return setError('You already have a cash account.')
+    }
     if (form.last4 && form.last4.length !== 4) return setError('Last digits must be 4 numbers.')
 
     setBusy(true)
@@ -143,7 +160,7 @@ function CardForm ({ initial, onClose }) {
       if (renaming) await renameCard(form.originalName, name)
       await saveCard({
         name,
-        icon: form.icon,
+        icon: form.type === 'cash' ? '' : form.icon,
         type: form.type,
         last4: form.last4,
         limit: form.type === 'credit' ? toNumber(form.limit) : 0,
@@ -177,10 +194,13 @@ function CardForm ({ initial, onClose }) {
             className={`${inputClass} bg-rail disabled:text-muted`}
           />
         </Field>
+        {form.type !== 'cash' && (
         <div className='flex flex-col gap-1.75'>
           <span className='text-xs font-medium text-muted'>Bank logo</span>
           <BrandPicker value={form.icon} onChange={icon => patch({ icon })} />
         </div>
+        )}
+        {form.type !== 'cash' && (
         <div className='grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5'>
           <Field label='Last 4 digits'>
             <input
@@ -192,15 +212,23 @@ function CardForm ({ initial, onClose }) {
             />
           </Field>
         </div>
+        )}
         <div className='flex flex-col gap-1.75'>
           <span className='text-xs font-medium text-muted'>Type</span>
-          <Segmented
-            label='Card type'
-            options={Object.entries(ACCOUNT_LABEL)}
-            value={form.type}
-            onChange={type => patch({ type })}
-            buttonClass='h-8.5 flex-1'
-          />
+          <div className='-mx-1 min-w-0 max-w-full overflow-x-auto px-1'>
+            <Segmented
+              label='Card type'
+              options={Object.entries(ACCOUNT_LABEL)}
+              value={form.type}
+              onChange={type => patch({ type })}
+              buttonClass='h-8.5 flex-1'
+            />
+          </div>
+          {form.type === 'cash' && (
+            <span className='text-xs leading-relaxed text-faint'>
+              Transactions without a card count as cash. Record ATM withdrawals as a transfer from your debit account to cash.
+            </span>
+          )}
         </div>
         {form.type === 'credit' && (
           <Field label='Credit limit' hint='optional'>
@@ -230,7 +258,9 @@ function CardForm ({ initial, onClose }) {
             </Field>
           </div>
           <span className='text-xs leading-relaxed text-faint'>
-            Use what your bank shows on that date. Anything you add after it updates the balance. Leave it empty to not track it.
+            {form.type === 'cash'
+              ? 'Count the cash you have on that date. Anything you add after it updates the balance. Leave it empty to not track it.'
+              : 'Use what your bank shows on that date. Anything you add after it updates the balance. Leave it empty to not track it.'}
           </span>
         </div>
         <div className='flex flex-col gap-1.75'>
@@ -295,15 +325,15 @@ export default function Cards () {
 
   if (loading) return <Spinner />
 
-  const spentOn = (list, name) => expensesOf(list.filter(t => t.card === name))
+  const spentOn = (list, card) => expensesOf(list.filter(belongsTo(card)))
   const selected = cards.find(c => c.name === selectedName) || cards[0]
-  const cardTx = selected ? metrics.inRange.filter(t => t.card === selected.name) : []
-  const spent = selected ? spentOn(metrics.inRange, selected.name) : 0
+  const cardTx = selected ? metrics.inRange.filter(belongsTo(selected)) : []
+  const spent = selected ? spentOn(metrics.inRange, selected) : 0
   const purchases = cardTx.filter(t => t.amount < 0)
   const cardTransfers = selected ? transfersInRange(transferList, range).filter(t => t.from === selected.name || t.to === selected.name) : []
   const activity = [...cardTx, ...cardTransfers].sort(byNewest)
   const selectedBalance = selected ? accountBalance(selected, transactions, transferList) : null
-  const usedThisMonth = selected ? spentOn(inMonth(transactions, currentMonthKey()), selected.name) : 0
+  const usedThisMonth = selected ? spentOn(inMonth(transactions, currentMonthKey()), selected) : 0
   const limit = selected?.limit || 0
   // What is owed is the real use of the limit. Without a balance, this month's purchases
   // are the only figure available, and they ignore old debt and payments.
@@ -351,7 +381,13 @@ export default function Cards () {
         )}
       </div>
 
-      {!form && <Balances onSet={editCard} />}
+      {!form && (
+        <Balances
+          onSet={card => (card === CASH_PLACEHOLDER
+            ? setForm({ ...emptyCard(), name: 'Cash', type: 'cash', icon: '', tone: 'graphite' })
+            : editCard(card))}
+        />
+      )}
 
       {form && (
         <CardForm
@@ -370,7 +406,7 @@ export default function Cards () {
             key={card.name}
             card={card}
             selected={selected?.name === card.name}
-            spent={format.money(spentOn(metrics.inRange, card.name))}
+            spent={format.money(spentOn(metrics.inRange, card))}
             onClick={() => setSelectedName(card.name)}
           />
         ))}
@@ -391,7 +427,7 @@ export default function Cards () {
               <div className='flex min-w-0 flex-col gap-0.5'>
                 <span className='truncate text-[17px] font-semibold'>{selected.name}</span>
                 <span className='text-xs text-faint'>
-                  {{ debit: 'Debit card', savings: 'Savings account', investment: 'Investment account' }[selected.type] || 'Credit card'}
+                  {{ debit: 'Debit card', savings: 'Savings account', investment: 'Investment account', cash: 'Cash on hand' }[selected.type] || 'Credit card'}
                   {selected.last4 && <span className='font-mono'> · •••• {selected.last4}</span>}
                 </span>
               </div>

@@ -387,7 +387,10 @@ export default function TransactionDrawer () {
               className='flex items-center gap-2.5 text-left text-ink'
             >
               <Icon name='credit_card' className='text-muted' />
-              <span className='flex-1 font-medium'>Paid with a card</span>
+              <span className='flex flex-1 flex-col'>
+                <span className='font-medium'>{isIncome ? 'Received on a card or account' : 'Paid with a card'}</span>
+                {!form.useCard && <span className='text-xs text-faint'>Off means cash</span>}
+              </span>
               <Switch on={form.useCard} />
             </button>
 
